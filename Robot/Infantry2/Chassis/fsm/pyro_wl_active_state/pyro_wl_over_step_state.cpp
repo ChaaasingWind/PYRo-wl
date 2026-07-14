@@ -4,8 +4,8 @@
  * @LastEditors: vod-x vod_x@outlook.com
  * @LastEditTime: 2026-05-28 06:20:05
  * @Description: Step-climbing/over-step action state implementation / 跃障扫摆及大扭矩起跳状态实现
- * 
- * Copyright (c) 2026 by PeiYangRobot, All Rights Reserved. 
+ *
+ * Copyright (c) 2026 by PeiYangRobot, All Rights Reserved.
  */
 #include "pyro_wl_chassis.h"
 #include "pyro_algo_common.h"
@@ -32,27 +32,27 @@ void wl_chassis_t::fsm_active_t::state_over_step_t::enter(wl_chassis_t *owner)
     /* Reset LQR errors during joint sweep / 跃障扫腿动作前，清零 LQR 自平衡偏差以切断自平衡 */
     for(uint8_t i = 0; i < 2; i++)
     {
-        owner->_leg_data[i].x_bias = 0.0f;
-        owner->_leg_data[i].d_x_bias = 0.0f;
-        owner->_leg_data[i].beta_bias = 0.0f;
-        owner->_leg_data[i].d_beta_bias = 0.0f;
-        owner->_leg_data[i].gamma_bias = 0.0f;
-        owner->_leg_data[i].d_gamma_bias = 0.0f;
+        owner->_ctx.data.leg[i].x_bias = 0.0f;
+        owner->_ctx.data.leg[i].d_x_bias = 0.0f;
+        owner->_ctx.data.leg[i].beta_bias = 0.0f;
+        owner->_ctx.data.leg[i].d_beta_bias = 0.0f;
+        owner->_ctx.data.leg[i].gamma_bias = 0.0f;
+        owner->_ctx.data.leg[i].d_gamma_bias = 0.0f;
     }
-    
+
     /* Record initial values / 记录起步姿态几何量 */
-    owner->get_cur_angle(&cur_angle[wl_chassis_t::R], 
+    owner->get_cur_angle(&cur_angle[wl_chassis_t::R],
                         &cur_angle[wl_chassis_t::L]);
-    owner->get_cur_length(&cur_length[wl_chassis_t::R], 
+    owner->get_cur_length(&cur_length[wl_chassis_t::R],
                     &cur_length[wl_chassis_t::L]);
-                    
+
     target_length[wl_chassis_t::R] = cur_length[wl_chassis_t::R];
     target_length[wl_chassis_t::L] = cur_length[wl_chassis_t::L];
     target_angle[wl_chassis_t::R] = cur_angle[wl_chassis_t::R];
     target_angle[wl_chassis_t::L] = cur_angle[wl_chassis_t::L];
-    
-    owner->_active_mode_flag.over_step = 0;
-    
+
+    owner->_ctx.data.active_mode_flag.over_step = 0;
+
     for(uint8_t i = 0; i < 2; i++)
     {
         state_flag[i] = 0;
@@ -70,97 +70,97 @@ void wl_chassis_t::fsm_active_t::state_over_step_t::execute(wl_chassis_t *owner)
 {
     /* Force high-speed counter-rotation command to wheels / 轮电机制动速度环控制到正负 100 rad/s，形成越障爬墙力矩 */
     float t = wheel_disable_pid[wl_chassis_t::R].calculate(100.0f,
-                 owner->_wheel_drv[wl_chassis_t::R]->get_current_rotate());
-    owner->_wheel_drv[wl_chassis_t::R]->send_torque(t);
-    
+                 owner->_ctx.motor.wheel[wl_chassis_t::R]->get_current_rotate());
+    owner->_ctx.motor.wheel[wl_chassis_t::R]->send_torque(t);
+
     t = wheel_disable_pid[wl_chassis_t::L].calculate(-100.0f,
-                 owner->_wheel_drv[wl_chassis_t::L]->get_current_rotate());
-    owner->_wheel_drv[wl_chassis_t::L]->send_torque(t);
+                 owner->_ctx.motor.wheel[wl_chassis_t::L]->get_current_rotate());
+    owner->_ctx.motor.wheel[wl_chassis_t::L]->send_torque(t);
 
     /* Generate planned trajectory coordinates / 轨迹规划插值 */
     calc_target_value(owner);
 
     /* Calculate expansion force F_leg (F[0]) using nested PID / 伸缩力 F[0] */
     /* Right leg / 右腿 */
-    owner->_leg_data[wl_chassis_t::R].ref_d_l =
-        owner->_F_pid[wl_chassis_t::R]->calculate(target_length[wl_chassis_t::R], owner->_leg_data[wl_chassis_t::R].l);
-    owner->_leg_data[wl_chassis_t::R].F[0] =
-        owner->_d_F_pid[wl_chassis_t::R]->calculate(owner->_leg_data[wl_chassis_t::R].ref_d_l, owner->_leg_data[wl_chassis_t::R].d_l);
+    owner->_ctx.data.leg[wl_chassis_t::R].ref_d_l =
+        owner->_ctx.pid.F[wl_chassis_t::R]->calculate(target_length[wl_chassis_t::R], owner->_ctx.data.leg[wl_chassis_t::R].l);
+    owner->_ctx.data.leg[wl_chassis_t::R].F[0] =
+        owner->_ctx.pid.d_F[wl_chassis_t::R]->calculate(owner->_ctx.data.leg[wl_chassis_t::R].ref_d_l, owner->_ctx.data.leg[wl_chassis_t::R].d_l);
     /* Left leg / 左腿 */
-    owner->_leg_data[wl_chassis_t::L].ref_d_l =
-        owner->_F_pid[wl_chassis_t::L]->calculate(target_length[wl_chassis_t::L], owner->_leg_data[wl_chassis_t::L].l);
-    owner->_leg_data[wl_chassis_t::L].F[0] =
-        owner->_d_F_pid[wl_chassis_t::L]->calculate(owner->_leg_data[wl_chassis_t::L].ref_d_l, owner->_leg_data[wl_chassis_t::L].d_l);
+    owner->_ctx.data.leg[wl_chassis_t::L].ref_d_l =
+        owner->_ctx.pid.F[wl_chassis_t::L]->calculate(target_length[wl_chassis_t::L], owner->_ctx.data.leg[wl_chassis_t::L].l);
+    owner->_ctx.data.leg[wl_chassis_t::L].F[0] =
+        owner->_ctx.pid.d_F[wl_chassis_t::L]->calculate(owner->_ctx.data.leg[wl_chassis_t::L].ref_d_l, owner->_ctx.data.leg[wl_chassis_t::L].d_l);
 
     /* Calculate hip virtual torque T_hip (F[1]) using nested PID / 扫摆关节扭矩 F[1] */
     /* Right leg / 右腿 */
     float diff;
-    if(target_angle[wl_chassis_t::R] - owner->_leg_data[wl_chassis_t::R].alpha > PI)
+    if(target_angle[wl_chassis_t::R] - owner->_ctx.data.leg[wl_chassis_t::R].alpha > PI)
     {
-        diff = -2 * PI + (target_angle[wl_chassis_t::R] - owner->_leg_data[wl_chassis_t::R].alpha);
+        diff = -2 * PI + (target_angle[wl_chassis_t::R] - owner->_ctx.data.leg[wl_chassis_t::R].alpha);
     }
-    else if(target_angle[wl_chassis_t::R] - owner->_leg_data[wl_chassis_t::R].alpha < -PI)
+    else if(target_angle[wl_chassis_t::R] - owner->_ctx.data.leg[wl_chassis_t::R].alpha < -PI)
     {
-        diff = 2 * PI + (target_angle[wl_chassis_t::R] - owner->_leg_data[wl_chassis_t::R].alpha);
+        diff = 2 * PI + (target_angle[wl_chassis_t::R] - owner->_ctx.data.leg[wl_chassis_t::R].alpha);
     }
     else
     {
-        diff = target_angle[wl_chassis_t::R] - owner->_leg_data[wl_chassis_t::R].alpha;
+        diff = target_angle[wl_chassis_t::R] - owner->_ctx.data.leg[wl_chassis_t::R].alpha;
     }
-    owner->_leg_data[wl_chassis_t::R].ref_d_alpha =
-        owner->_T_pid[wl_chassis_t::R]->calculate(owner->_leg_data[wl_chassis_t::R].alpha + diff, owner->_leg_data[wl_chassis_t::R].alpha);
-    owner->_leg_data[wl_chassis_t::R].F[1] =
-        owner->_d_T_pid[wl_chassis_t::R]->calculate(owner->_leg_data[wl_chassis_t::R].ref_d_alpha, owner->_leg_data[wl_chassis_t::R].d_alpha);
-        
+    owner->_ctx.data.leg[wl_chassis_t::R].ref_d_alpha =
+        owner->_ctx.pid.T[wl_chassis_t::R]->calculate(owner->_ctx.data.leg[wl_chassis_t::R].alpha + diff, owner->_ctx.data.leg[wl_chassis_t::R].alpha);
+    owner->_ctx.data.leg[wl_chassis_t::R].F[1] =
+        owner->_ctx.pid.d_T[wl_chassis_t::R]->calculate(owner->_ctx.data.leg[wl_chassis_t::R].ref_d_alpha, owner->_ctx.data.leg[wl_chassis_t::R].d_alpha);
+
     /* Left leg / 左腿 */
-    if(target_angle[wl_chassis_t::L] - owner->_leg_data[wl_chassis_t::L].alpha > PI)
+    if(target_angle[wl_chassis_t::L] - owner->_ctx.data.leg[wl_chassis_t::L].alpha > PI)
     {
-        diff = -2 * PI + (target_angle[wl_chassis_t::L] - owner->_leg_data[wl_chassis_t::L].alpha);
+        diff = -2 * PI + (target_angle[wl_chassis_t::L] - owner->_ctx.data.leg[wl_chassis_t::L].alpha);
     }
-    else if(target_angle[wl_chassis_t::L] - owner->_leg_data[wl_chassis_t::L].alpha < -PI)
+    else if(target_angle[wl_chassis_t::L] - owner->_ctx.data.leg[wl_chassis_t::L].alpha < -PI)
     {
-        diff = 2 * PI + (target_angle[wl_chassis_t::L] - owner->_leg_data[wl_chassis_t::L].alpha);
+        diff = 2 * PI + (target_angle[wl_chassis_t::L] - owner->_ctx.data.leg[wl_chassis_t::L].alpha);
     }
     else
     {
-        diff = target_angle[wl_chassis_t::L] - owner->_leg_data[wl_chassis_t::L].alpha;
+        diff = target_angle[wl_chassis_t::L] - owner->_ctx.data.leg[wl_chassis_t::L].alpha;
     }
-    owner->_leg_data[wl_chassis_t::L].ref_d_alpha =
-        owner->_T_pid[wl_chassis_t::L]->calculate(owner->_leg_data[wl_chassis_t::L].alpha + diff, owner->_leg_data[wl_chassis_t::L].alpha);
-    owner->_leg_data[wl_chassis_t::L].F[1] =
-        owner->_d_T_pid[wl_chassis_t::L]->calculate(owner->_leg_data[wl_chassis_t::L].ref_d_alpha, owner->_leg_data[wl_chassis_t::L].d_alpha);
-    
+    owner->_ctx.data.leg[wl_chassis_t::L].ref_d_alpha =
+        owner->_ctx.pid.T[wl_chassis_t::L]->calculate(owner->_ctx.data.leg[wl_chassis_t::L].alpha + diff, owner->_ctx.data.leg[wl_chassis_t::L].alpha);
+    owner->_ctx.data.leg[wl_chassis_t::L].F[1] =
+        owner->_ctx.pid.d_T[wl_chassis_t::L]->calculate(owner->_ctx.data.leg[wl_chassis_t::L].ref_d_alpha, owner->_ctx.data.leg[wl_chassis_t::L].d_alpha);
+
     /* VMC Jacobian transpose mapping to convert forces / VMC 转换映射 */
     for(uint8_t i = 0; i < 2; i++)
     {
-        arm_mat_vec_mult_f32(&owner->_leg_data[i].T_mat, 
-                            owner->_leg_data[i].F, 
-                            owner->_leg_data[i].T);
+        arm_mat_vec_mult_f32(&owner->_ctx.data.leg[i].T_mat,
+                            owner->_ctx.data.leg[i].F,
+                            owner->_ctx.data.leg[i].T);
     }
 
     /* Send commands to joint motors / 下发关节驱动扭矩，右侧取反 */
-    owner->_motor_drv[wl_chassis_t::RF]->send_torque(
-                        -owner->_leg_data[wl_chassis_t::R].T[0]);
-    owner->_motor_drv[wl_chassis_t::RB]->send_torque(
-                        -owner->_leg_data[wl_chassis_t::R].T[1]);
-    owner->_motor_drv[wl_chassis_t::LF]->send_torque(
-                        owner->_leg_data[wl_chassis_t::L].T[0]);
-    owner->_motor_drv[wl_chassis_t::LB]->send_torque(
-                        owner->_leg_data[wl_chassis_t::L].T[1]);
-                        
+    owner->_ctx.motor.joint[wl_chassis_t::RF]->send_torque(
+                        -owner->_ctx.data.leg[wl_chassis_t::R].T[0]);
+    owner->_ctx.motor.joint[wl_chassis_t::RB]->send_torque(
+                        -owner->_ctx.data.leg[wl_chassis_t::R].T[1]);
+    owner->_ctx.motor.joint[wl_chassis_t::LF]->send_torque(
+                        owner->_ctx.data.leg[wl_chassis_t::L].T[0]);
+    owner->_ctx.motor.joint[wl_chassis_t::LB]->send_torque(
+                        owner->_ctx.data.leg[wl_chassis_t::L].T[1]);
+
     /* Verify geometric target stance achieved / 检测越障目标几何高度和偏摆角度是否到位 */
     if(
-       (0.05f > abs(owner->_leg_data[wl_chassis_t::R].alpha - TARGET_ANGLE)) &&
-       (0.05f > abs(owner->_leg_data[wl_chassis_t::L].alpha - TARGET_ANGLE)) &&
-       (0.01f > abs(owner->_leg_data[wl_chassis_t::R].l - TARGET_LENGTH)) &&
-       (0.01f > abs(owner->_leg_data[wl_chassis_t::L].l - TARGET_LENGTH)))
+       (0.05f > abs(owner->_ctx.data.leg[wl_chassis_t::R].alpha - TARGET_ANGLE)) &&
+       (0.05f > abs(owner->_ctx.data.leg[wl_chassis_t::L].alpha - TARGET_ANGLE)) &&
+       (0.01f > abs(owner->_ctx.data.leg[wl_chassis_t::R].l - TARGET_LENGTH)) &&
+       (0.01f > abs(owner->_ctx.data.leg[wl_chassis_t::L].l - TARGET_LENGTH)))
     {
         static uint32_t cnt = 0;
         cnt++;
         if(cnt > 100)
         {
             cnt = 0;
-            owner->_active_mode_flag.over_step = 1; /* Mark action complete / 标记跃障扫摆完成，通知底盘主控 */
+            owner->_ctx.data.active_mode_flag.over_step = 1; /* Mark action complete / 标记跃障扫摆完成，通知底盘主控 */
         }
     }
 }
@@ -187,17 +187,17 @@ void wl_chassis_t::fsm_active_t::state_over_step_t::calc_target_value(wl_chassis
             {
                 target_angle[i] = TEMP_ANGLE;
             }
-            else 
+            else
             {
                 target_angle[i] += ANGLE_SPEED;
                 target_angle[i] = wrap2pi_f32(target_angle[i]);
             }
-            if(0.05f > abs(owner->_leg_data[i].alpha - TEMP_ANGLE))
+            if(0.05f > abs(owner->_ctx.data.leg[i].alpha - TEMP_ANGLE))
             {
                 state_flag[i] = 1;
             }
         }
-        
+
         /* Phase 1: Adjust sweep target length / 第1阶段：调节高度摆长 */
         if(1 == state_flag[i])
         {
@@ -214,12 +214,12 @@ void wl_chassis_t::fsm_active_t::state_over_step_t::calc_target_value(wl_chassis
                 target_length[i] -= LENGTH_SPEED;
             }
 
-            if(0.01f > abs(owner->_leg_data[i].l - TARGET_LENGTH))
+            if(0.01f > abs(owner->_ctx.data.leg[i].l - TARGET_LENGTH))
             {
                 state_flag[i] = 2;
             }
         }
-        
+
         /* Phase 2: Target sweep final angle / 第2阶段：顺向大扫角偏转，获得向上动力 */
         if(2 == state_flag[i])
         {
@@ -227,12 +227,12 @@ void wl_chassis_t::fsm_active_t::state_over_step_t::calc_target_value(wl_chassis
             {
                 target_angle[i] = TARGET_ANGLE;
             }
-            else 
+            else
             {
                 target_angle[i] -= ANGLE_SPEED;
                 target_angle[i] = wrap2pi_f32(target_angle[i]);
             }
-            if(0.05f > abs(owner->_leg_data[i].alpha - TARGET_ANGLE))
+            if(0.05f > abs(owner->_ctx.data.leg[i].alpha - TARGET_ANGLE))
             {
                 state_flag[i] = 3;
             }

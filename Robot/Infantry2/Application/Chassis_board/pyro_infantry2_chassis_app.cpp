@@ -13,7 +13,6 @@
 #include "pyro_com_canrx.h"
 #include "pyro_com_cantx.h"
 #include "pyro_referee.h"
-#include "pyro_referee.h"
 #include "pyro_infantry2_chassis_intf.h"
 namespace pyro
 {

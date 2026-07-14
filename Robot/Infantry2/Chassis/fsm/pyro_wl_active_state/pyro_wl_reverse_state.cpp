@@ -4,8 +4,8 @@
  * @LastEditors: vod-x vod_x@outlook.com
  * @LastEditTime: 2026-05-29 06:24:46
  * @Description: Reverse sweep state implementation / 倒地/关节反摆复原状态实现
- * 
- * Copyright (c) 2026 by PeiYangRobot, All Rights Reserved. 
+ *
+ * Copyright (c) 2026 by PeiYangRobot, All Rights Reserved.
  */
 #include "pyro_wl_chassis.h"
 
@@ -38,63 +38,63 @@ void wl_chassis_t::fsm_active_t::state_reverse_t::execute(wl_chassis_t *owner)
     for(uint8_t i = 0; i < 2; i++)
     {
         float t = wheel_disable_pid[i].calculate(0.0f,
-             owner->_wheel_drv[i]->get_current_rotate());
-        owner->_wheel_drv[i]->send_torque(t);
+             owner->_ctx.motor.wheel[i]->get_current_rotate());
+        owner->_ctx.motor.wheel[i]->send_torque(t);
     }
 
     /* Keep leg expansion force F_leg (F[0]) closed-loop servo tracking the reference target length
        双腿极向伸长高度闭环控制跟踪参考指令 */
     /* Right leg / 右腿 */
-    owner->_leg_data[wl_chassis_t::R].ref_d_l=
-            owner->_F_pid[wl_chassis_t::R]->
-        calculate(owner->_cmd->r_leg, 
-        owner->_leg_data[wl_chassis_t::R].l);
-    owner->_leg_data[wl_chassis_t::R].F[0]=
-            owner->_F_pid[wl_chassis_t::R]->
-              calculate(owner->_leg_data[wl_chassis_t::R].ref_d_l, 
-        owner->_leg_data[wl_chassis_t::R].d_l);
+    owner->_ctx.data.leg[wl_chassis_t::R].ref_d_l=
+            owner->_ctx.pid.F[wl_chassis_t::R]->
+        calculate(owner->_ctx.cmd->r_leg,
+        owner->_ctx.data.leg[wl_chassis_t::R].l);
+    owner->_ctx.data.leg[wl_chassis_t::R].F[0]=
+            owner->_ctx.pid.F[wl_chassis_t::R]->
+              calculate(owner->_ctx.data.leg[wl_chassis_t::R].ref_d_l,
+        owner->_ctx.data.leg[wl_chassis_t::R].d_l);
     /* Left leg / 左腿 */
-    owner->_leg_data[wl_chassis_t::L].ref_d_l=
-        owner->_F_pid[wl_chassis_t::L]->
-        calculate(owner->_cmd->l_leg,
-        owner->_leg_data[wl_chassis_t::L].l);
-    owner->_leg_data[wl_chassis_t::L].F[0]=
-        owner->_F_pid[wl_chassis_t::L]->
-        calculate(owner->_leg_data[wl_chassis_t::L].ref_d_l,
-        owner->_leg_data[wl_chassis_t::L].d_l);
+    owner->_ctx.data.leg[wl_chassis_t::L].ref_d_l=
+        owner->_ctx.pid.F[wl_chassis_t::L]->
+        calculate(owner->_ctx.cmd->l_leg,
+        owner->_ctx.data.leg[wl_chassis_t::L].l);
+    owner->_ctx.data.leg[wl_chassis_t::L].F[0]=
+        owner->_ctx.pid.F[wl_chassis_t::L]->
+        calculate(owner->_ctx.data.leg[wl_chassis_t::L].ref_d_l,
+        owner->_ctx.data.leg[wl_chassis_t::L].d_l);
 
     /* Set target polar angular velocity to ANGLE_SPEED (-PI/3)
        关节摆轴转矩计算：设定目标摆角速度为 ANGLE_SPEED (-PI/3 rad/s) 闭环跟踪 */
     /* Right leg / 右腿 */
-    owner->_leg_data[wl_chassis_t::R].ref_d_alpha = ANGLE_SPEED;
-    owner->_leg_data[wl_chassis_t::R].F[1]=
-        owner->_d_T_pid[wl_chassis_t::R]->
-        calculate(owner->_leg_data[wl_chassis_t::R].ref_d_alpha,
-        owner->_leg_data[wl_chassis_t::R].d_alpha);
+    owner->_ctx.data.leg[wl_chassis_t::R].ref_d_alpha = ANGLE_SPEED;
+    owner->_ctx.data.leg[wl_chassis_t::R].F[1]=
+        owner->_ctx.pid.d_T[wl_chassis_t::R]->
+        calculate(owner->_ctx.data.leg[wl_chassis_t::R].ref_d_alpha,
+        owner->_ctx.data.leg[wl_chassis_t::R].d_alpha);
     /* Left leg / 左腿 */
-    owner->_leg_data[wl_chassis_t::L].ref_d_alpha = ANGLE_SPEED;
-    owner->_leg_data[wl_chassis_t::L].F[1]=
-        owner->_d_T_pid[wl_chassis_t::L]->
-        calculate(owner->_leg_data[wl_chassis_t::L].ref_d_alpha,
-        owner->_leg_data[wl_chassis_t::L].d_alpha);
-    
+    owner->_ctx.data.leg[wl_chassis_t::L].ref_d_alpha = ANGLE_SPEED;
+    owner->_ctx.data.leg[wl_chassis_t::L].F[1]=
+        owner->_ctx.pid.d_T[wl_chassis_t::L]->
+        calculate(owner->_ctx.data.leg[wl_chassis_t::L].ref_d_alpha,
+        owner->_ctx.data.leg[wl_chassis_t::L].d_alpha);
+
     /* VMC Jacobian transpose mapping / 运动学极坐标虚拟力转换映射 */
     for(uint8_t i = 0; i < 2; i++)
     {
-        arm_mat_vec_mult_f32(&owner->_leg_data[i].T_mat, 
-                            owner->_leg_data[i].F, 
-                            owner->_leg_data[i].T);
+        arm_mat_vec_mult_f32(&owner->_ctx.data.leg[i].T_mat,
+                            owner->_ctx.data.leg[i].F,
+                            owner->_ctx.data.leg[i].T);
     }
 
     /* Send commands to joint motors / 下发关节电机力矩，右侧取反 */
-    owner->_motor_drv[wl_chassis_t::RF]->send_torque(
-                        -owner->_leg_data[wl_chassis_t::R].T[0]);
-    owner->_motor_drv[wl_chassis_t::RB]->send_torque(
-                        -owner->_leg_data[wl_chassis_t::R].T[1]);
-    owner->_motor_drv[wl_chassis_t::LF]->send_torque(
-                        owner->_leg_data[wl_chassis_t::L].T[0]);
-    owner->_motor_drv[wl_chassis_t::LB]->send_torque(
-                        owner->_leg_data[wl_chassis_t::L].T[1]);
+    owner->_ctx.motor.joint[wl_chassis_t::RF]->send_torque(
+                        -owner->_ctx.data.leg[wl_chassis_t::R].T[0]);
+    owner->_ctx.motor.joint[wl_chassis_t::RB]->send_torque(
+                        -owner->_ctx.data.leg[wl_chassis_t::R].T[1]);
+    owner->_ctx.motor.joint[wl_chassis_t::LF]->send_torque(
+                        owner->_ctx.data.leg[wl_chassis_t::L].T[0]);
+    owner->_ctx.motor.joint[wl_chassis_t::LB]->send_torque(
+                        owner->_ctx.data.leg[wl_chassis_t::L].T[1]);
 }
 
 void wl_chassis_t::fsm_active_t::state_reverse_t::exit(wl_chassis_t *owner)
