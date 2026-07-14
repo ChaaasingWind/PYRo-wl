@@ -1,0 +1,12 @@
+{
+	"InstallScripts" : 
+	[
+		"E:/Develop/a_PYRo/PYRo-wl/PYRo-wl_2027/PYRo-wl_2027/cmake-build-infantry2/cmake_install.cmake",
+		"E:/Develop/a_PYRo/PYRo-wl/PYRo-wl_2027/PYRo-wl_2027/cmake-build-infantry2/build_cmsis_dsp/cmake_install.cmake",
+		"E:/Develop/a_PYRo/PYRo-wl/PYRo-wl_2027/PYRo-wl_2027/cmake-build-infantry2/build_cmsis_dsp/Source/cmake_install.cmake",
+		"E:/Develop/a_PYRo/PYRo-wl/PYRo-wl_2027/PYRo-wl_2027/cmake-build-infantry2/CubeMX/cmake/stm32cubemx/cmake_install.cmake",
+		"E:/Develop/a_PYRo/PYRo-wl/PYRo-wl_2027/PYRo-wl_2027/cmake-build-infantry2/PYRo/cmake_install.cmake",
+		"E:/Develop/a_PYRo/PYRo-wl/PYRo-wl_2027/PYRo-wl_2027/cmake-build-infantry2/Robot/Infantry2/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
