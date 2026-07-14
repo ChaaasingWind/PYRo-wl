@@ -21,6 +21,8 @@ target_sources(Infantry2
         Application/Chassis_board/pyro_infantry2_chassis_cfg.cpp
         Application/Chassis_board/pyro_infantry2_ui_app.cpp
 
+        ${CMAKE_SOURCE_DIR}/PYRo/Algorithm/KF/kf.cpp
+
         Chassis/pyro_wl_chassis.cpp
         Chassis/fsm/pyro_wl_passive_state.cpp
         Chassis/fsm/pyro_wl_active_state/pyro_wl_active_state.cpp

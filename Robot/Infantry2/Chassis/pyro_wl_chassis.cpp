@@ -13,6 +13,7 @@
 #include "pyro_algo_common.h"
 #include "pyro_vofa.h"
 #include "pyro_referee.h"
+#include <cmath>
 
 #define WHEEL_DISTANCE 0.424f             /* Distance between left and right wheels (m) / 左右轮距 (m) */
 #define SUPPORT_FORCE_ACC_LPF_RC 0.01f   /* LPF time constant for vertical acceleration / 垂直加速度低通滤波时间常数 */
@@ -31,8 +32,34 @@ float test_wl_cap_power_cap{};
 float test_wl_cap_vot{};
 supercap_drv_t::cap_feedback_t test_wl_cap_feedback{};
 
+static float wl_power_predict(const power_fit_params_t &params,
+                              const float target_cmd,
+                              const float uncontrolled_cmd,
+                              const float rpm,
+                              const float temp)
+{
+    float temp_factor = 1.0f + params.alpha * (temp - 20.0f);
+    if (temp_factor < 1.0f)
+    {
+        temp_factor = 1.0f;
+    }
+
+    const float total_cmd = target_cmd + uncontrolled_cmd;
+    const float copper = params.k2 * temp_factor * total_cmd * total_cmd;
+    const float controlled_mechanical = params.k1 * rpm * target_cmd;
+    const float uncontrolled_mechanical = params.k1 * rpm * uncontrolled_cmd;
+    const float static_loss = params.k3 * rpm * rpm +
+                              params.k4 * fabsf(rpm) +
+                              params.k5;
+
+    return copper +
+           ((controlled_mechanical > 0.0f) ? controlled_mechanical : 0.0f) +
+           ((uncontrolled_mechanical > 0.0f) ? uncontrolled_mechanical : 0.0f) +
+           static_loss;
+}
+
 /* Constructor / 构造函数，设定任务名称及堆栈大小，初始化 2 组轮速卡尔曼滤波器 */
-wl_chassis_t::wl_chassis_t() : module_base_t("wl_chassis", 512, 2048),
+wl_chassis_t::wl_chassis_t() : module_base_t("wl_chassis", 0, 2048),
     _wheel_power_node{nullptr, nullptr},
     _wheel_kf{kf_t(3, 1, 3, 2), kf_t(3, 1, 3, 2)}
 {
@@ -614,12 +641,11 @@ void wl_chassis_t::_solve_wheel_power_limit(const float tau_motion[2],
 
         tau_out[i] = node->safe_cmd;
         _leg_data[i].predict_power =
-            power_controller_t::predict_power(node->params,
-                                              node->safe_cmd -
-                                                  node->uncontrolled_cmd,
-                                              node->uncontrolled_cmd,
-                                              node->rpm,
-                                              node->temp);
+            wl_power_predict(node->params,
+                             node->safe_cmd - node->uncontrolled_cmd,
+                             node->uncontrolled_cmd,
+                             node->rpm,
+                             node->temp);
     }
 }
 
