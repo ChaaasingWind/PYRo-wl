@@ -449,8 +449,9 @@ void wl_chassis_t::_update_feedback()
         _ctx.ins->get_rads_b(&_ctx.data.yaw, &_ctx.data.pitch, &_ctx.data.roll);
         _ctx.ins->get_gyro_b(&_ctx.data.g_yaw, &_ctx.data.g_pitch,
                              &_ctx.data.g_roll);
-        _ctx.ins->get_accel_b(&_ctx.data.accel_x, &_ctx.data.accel_y,
-                              &_ctx.data.accel_z);
+        _ctx.ins->get_accel_without_g_b(&_ctx.data.accel_x,
+                                         &_ctx.data.accel_y,
+                                         &_ctx.data.accel_z);
     }
 
     /* Update joint motor feedback
@@ -496,7 +497,7 @@ void wl_chassis_t::_update_feedback()
     /* Update Gimbal Yaw tracking / 鍒锋柊搴曠洏瀵归綈浜戝彴鍋忚埅瑙掔數鏈虹殑瑙掑害鍜岃閫熷害 */
     _ctx.motor.yaw->update_feedback();
     _ctx.data.gimbal_yaw =
-        wrap2pi_f32(_ctx.motor.yaw->get_current_position() + _yaw_offset);
+        wrap2pi_f32_normalized(_ctx.motor.yaw->get_current_position() + _yaw_offset);
     _ctx.data.gimbal_g_yaw = _ctx.motor.yaw->get_current_rotate();
 
     time = dwt_drv_t::get_delta_t(&dwt_cnt);

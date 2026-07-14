@@ -7,6 +7,7 @@ namespace pyro
 {
 
 float wrap2pi_f32(float input);
+float wrap2pi_f32_normalized(float input);
 float radps_to_rpm(float radps);
 float calculate_angle_diff(float current, float target);
 float evaluate_polynomial(float x, const float *coeffs, uint32_t degree);

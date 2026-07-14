@@ -307,10 +307,10 @@ void wl_chassis_t::fsm_active_t::state_ready_t::calc_target_value(wl_chassis_t *
                 if(((0.0f < cur_angle[i]) && (cur_angle[i] < PI/2.0f)) ||
                    ((-PI/2.0f < cur_angle[i]) && (cur_angle[i] < 0.0f)))
                 {
-                    float next_angle = wrap2pi_f32(target_angle[i] - ANGLE_SPEED);
+                    float next_angle = wrap2pi_f32_normalized(target_angle[i] - ANGLE_SPEED);
                     float other_angle = target_angle[1 - i];
-                    diff = wrap2pi_f32(next_angle - other_angle);
-                    float current_diff = wrap2pi_f32(target_angle[i] - other_angle);
+                    diff = wrap2pi_f32_normalized(next_angle - other_angle);
+                    float current_diff = wrap2pi_f32_normalized(target_angle[i] - other_angle);
 
                     /* A move is permitted only if moving this step will not result in a collision gap > 1.5 rad
                        防劈叉限制：限制单步角位移，防止左右摆角差异过大（> 1.5 rad）造成连杆机械撞击 */
@@ -319,7 +319,7 @@ void wl_chassis_t::fsm_active_t::state_ready_t::calc_target_value(wl_chassis_t *
                         if(0.05f < fabsf(target_angle[i] - (-PI/2.0f)))
                         {
                             target_angle[i] -= ANGLE_SPEED;
-                            target_angle[i] = wrap2pi_f32(target_angle[i]);
+                            target_angle[i] = wrap2pi_f32_normalized(target_angle[i]);
                         }
                         else
                         {
@@ -343,7 +343,7 @@ void wl_chassis_t::fsm_active_t::state_ready_t::calc_target_value(wl_chassis_t *
     {
         if (state_flag[wl_chassis_t::R] != 3 || state_flag[wl_chassis_t::L] != 3)
         {
-            diff = wrap2pi_f32(target_angle[wl_chassis_t::L] - target_angle[wl_chassis_t::R]);
+            diff = wrap2pi_f32_normalized(target_angle[wl_chassis_t::L] - target_angle[wl_chassis_t::R]);
 
             if (fabsf(diff) > 0.05f)
             {
@@ -351,12 +351,12 @@ void wl_chassis_t::fsm_active_t::state_ready_t::calc_target_value(wl_chassis_t *
                 if (diff > 0.0f)
                 {
                     target_angle[wl_chassis_t::L] -= ANGLE_SPEED;
-                    target_angle[wl_chassis_t::L] = wrap2pi_f32(target_angle[wl_chassis_t::L]);
+                    target_angle[wl_chassis_t::L] = wrap2pi_f32_normalized(target_angle[wl_chassis_t::L]);
                 }
                 else
                 {
                     target_angle[wl_chassis_t::R] -= ANGLE_SPEED;
-                    target_angle[wl_chassis_t::R] = wrap2pi_f32(target_angle[wl_chassis_t::R]);
+                    target_angle[wl_chassis_t::R] = wrap2pi_f32_normalized(target_angle[wl_chassis_t::R]);
                 }
             }
             else
@@ -378,7 +378,7 @@ void wl_chassis_t::fsm_active_t::state_ready_t::calc_target_value(wl_chassis_t *
             if(0.05f < fabsf(target_angle[i] - TARGET_ANGLE))
             {
                 target_angle[i] -= ANGLE_SPEED;
-                target_angle[i] = wrap2pi_f32(target_angle[i]);
+                target_angle[i] = wrap2pi_f32_normalized(target_angle[i]);
             }
             else
             {

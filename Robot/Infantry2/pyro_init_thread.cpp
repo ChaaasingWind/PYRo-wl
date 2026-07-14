@@ -28,11 +28,11 @@ void pyro_init_thread(void *argument)
     ins_drv = ins_drv_t::get_instance();
     ins_config_t ins_cfg;
     ins_cfg.calibrate = IMU_CALIBRATION_EN;
-    ins_cfg.direct = ins_config_t::imu_direct_t::DIRECT_4;
-    ins_cfg.gx_offset = 0.00315992557f;
-    ins_cfg.gy_offset = -0.00562873948f;
-    ins_cfg.gz_offset = 0.000649456517f;
-    ins_cfg.g_norm = 9.96699905f;
+    ins_cfg.direct = ins_config_t::imu_direct_t::DIRECT_3;
+    ins_cfg.gx_offset = 0.00275493739f;
+    ins_cfg.gy_offset = 0.000510261336f;
+    ins_cfg.gz_offset = 0.00282844482f;
+    ins_cfg.g_norm = 9.83213902f;
     ins_drv->init(ins_cfg);
 
 #ifdef REFEREE_UART

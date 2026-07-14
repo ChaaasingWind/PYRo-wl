@@ -190,7 +190,7 @@ void wl_chassis_t::fsm_active_t::state_over_step_t::calc_target_value(wl_chassis
             else
             {
                 target_angle[i] += ANGLE_SPEED;
-                target_angle[i] = wrap2pi_f32(target_angle[i]);
+                target_angle[i] = wrap2pi_f32_normalized(target_angle[i]);
             }
             if(0.05f > abs(owner->_ctx.data.leg[i].alpha - TEMP_ANGLE))
             {
@@ -230,7 +230,7 @@ void wl_chassis_t::fsm_active_t::state_over_step_t::calc_target_value(wl_chassis
             else
             {
                 target_angle[i] -= ANGLE_SPEED;
-                target_angle[i] = wrap2pi_f32(target_angle[i]);
+                target_angle[i] = wrap2pi_f32_normalized(target_angle[i]);
             }
             if(0.05f > abs(owner->_ctx.data.leg[i].alpha - TARGET_ANGLE))
             {

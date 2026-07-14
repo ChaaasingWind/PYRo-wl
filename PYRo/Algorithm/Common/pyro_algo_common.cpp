@@ -11,6 +11,22 @@ float wrap2pi_f32(const float input)
     return std::fmod(input, 2.0f * PI);
 }
 
+// Legacy-compatible angle normalization used by the wheel-legged control path.
+// Keep wrap2pi_f32() unchanged for existing users of the migrated common layer.
+float wrap2pi_f32_normalized(const float input)
+{
+    float ret = std::fmod(input, 2.0f * PI);
+    if (ret >= PI)
+    {
+        ret -= 2.0f * PI;
+    }
+    else if (ret < -PI)
+    {
+        ret += 2.0f * PI;
+    }
+    return ret;
+}
+
 float radps_to_rpm(const float radps)
 {
     return radps * 9.5492966f;
