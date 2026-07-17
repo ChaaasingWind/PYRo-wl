@@ -77,6 +77,10 @@ elseif (ROBOT_ID EQUAL INFANTRY2_ID)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Robot/Infantry2)
     target_link_libraries(${CMAKE_PROJECT_NAME}
             Infantry2)
+elseif (ROBOT_ID EQUAL INFANTRY1_ID)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/robot/infantry1)
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+            Infantry1)
 elseif (ROBOT_ID EQUAL SENTRY_ID)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/robot/sentry)
 endif ()

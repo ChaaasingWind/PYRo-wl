@@ -280,4 +280,3 @@ status_t wheel_legged_kin_t::get_VMC_value(float theta1, float theta2,
     
     return PYRO_OK;
 }
-}
