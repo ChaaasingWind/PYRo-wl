@@ -11,8 +11,6 @@ extern pyro::status_t infantry2_chassis_init(void *argument);
 
 void start_mission_planer_task(void const *argument)
 {
-    (void)argument;
-
     xTaskCreate(pyro_init_thread, "pyro_init_thread", 512, nullptr,
                 configMAX_PRIORITIES - 1, nullptr);
     vTaskDelay(pdMS_TO_TICKS(20));

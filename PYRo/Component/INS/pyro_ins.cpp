@@ -84,7 +84,7 @@ status_t ins_drv_t::init(const ins_config_t &config)
 
     if (_ins_task_handle == nullptr)
     {
-        xTaskCreate(__static_ins_task, "ins_task", 512, this, 2,
+        xTaskCreate(_static_ins_task, "ins_task", 512, this, 2,
                     &_ins_task_handle);
     }
     else
@@ -98,12 +98,13 @@ status_t ins_drv_t::init(const ins_config_t &config)
     return PYRO_OK;
 }
 
-void ins_drv_t::__static_ins_task(void *argument)
+void ins_drv_t::_static_ins_task(void *argument)
 {
-    ((ins_drv_t *)argument)->__ins_task();
+    ((ins_drv_t *)argument)->_ins_task();
 }
 
-void ins_drv_t::__ins_task()
+
+void ins_drv_t::_ins_task()
 {
     _dwt_cnt = 0;
     IMU_QuaternionEKF_Init(10, 0.001, 10000000, 0.9996, 0.01f);
@@ -159,19 +160,19 @@ void ins_drv_t::__ins_task()
         _angle_n[Z] = QEKF_INS.Yaw;
 
         // Restore the original gravity compensation and frame transforms.
-        __transform_n2b(_gravity_n, _gravity_b, _q);
+        _transform_n2b(_gravity_n, _gravity_b, _q);
         _acc_without_g_b[X] = _acc_b[X] - _gravity_b[X];
         _acc_without_g_b[Y] = _acc_b[Y] - _gravity_b[Y];
         _acc_without_g_b[Z] = _acc_b[Z] - _gravity_b[Z];
 
-        __transform_b2n(_acc_b, _acc_n, _q);
-        __transform_b2n(_acc_without_g_b, _acc_without_g_n, _q);
+        _transform_b2n(_acc_b, _acc_n, _q);
+        _transform_b2n(_acc_without_g_b, _acc_without_g_n, _q);
 
         vTaskDelay(1);
     }
 }
 
-status_t ins_drv_t::__transform_b2n(float *v_b, float *v_n, float *b2n_q)
+status_t ins_drv_t::_transform_b2n(float *v_b, float *v_n, float *b2n_q)
 {
     if (v_b == nullptr || v_n == nullptr || b2n_q == nullptr)
     {
@@ -195,7 +196,7 @@ status_t ins_drv_t::__transform_b2n(float *v_b, float *v_n, float *b2n_q)
     return PYRO_OK;
 }
 
-status_t ins_drv_t::__transform_n2b(float *v_n, float *v_b, float *b2n_q)
+status_t ins_drv_t::_transform_n2b(float *v_n, float *v_b, float *b2n_q)
 {
     if (v_n == nullptr || v_b == nullptr || b2n_q == nullptr)
     {
@@ -224,6 +225,8 @@ status_t ins_drv_t::__transform_n2b(float *v_n, float *v_b, float *b2n_q)
 
     return PYRO_OK;
 }
+
+
 
 status_t ins_drv_t::get_angles_b(float *yaw, float *pitch, float *roll)
 {
