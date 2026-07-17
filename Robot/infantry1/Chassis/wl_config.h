@@ -4,6 +4,7 @@
 constexpr float OJ5 = 0.0945f;
 constexpr float J4J5 = 0.1125f;
 constexpr float OJ8 = 0.2100f;
+constexpr float MIN_LEG_LENGTH = 0.18f;
 
 namespace leg_def
 {

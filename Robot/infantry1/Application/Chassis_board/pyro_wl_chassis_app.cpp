@@ -10,8 +10,6 @@
 
 using namespace pyro;
 
-// 定义任务通知的位掩码 (Event Bits)
-constexpr uint32_t EVENT_BIT_LEG_TOGGLE = (1 << 1);
 
 static TaskHandle_t chassis_task_handle                = nullptr;
 static pyro::wl_chassis_t *wl_chassis_ptr             = nullptr;
@@ -33,12 +31,6 @@ extern "C"
             // 接收任务通知事件（不阻塞等待，0 tick延时）
             xTaskNotifyWait(0x00, UINT32_MAX, &notify_val, 0);
 
-            // 检测事件并翻转翻转腿长状态
-            if (notify_val & EVENT_BIT_LEG_TOGGLE)
-            {
-                leg_toggle_state = !leg_toggle_state;
-            }
-
             // 当前没有板间通信，直接检测并使用遥控器控制
             if (dr16_drv_t::instance().check_online())
             {
@@ -47,21 +39,6 @@ extern "C"
             else
             {
                 wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::PASSIVE;
-            }
-
-            // 结合遥控器输入和LEG_TOGGLE状态控制腿长
-            if (wl_chassis_cmd_ptr->mode == pyro::cmd_base_t::mode_t::ACTIVE)
-            {
-                if (leg_toggle_state)
-                {
-                    wl_chassis_cmd_ptr->leg_length[0] = 0.28f;
-                    wl_chassis_cmd_ptr->leg_length[1] = 0.28f;
-                }
-                else
-                {
-                    wl_chassis_cmd_ptr->leg_length[0] = 0.22f;
-                    wl_chassis_cmd_ptr->leg_length[1] = 0.22f;
-                }
             }
 
             wl_chassis_ptr->set_command(*wl_chassis_cmd_ptr);
@@ -83,10 +60,6 @@ extern "C"
 
         auto &vrc = pyro::rc_drv_t::read();
 
-        // 绑定右拨轮fn_r到腿长切换事件
-        pyro::btn_broker::subscribe(&vrc.buttons.fn_r,
-                                    pyro::btn_event_t::PRESS_DOWN,
-                                    chassis_task_handle, EVENT_BIT_LEG_TOGGLE);
 
         vTaskDelete(nullptr);
     }
@@ -98,27 +71,25 @@ void chassis_dr162cmd()
     auto &vrc = pyro::rc_drv_t::read();
 
     // 右开关控制底盘使能模式：不处于MID或DOWN时，失能
-    if (pyro::sw_pos_t::MID != vrc.switches.right.current_pos &&
-        pyro::sw_pos_t::DOWN != vrc.switches.right.current_pos)
+    if (pyro::sw_pos_t::MID != vrc.switches.right.current_pos)
     {
         wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::PASSIVE;
-        wl_chassis_cmd_ptr->leg_length[0] = 0.22f;
-        wl_chassis_cmd_ptr->leg_length[1] = 0.22f;
-        wl_chassis_cmd_ptr->leg_rad[0] = 0.0f;
-        wl_chassis_cmd_ptr->leg_rad[1] = 0.0f;
+        wl_chassis_cmd_ptr->delta_leg_length[leg_def::LEFT]  = 0.0f;
+        wl_chassis_cmd_ptr->delta_leg_length[leg_def::RIGHT] = 0.0f;
+        wl_chassis_cmd_ptr->delta_leg_rad[leg_def::LEFT]     = 0.0f;
+        wl_chassis_cmd_ptr->delta_leg_rad[leg_def::RIGHT]    = 0.0f;
         return;
     }
 
     wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::ACTIVE;
 
     // 手动通道输入控制腿长和腿度（角度）的偏置量
-    float rc_len_offset = vrc.axes.ly * 0.1f; // 映射范围为 [-0.1f, 0.1f]
-    wl_chassis_cmd_ptr->leg_length[0] = 0.22f + rc_len_offset;
-    wl_chassis_cmd_ptr->leg_length[1] = 0.22f + rc_len_offset;
 
-    float rc_rad = vrc.axes.ry * 0.5f;        // 映射范围为 [-0.5f, 0.5f]
-    wl_chassis_cmd_ptr->leg_rad[0] = rc_rad;
-    wl_chassis_cmd_ptr->leg_rad[1] = rc_rad;
+    wl_chassis_cmd_ptr->delta_leg_length[leg_def::LEFT]  = vrc.axes.ly * 0.0001f;
+    wl_chassis_cmd_ptr->delta_leg_rad[leg_def::LEFT] = vrc.axes.lx * 0.00001f;
+
+    wl_chassis_cmd_ptr->delta_leg_length[leg_def::RIGHT]  = vrc.axes.ry * 0.0001f;
+    wl_chassis_cmd_ptr->delta_leg_rad[leg_def::RIGHT] = vrc.axes.rx * 0.00001f;
 }
 
 void deps_init()
@@ -126,17 +97,17 @@ void deps_init()
     wl_chassis_deps = new pyro::wl_chassis_deps_t();
 
     // 1. 初始化二维数组形式的 4 个关节达妙电机 (使用 CAN1)
-    wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::HIP] = new pyro::dm_motor_drv_t(0x11, 0x21, pyro::bsp_can::can1);
-    wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::KNEE] = new pyro::dm_motor_drv_t(0x12, 0x22, pyro::bsp_can::can1);
-    wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::HIP] = new pyro::dm_motor_drv_t(0x13, 0x23, pyro::bsp_can::can1);
-    wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::KNEE] = new pyro::dm_motor_drv_t(0x14, 0x24, pyro::bsp_can::can1);
+    wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::HIP] = new pyro::dm_motor_drv_t(0x04, 0x14, pyro::bsp_can::can2);
+    wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::KNEE] = new pyro::dm_motor_drv_t(0x03, 0x13, pyro::bsp_can::can2);
+    wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::HIP] = new pyro::dm_motor_drv_t(0x02, 0x12, pyro::bsp_can::can1);
+    wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::KNEE] = new pyro::dm_motor_drv_t(0x01, 0x11, pyro::bsp_can::can1);
 
     // 2. 初始化 PIDs
     // 腿长 PID
-    wl_chassis_deps->pid.leg_length[leg_def::LEFT] = new pyro::pid_t(10.0f, 0.0f, 0.1f, 1.0f, 50.0f);
-    wl_chassis_deps->pid.leg_length[leg_def::RIGHT] = new pyro::pid_t(10.0f, 0.0f, 0.1f, 1.0f, 50.0f);
+    wl_chassis_deps->pid.leg_length[leg_def::LEFT] = new pyro::pid_t(1.0f, 0.0f, 0.1f, 1.0f, 50.0f);
+    wl_chassis_deps->pid.leg_length[leg_def::RIGHT] = new pyro::pid_t(1.0f, 0.0f, 0.1f, 1.0f, 50.0f);
 
     // 腿角度 PID
-    wl_chassis_deps->pid.leg_rad[leg_def::LEFT] = new pyro::pid_t(5.0f, 0.1f, 0.0f, 2.0f, 100.0f);
-    wl_chassis_deps->pid.leg_rad[leg_def::RIGHT] = new pyro::pid_t(5.0f, 0.1f, 0.0f, 2.0f, 100.0f);
+    wl_chassis_deps->pid.leg_rad[leg_def::LEFT] = new pyro::pid_t(0.5f, 0.0f, 0.0f, 2.0f, 100.0f);
+    wl_chassis_deps->pid.leg_rad[leg_def::RIGHT] = new pyro::pid_t(0.5f, 0.0f, 0.0f, 2.0f, 100.0f);
 }

@@ -1,5 +1,6 @@
 #include "pyro_bsp_can.h"
 #include "pyro_bsp_uart.h"
+#include "pyro_dr16_rc_drv.h"
 #include "pyro_dwt_drv.h"
 #include "pyro_ins.h"
 #include "pyro_referee.h"
@@ -18,7 +19,6 @@ extern "C"
 void pyro_init_thread(void *argument)
 {
     dwt_drv_t::init(480);
-    bsp_uart::init_all();
     bsp_can::init_all();
 
     can1_drv = &bsp_can::get_can1();
@@ -34,6 +34,14 @@ void pyro_init_thread(void *argument)
     ins_cfg.gz_offset = 0.00282844482f;
     ins_cfg.g_norm = 9.83213902f;
     ins_drv->init(ins_cfg);
+
+#ifdef DR16_UART
+    dr16_drv_t::instance().start();
+    dr16_drv_t::instance().enable();
+    DR16_UART.reset(100000, UART_WORDLENGTH_9B, UART_STOPBITS_2,
+                    UART_PARITY_EVEN);
+    DR16_UART.enable_rx_dma();
+#endif
 
 #ifdef REFEREE_UART
     REFEREE_UART.reset(115200, UART_WORDLENGTH_8B, UART_STOPBITS_1,

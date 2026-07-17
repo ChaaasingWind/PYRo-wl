@@ -8,7 +8,7 @@ target_compile_definitions(Infantry1 PRIVATE
 )
 
 target_compile_definitions(PYRo PUBLIC
-    DR16_UART=PYRO_UART5
+    DR16_UART=PYRO_UART10
 )
 
 target_sources(Infantry1
@@ -17,7 +17,9 @@ target_sources(Infantry1
         pyro_mission_planer.cpp
 
         Chassis/pyro_wl_chassis.cpp
-
+        Chassis/fsm/pyro_wl_active_state.cpp
+        Chassis/fsm/pyro_wl_manual_state.cpp
+        Chassis/fsm/pyro_wl_passive_state.cpp
 
         Application/Chassis_board/pyro_wl_chassis_app.cpp
 )

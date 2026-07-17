@@ -11,20 +11,45 @@ wl_chassis_t::wl_chassis_t() : module_base_t("wl_chassis")
 
 status_t wl_chassis_t::_init()
 {
+    _ctx                                    = {};
+    _ctx.motor                              = _module_deps.motor;
+    _ctx.pid                                = _module_deps.pid;
+
+    _current_cmd.delta_leg_length[leg_def::LEFT]  = 0.0f;
+    _current_cmd.delta_leg_length[leg_def::RIGHT] = 0.0f;
+    _current_cmd.delta_leg_rad[leg_def::LEFT]     = 0.0f;
+    _current_cmd.delta_leg_rad[leg_def::RIGHT]    = 0.0f;
+
     return PYRO_OK;
 }
 
 void wl_chassis_t::_update_feedback()
 {
+    _ctx.motor.joint[leg_def::LEFT][motor_def::HIP]->update_feedback();
+    _ctx.motor.joint[leg_def::LEFT][motor_def::KNEE]->update_feedback();
+    _ctx.motor.joint[leg_def::RIGHT][motor_def::HIP]->update_feedback();
+    _ctx.motor.joint[leg_def::RIGHT][motor_def::KNEE]->update_feedback();
+    // The existing VMC transform is intentionally left unchanged.
+    _vmc_trans();
 }
 
 void wl_chassis_t::_fsm_execute()
 {
+    if (_current_cmd.mode == cmd_base_t::mode_t::ACTIVE)
+    {
+        _main_fsm.change_state(&_state_active);
+    }
+    else
+    {
+        _main_fsm.change_state(&_state_passive);
+    }
+
+    _main_fsm.execute(this);
 }
 
 void wl_chassis_t::_vmc_trans()
 {
-    for (auto leg : _ctx.data.leg)
+    for (auto &leg : _ctx.data.leg)
     {
         const float theta = (leg.current_motor_rad[motor_def::KNEE] -
                              leg.current_motor_rad[motor_def::HIP]) /
@@ -71,56 +96,30 @@ void wl_chassis_t::_calculate()
 
 void wl_chassis_t::_vmc_control()
 {
-    for (auto leg : _ctx.data.leg)
+    for (auto &leg : _ctx.data.leg)
     {
-        float tau_sum = leg.out_T_p;
-        float tau_diff = leg.out_F_L * leg.J_L;
-        leg.out_motor_torque[motor_def::HIP] = (tau_sum - tau_diff) / 2;
+        float tau_sum                         = leg.out_T_p;
+        float tau_diff                        = leg.out_F_L * leg.J_L;
+        leg.out_motor_torque[motor_def::HIP]  = (tau_sum - tau_diff) / 2;
         leg.out_motor_torque[motor_def::KNEE] = (tau_sum + tau_diff) / 2;
     }
 }
 
-
-/* state_passive_t */
-
-void wl_chassis_t::state_passive_t::enter(wl_chassis_t *owner)
+void wl_chassis_t::_send_torque()
 {
-}
+    // _ctx.motor.joint[leg_def::LEFT][motor_def::HIP]->send_torque(
+    //     _ctx.data.leg[leg_def::LEFT].out_motor_torque[motor_def::HIP]);
+    // _ctx.motor.joint[leg_def::LEFT][motor_def::KNEE]->send_torque(
+    //     _ctx.data.leg[leg_def::LEFT].out_motor_torque[motor_def::KNEE]);
+    // _ctx.motor.joint[leg_def::RIGHT][motor_def::HIP]->send_torque(
+    //     _ctx.data.leg[leg_def::RIGHT].out_motor_torque[motor_def::HIP]);
+    // _ctx.motor.joint[leg_def::RIGHT][motor_def::KNEE]->send_torque(
+    //     _ctx.data.leg[leg_def::RIGHT].out_motor_torque[motor_def::KNEE]);
 
-void wl_chassis_t::state_passive_t::execute(wl_chassis_t *owner)
-{
-}
-
-void wl_chassis_t::state_passive_t::exit(wl_chassis_t *owner)
-{
-}
-
-/* fsm_active_t */
-
-void wl_chassis_t::fsm_active_t::on_enter(wl_chassis_t *ctx)
-{
-}
-
-void wl_chassis_t::fsm_active_t::on_execute(wl_chassis_t *ctx)
-{
-}
-
-void wl_chassis_t::fsm_active_t::on_exit(wl_chassis_t *ctx)
-{
-}
-
-/* fsm_active_t::state_manual_t */
-
-void wl_chassis_t::fsm_active_t::state_manual_t::enter(wl_chassis_t *owner)
-{
-}
-
-void wl_chassis_t::fsm_active_t::state_manual_t::execute(wl_chassis_t *owner)
-{
-}
-
-void wl_chassis_t::fsm_active_t::state_manual_t::exit(wl_chassis_t *owner)
-{
+    _ctx.motor.joint[leg_def::LEFT][motor_def::HIP]  ->send_torque(0);
+    _ctx.motor.joint[leg_def::LEFT][motor_def::KNEE] ->send_torque(0);
+    _ctx.motor.joint[leg_def::RIGHT][motor_def::HIP] ->send_torque(0);
+    _ctx.motor.joint[leg_def::RIGHT][motor_def::KNEE]->send_torque(0);
 }
 
 } // namespace pyro

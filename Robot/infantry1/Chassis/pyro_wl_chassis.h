@@ -26,8 +26,9 @@ struct wl_chassis_deps_t
 
 struct wl_chassis_cmd_t final : public cmd_base_t
 {
-    float leg_length[2];
-    float leg_rad[2];
+    float delta_leg_length[2];
+    float delta_leg_rad[2];
+
 
     enum class wl_chassis_mode_t : uint8_t
     {
@@ -98,12 +99,12 @@ class wl_chassis_t final
     void _fsm_execute() override;
 
     // 私有成员变量
-    ctx_t _ctx;
 
     // 辅助函数
     void _vmc_trans();
     void _calculate();
     void _vmc_control();
+    void _send_torque();
 
     using owner = wl_chassis_t;
 
@@ -125,6 +126,9 @@ class wl_chassis_t final
         void on_enter(wl_chassis_t *ctx) override;
         void on_execute(wl_chassis_t *ctx) override;
         void on_exit(wl_chassis_t *ctx) override;
+
+      private:
+        state_manual_t _state_manual;
     };
 
     fsm_t<owner> _main_fsm;

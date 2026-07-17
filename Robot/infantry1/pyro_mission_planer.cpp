@@ -15,7 +15,8 @@ void start_mission_planer_task(void const *argument)
                 configMAX_PRIORITIES - 1, nullptr);
     vTaskDelay(pdMS_TO_TICKS(20));
 
-    infantry1_chassis_init(nullptr);
+    xTaskCreate(infantry1_chassis_init, "infantry1_chassis_init", 512, nullptr,
+                configMAX_PRIORITIES - 2, nullptr);
 
 #if DEBUG_MODE
     xTaskCreate(start_debug_task, "start_debug_task", 512, nullptr,
