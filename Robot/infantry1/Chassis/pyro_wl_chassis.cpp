@@ -1,5 +1,6 @@
 #include "pyro_wl_chassis.h"
 
+#include "pyro_algo_common.h"
 #include "dsp/fast_math_functions.h"
 
 namespace pyro
@@ -11,14 +12,17 @@ wl_chassis_t::wl_chassis_t() : module_base_t("wl_chassis")
 
 status_t wl_chassis_t::_init()
 {
-    _ctx                                    = {};
-    _ctx.motor                              = _module_deps.motor;
-    _ctx.pid                                = _module_deps.pid;
+    _ctx                                          = {};
+    _ctx.motor                                    = _module_deps.motor;
+    _ctx.pid                                      = _module_deps.pid;
 
     _current_cmd.delta_leg_length[leg_def::LEFT]  = 0.0f;
     _current_cmd.delta_leg_length[leg_def::RIGHT] = 0.0f;
     _current_cmd.delta_leg_rad[leg_def::LEFT]     = 0.0f;
     _current_cmd.delta_leg_rad[leg_def::RIGHT]    = 0.0f;
+
+    _ctx.data.leg[leg_def::LEFT].direction = LEFT_DIRECTION;
+    _ctx.data.leg[leg_def::RIGHT].direction = RIGHT_DIRECTION;
 
     return PYRO_OK;
 }
@@ -29,6 +33,45 @@ void wl_chassis_t::_update_feedback()
     _ctx.motor.joint[leg_def::LEFT][motor_def::KNEE]->update_feedback();
     _ctx.motor.joint[leg_def::RIGHT][motor_def::HIP]->update_feedback();
     _ctx.motor.joint[leg_def::RIGHT][motor_def::KNEE]->update_feedback();
+
+    float raw_rad_lh = _ctx.motor.joint[leg_def::LEFT][motor_def::HIP]
+                           ->get_current_position() +
+                       LEFT_HIP_OFFSET;
+    float raw_rad_lk = _ctx.motor.joint[leg_def::LEFT][motor_def::KNEE]
+                           ->get_current_position() +
+                       LEFT_HIP_OFFSET;
+    float raw_rad_rh = _ctx.motor.joint[leg_def::RIGHT][motor_def::HIP]
+                           ->get_current_position() +
+                       RIGHT_HIP_OFFSET;
+    float raw_rad_rk = _ctx.motor.joint[leg_def::RIGHT][motor_def::KNEE]
+                           ->get_current_position() +
+                       RIGHT_HIP_OFFSET;
+    _ctx.data.leg[leg_def::LEFT].current_motor_rad[motor_def::HIP] =
+        loop_fp32_constrain(raw_rad_lh, -PI, PI);
+    _ctx.data.leg[leg_def::LEFT].current_motor_rad[motor_def::KNEE] =
+        loop_fp32_constrain(raw_rad_lk, -PI, PI);
+    _ctx.data.leg[leg_def::RIGHT].current_motor_rad[motor_def::HIP] =
+        loop_fp32_constrain(raw_rad_rh, -PI, PI);
+    _ctx.data.leg[leg_def::RIGHT].current_motor_rad[motor_def::KNEE] =
+        loop_fp32_constrain(raw_rad_rk, -PI, PI);
+
+    _ctx.data.leg[leg_def::LEFT].out_motor_torque[motor_def::HIP] =
+        _ctx.motor.joint[leg_def::LEFT][motor_def::HIP]->get_current_torque();
+    _ctx.data.leg[leg_def::LEFT].out_motor_torque[motor_def::KNEE] =
+        _ctx.motor.joint[leg_def::LEFT][motor_def::KNEE]->get_current_torque();
+    _ctx.data.leg[leg_def::RIGHT].out_motor_torque[motor_def::HIP] =
+        _ctx.motor.joint[leg_def::RIGHT][motor_def::HIP]->get_current_torque();
+    _ctx.data.leg[leg_def::RIGHT].out_motor_torque[motor_def::KNEE] =
+        _ctx.motor.joint[leg_def::RIGHT][motor_def::KNEE]->get_current_torque();
+
+    _ctx.data.leg[leg_def::LEFT].current_motor_radps[motor_def::HIP] =
+        _ctx.motor.joint[leg_def::LEFT][motor_def::HIP]->get_current_rotate();
+    _ctx.data.leg[leg_def::LEFT].current_motor_radps[motor_def::KNEE] =
+        _ctx.motor.joint[leg_def::LEFT][motor_def::KNEE]->get_current_rotate();
+    _ctx.data.leg[leg_def::RIGHT].current_motor_radps[motor_def::HIP] =
+        _ctx.motor.joint[leg_def::RIGHT][motor_def::HIP]->get_current_rotate();
+    _ctx.data.leg[leg_def::RIGHT].current_motor_radps[motor_def::KNEE] =
+        _ctx.motor.joint[leg_def::RIGHT][motor_def::KNEE]->get_current_rotate();
     // The existing VMC transform is intentionally left unchanged.
     _vmc_trans();
 }
@@ -116,9 +159,9 @@ void wl_chassis_t::_send_torque()
     // _ctx.motor.joint[leg_def::RIGHT][motor_def::KNEE]->send_torque(
     //     _ctx.data.leg[leg_def::RIGHT].out_motor_torque[motor_def::KNEE]);
 
-    _ctx.motor.joint[leg_def::LEFT][motor_def::HIP]  ->send_torque(0);
-    _ctx.motor.joint[leg_def::LEFT][motor_def::KNEE] ->send_torque(0);
-    _ctx.motor.joint[leg_def::RIGHT][motor_def::HIP] ->send_torque(0);
+    _ctx.motor.joint[leg_def::LEFT][motor_def::HIP]->send_torque(0);
+    _ctx.motor.joint[leg_def::LEFT][motor_def::KNEE]->send_torque(0);
+    _ctx.motor.joint[leg_def::RIGHT][motor_def::HIP]->send_torque(0);
     _ctx.motor.joint[leg_def::RIGHT][motor_def::KNEE]->send_torque(0);
 }
 

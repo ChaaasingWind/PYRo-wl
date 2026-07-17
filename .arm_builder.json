@@ -1,0 +1,10 @@
+{
+  "cfg_path": "E:\\Develop\\DevEnv\\stm32h7_daplink.cfg",
+  "flash_mode": "Run",
+  "cmake_options": "-DROBOT_ID=3",
+  "backend_type": "OpenOCD",
+  "target_type": "stm32g431cbux",
+  "svd_path": "E:\\Develop\\Cmake_pack\\openocd_test\\STM32G431.svd",
+  "build_type": "Debug",
+  "breakpoints": []
+}

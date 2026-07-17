@@ -102,6 +102,23 @@ void deps_init()
     wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::HIP] = new pyro::dm_motor_drv_t(0x02, 0x12, pyro::bsp_can::can1);
     wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::KNEE] = new pyro::dm_motor_drv_t(0x01, 0x11, pyro::bsp_can::can1);
 
+    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::HIP])->set_position_range(-PI,PI);
+    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::HIP])->set_rotate_range(-45.0f, 45.0f);
+    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::HIP])->set_torque_range(-54.0f, 54.0f);
+
+    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::KNEE])->set_position_range(-PI,PI);
+    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::KNEE])->set_rotate_range(-45.0f, 45.0f);
+    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::KNEE])->set_torque_range(-54.0f, 54.0f);
+
+    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::HIP])->set_position_range(-PI,PI);
+    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::HIP])->set_rotate_range(-45.0f, 45.0f);
+    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::HIP])->set_torque_range(-54.0f, 54.0f);
+
+    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::KNEE])->set_position_range(-PI,PI);
+    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::KNEE])->set_rotate_range(-45.0f, 45.0f);
+    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::KNEE])->set_torque_range(-54.0f, 54.0f);
+
+
     // 2. 初始化 PIDs
     // 腿长 PID
     wl_chassis_deps->pid.leg_length[leg_def::LEFT] = new pyro::pid_t(1.0f, 0.0f, 0.1f, 1.0f, 50.0f);
