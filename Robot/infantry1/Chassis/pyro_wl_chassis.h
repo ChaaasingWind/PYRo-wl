@@ -56,6 +56,7 @@ struct leg_ctx
     float direction; // Motor-positive sign in the defined leg coordinate system
     float current_motor_rad[2];// θ1，θ2
     float current_motor_radps[2];
+    float current_motor_torque[2];
     float out_motor_torque[2];
 };
 

@@ -1,6 +1,10 @@
 #ifndef __WL_CONFIG_H__
 #define __WL_CONFIG_H__
 
+
+namespace pyro
+{
+
 constexpr float OJ5               = 0.0945f;
 constexpr float J4J5              = 0.1125f;
 constexpr float OJ8               = 0.2100f;
@@ -30,5 +34,6 @@ enum : uint8_t
     HIP  = 0,
     KNEE = 1,
 };
+}
 }
 #endif
