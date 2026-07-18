@@ -47,16 +47,16 @@ void wl_chassis_t::_update_feedback()
                            ->get_current_position() +
                        RIGHT_KNEE_OFFSET;
     _ctx.data.leg[leg_def::LEFT].current_motor_rad[motor_def::HIP] =
-        loop_fp32_constrain(raw_rad_lh, 0, 2 * PI) *
+        loop_fp32_constrain(raw_rad_lh, -PI, PI) *
         _ctx.data.leg[leg_def::LEFT].direction;
     _ctx.data.leg[leg_def::LEFT].current_motor_rad[motor_def::KNEE] =
-        loop_fp32_constrain(raw_rad_lk, 0, 2 * PI) *
+        loop_fp32_constrain(raw_rad_lk, -PI, PI) *
         _ctx.data.leg[leg_def::LEFT].direction;
     _ctx.data.leg[leg_def::RIGHT].current_motor_rad[motor_def::HIP] =
-        loop_fp32_constrain(raw_rad_rh, 0, 2 * PI) *
+        loop_fp32_constrain(raw_rad_rh, -PI, PI) *
         _ctx.data.leg[leg_def::RIGHT].direction;
     _ctx.data.leg[leg_def::RIGHT].current_motor_rad[motor_def::KNEE] =
-        loop_fp32_constrain(raw_rad_rk, 0, 2 * PI) *
+        loop_fp32_constrain(raw_rad_rk, -PI, PI) *
         _ctx.data.leg[leg_def::RIGHT].direction;
 
     _ctx.data.leg[leg_def::LEFT].current_motor_torque[motor_def::HIP] =
@@ -108,7 +108,7 @@ void wl_chassis_t::_vmc_trans()
     {
         const float raw_2_theta = leg.current_motor_rad[motor_def::KNEE] -
                                   leg.current_motor_rad[motor_def::HIP];
-        const float theta     = loop_fp32_constrain(raw_2_theta, 0, 2 * PI) / 2;
+        const float theta     = loop_fp32_constrain(raw_2_theta, -PI, PI) / 2;
         const float dot_theta = (leg.current_motor_radps[motor_def::KNEE] -
                                  leg.current_motor_radps[motor_def::HIP]) /
                                 2;
@@ -122,11 +122,10 @@ void wl_chassis_t::_vmc_trans()
         leg.current_leg_length = OJ4 * OJ8 / OJ5;
         leg.current_leg_speed  = dot_theta * leg.J_L;
 
-        const float raw_2_beta   = leg.current_motor_rad[motor_def::KNEE] +
-                               leg.current_motor_rad[motor_def::HIP];
-        const float beta = loop_fp32_constrain(raw_2_beta, 0, 2 * PI) / 2;
-        leg.current_leg_rad   = beta;
-        leg.current_leg_radps = (leg.current_motor_radps[motor_def::KNEE] +
+        const float raw_beta   = leg.current_motor_rad[motor_def::HIP] + theta;
+        const float beta       = loop_fp32_constrain(raw_beta, -PI, PI);
+        leg.current_leg_rad    = beta;
+        leg.current_leg_radps  = (leg.current_motor_radps[motor_def::KNEE] +
                                  leg.current_motor_radps[motor_def::HIP]) /
                                 2;
         leg.current_F_L = (leg.out_motor_torque[motor_def::KNEE] -
