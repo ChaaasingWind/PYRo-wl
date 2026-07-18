@@ -39,13 +39,13 @@ void wl_chassis_t::_update_feedback()
                        LEFT_HIP_OFFSET;
     float raw_rad_lk = _ctx.motor.joint[leg_def::LEFT][motor_def::KNEE]
                            ->get_current_position() +
-                       LEFT_HIP_OFFSET;
+                       LEFT_KNEE_OFFSET;
     float raw_rad_rh = _ctx.motor.joint[leg_def::RIGHT][motor_def::HIP]
                            ->get_current_position() +
                        RIGHT_HIP_OFFSET;
     float raw_rad_rk = _ctx.motor.joint[leg_def::RIGHT][motor_def::KNEE]
                            ->get_current_position() +
-                       RIGHT_HIP_OFFSET;
+                       RIGHT_KNEE_OFFSET;
     _ctx.data.leg[leg_def::LEFT].current_motor_rad[motor_def::HIP] =
         loop_fp32_constrain(raw_rad_lh, -PI, PI);
     _ctx.data.leg[leg_def::LEFT].current_motor_rad[motor_def::KNEE] =
