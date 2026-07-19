@@ -85,8 +85,8 @@ void chassis_dr162cmd()
 
     // 手动通道输入控制腿长和腿度（角度）的偏置量
 
-    wl_chassis_cmd_ptr->delta_leg_length[leg_def::LEFT]  = vrc.axes.ly * 0.0001f;
-    wl_chassis_cmd_ptr->delta_leg_rad[leg_def::LEFT] = vrc.axes.lx * 0.00001f;
+    wl_chassis_cmd_ptr->delta_leg_length[leg_def::LEFT]  = vrc.axes.ly * 0.001f;
+    wl_chassis_cmd_ptr->delta_leg_rad[leg_def::LEFT] = vrc.axes.lx * 0.001f;
 
     wl_chassis_cmd_ptr->delta_leg_length[leg_def::RIGHT]  = vrc.axes.ry * 0.0001f;
     wl_chassis_cmd_ptr->delta_leg_rad[leg_def::RIGHT] = vrc.axes.rx * 0.00001f;
@@ -124,19 +124,19 @@ void deps_init()
     constexpr float OUTPUT_CUTOFF_HZ = 20.0f;
     constexpr float DERIVATIVE_CUTOFF_HZ = 30.0f;
 
-    // Leg-length PD: output F_L (N), limited to 10 N.
+    // Leg-length PD: output F_L (N), limited to 80 N.
     wl_chassis_deps->pid.leg_length[leg_def::LEFT] =
-        new pyro::pd_ctrl_t(300.0f, 20.0f, 10.0f, OUTPUT_CUTOFF_HZ, 1,
+        new pyro::pd_ctrl_t(2400.0f, 160.0f, 80.0f, OUTPUT_CUTOFF_HZ, 1,
                             DERIVATIVE_CUTOFF_HZ, 1);
     wl_chassis_deps->pid.leg_length[leg_def::RIGHT] =
-        new pyro::pd_ctrl_t(300.0f, 20.0f, 10.0f, OUTPUT_CUTOFF_HZ, 1,
+        new pyro::pd_ctrl_t(2400.0f, 160.0f, 80.0f, OUTPUT_CUTOFF_HZ, 1,
                             DERIVATIVE_CUTOFF_HZ, 1);
 
-    // Leg-angle PD: output T_p (N m), limited to 4 N m.
+    // Leg-angle PD: output T_p (N m), limited to 32 N m.
     wl_chassis_deps->pid.leg_rad[leg_def::LEFT] =
-        new pyro::pd_ctrl_t(2.0f, 0.15f, 4.0f, OUTPUT_CUTOFF_HZ, 1,
+        new pyro::pd_ctrl_t(32.0f, 1.20f, 64.0f, OUTPUT_CUTOFF_HZ, 1,
                             DERIVATIVE_CUTOFF_HZ, 1);
     wl_chassis_deps->pid.leg_rad[leg_def::RIGHT] =
-        new pyro::pd_ctrl_t(2.0f, 0.15f, 4.0f, OUTPUT_CUTOFF_HZ, 1,
+        new pyro::pd_ctrl_t(32.0f, 1.20f, 32.0f, OUTPUT_CUTOFF_HZ, 1,
                             DERIVATIVE_CUTOFF_HZ, 1);
 }
