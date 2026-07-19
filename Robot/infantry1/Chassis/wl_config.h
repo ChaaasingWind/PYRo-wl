@@ -19,6 +19,9 @@ constexpr float RIGHT_KNEE_OFFSET = 0.0f;
 constexpr float LEFT_DIRECTION    = -1.0f;
 constexpr float RIGHT_DIRECTION   = 1.0f;
 
+constexpr float MAX_LEG_LENGTH = 0.38f;
+constexpr float MIN_LEG_LENGTH = 0.18f;
+
 namespace leg_def
 {
 enum : uint8_t

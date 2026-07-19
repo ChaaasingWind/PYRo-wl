@@ -46,6 +46,7 @@ struct leg_ctx
     float current_leg_speed;
     float current_leg_rad; // current_leg_rad = (θ1 + θ2) / 2
     float current_leg_radps;
+    float error_leg_rad;
 
     float J_L;
     float out_F_L; // F_L * J_L = tau_2 - tau_1
