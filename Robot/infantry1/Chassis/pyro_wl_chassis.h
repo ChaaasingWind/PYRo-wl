@@ -1,7 +1,7 @@
 #ifndef __PYRO_WL_CHASSIS_H__
 #define __PYRO_WL_CHASSIS_H__
 
-#include "pyro_algo_pid.h"
+#include "pyro_algo_pd.h"
 #include "pyro_module_base.h"
 #include "pyro_motor_base.h"
 #include "wl_config.h"
@@ -17,8 +17,8 @@ struct wl_chassis_deps_t
 
     struct pid_deps_t
     {
-        pid_t *leg_length[2];
-        pid_t *leg_rad[2];
+        pd_ctrl_t *leg_length[2];
+        pd_ctrl_t *leg_rad[2];
     };
     motor_deps_t motor;
     pid_deps_t pid;

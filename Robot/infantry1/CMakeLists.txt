@@ -8,7 +8,7 @@ target_compile_definitions(Infantry1 PRIVATE
 )
 
 target_compile_definitions(PYRo PUBLIC
-    DR16_UART=PYRO_UART10
+    DR16_UART=PYRO_UART5
 )
 
 target_sources(Infantry1

@@ -141,51 +141,59 @@ void wl_chassis_t::_calculate()
     _ctx.data.leg[leg_def::LEFT].out_F_L =
         _ctx.pid.leg_length[leg_def::LEFT]->calculate(
             _ctx.data.leg[leg_def::LEFT].target_leg_length,
-            _ctx.data.leg[leg_def::LEFT].current_leg_length);
+            _ctx.data.leg[leg_def::LEFT].current_leg_length,
+            _ctx.data.leg[leg_def::LEFT].current_leg_speed);
     _ctx.data.leg[leg_def::LEFT].out_T_p =
         _ctx.pid.leg_rad[leg_def::LEFT]->calculate(
             _ctx.data.leg[leg_def::LEFT].target_leg_rad,
-            _ctx.data.leg[leg_def::LEFT].current_leg_rad);
+            _ctx.data.leg[leg_def::LEFT].current_leg_rad,
+            _ctx.data.leg[leg_def::LEFT].current_leg_radps);
     _ctx.data.leg[leg_def::RIGHT].out_F_L =
         _ctx.pid.leg_length[leg_def::RIGHT]->calculate(
             _ctx.data.leg[leg_def::RIGHT].target_leg_length,
-            _ctx.data.leg[leg_def::RIGHT].current_leg_length);
+            _ctx.data.leg[leg_def::RIGHT].current_leg_length,
+            _ctx.data.leg[leg_def::RIGHT].current_leg_speed);
     _ctx.data.leg[leg_def::RIGHT].out_T_p =
         _ctx.pid.leg_rad[leg_def::RIGHT]->calculate(
             _ctx.data.leg[leg_def::RIGHT].target_leg_rad,
-            _ctx.data.leg[leg_def::RIGHT].current_leg_rad);
+            _ctx.data.leg[leg_def::RIGHT].current_leg_rad,
+            _ctx.data.leg[leg_def::RIGHT].current_leg_radps);
 }
 
 void wl_chassis_t::_vmc_control()
 {
+    constexpr float MAX_MOTOR_TORQUE = 4.0f;
+
     for (auto &leg : _ctx.data.leg)
     {
-        float tau_sum                         = leg.out_T_p;
-        float tau_diff                        = leg.out_F_L * leg.J_L;
-        leg.out_motor_torque[motor_def::HIP]  = (tau_sum - tau_diff) / 2;
-        leg.out_motor_torque[motor_def::KNEE] = (tau_sum + tau_diff) / 2;
+        float tau_sum  = leg.out_T_p;
+        float tau_diff = leg.out_F_L * leg.J_L;
+        leg.out_motor_torque[motor_def::HIP] = fp32_constrain(
+            (tau_sum - tau_diff) / 2, -MAX_MOTOR_TORQUE, MAX_MOTOR_TORQUE);
+        leg.out_motor_torque[motor_def::KNEE] = fp32_constrain(
+            (tau_sum + tau_diff) / 2, -MAX_MOTOR_TORQUE, MAX_MOTOR_TORQUE);
     }
 }
 
 void wl_chassis_t::_send_torque()
 {
-    // _ctx.motor.joint[leg_def::LEFT][motor_def::HIP]->send_torque(
-    //     _ctx.data.leg[leg_def::LEFT].direction *
-    //     _ctx.data.leg[leg_def::LEFT].out_motor_torque[motor_def::HIP]);
-    // _ctx.motor.joint[leg_def::LEFT][motor_def::KNEE]->send_torque(
-    //     _ctx.data.leg[leg_def::LEFT].direction *
-    //     _ctx.data.leg[leg_def::LEFT].out_motor_torque[motor_def::KNEE]);
-    // _ctx.motor.joint[leg_def::RIGHT][motor_def::HIP]->send_torque(
-    //     _ctx.data.leg[leg_def::RIGHT].direction *
-    //     _ctx.data.leg[leg_def::RIGHT].out_motor_torque[motor_def::HIP]);
-    // _ctx.motor.joint[leg_def::RIGHT][motor_def::KNEE]->send_torque(
-    //     _ctx.data.leg[leg_def::RIGHT].direction *
-    //     _ctx.data.leg[leg_def::RIGHT].out_motor_torque[motor_def::KNEE]);
+    _ctx.motor.joint[leg_def::LEFT][motor_def::HIP]->send_torque(
+        _ctx.data.leg[leg_def::LEFT].direction *
+        _ctx.data.leg[leg_def::LEFT].out_motor_torque[motor_def::HIP]);
+    _ctx.motor.joint[leg_def::LEFT][motor_def::KNEE]->send_torque(
+        _ctx.data.leg[leg_def::LEFT].direction *
+        _ctx.data.leg[leg_def::LEFT].out_motor_torque[motor_def::KNEE]);
+    _ctx.motor.joint[leg_def::RIGHT][motor_def::HIP]->send_torque(
+        _ctx.data.leg[leg_def::RIGHT].direction *
+        _ctx.data.leg[leg_def::RIGHT].out_motor_torque[motor_def::HIP]);
+    _ctx.motor.joint[leg_def::RIGHT][motor_def::KNEE]->send_torque(
+        _ctx.data.leg[leg_def::RIGHT].direction *
+        _ctx.data.leg[leg_def::RIGHT].out_motor_torque[motor_def::KNEE]);
 
-    _ctx.motor.joint[leg_def::LEFT][motor_def::HIP]->send_torque(0);
-    _ctx.motor.joint[leg_def::LEFT][motor_def::KNEE]->send_torque(0);
-    _ctx.motor.joint[leg_def::RIGHT][motor_def::HIP]->send_torque(0);
-    _ctx.motor.joint[leg_def::RIGHT][motor_def::KNEE]->send_torque(0);
+    // _ctx.motor.joint[leg_def::LEFT][motor_def::HIP]->send_torque(0);
+    // _ctx.motor.joint[leg_def::LEFT][motor_def::KNEE]->send_torque(0);
+    // _ctx.motor.joint[leg_def::RIGHT][motor_def::HIP]->send_torque(0);
+    // _ctx.motor.joint[leg_def::RIGHT][motor_def::KNEE]->send_torque(0);
 }
 
 } // namespace pyro
