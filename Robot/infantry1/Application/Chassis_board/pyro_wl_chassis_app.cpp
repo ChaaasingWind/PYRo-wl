@@ -11,10 +11,10 @@
 using namespace pyro;
 
 
-static TaskHandle_t chassis_task_handle                = nullptr;
-static pyro::wl_chassis_t *wl_chassis_ptr             = nullptr;
-static pyro::wl_chassis_cmd_t *wl_chassis_cmd_ptr     = nullptr;
-static pyro::wl_chassis_deps_t *wl_chassis_deps       = nullptr;
+static TaskHandle_t chassis_task_handle           = nullptr;
+static pyro::wl_chassis_t *wl_chassis_ptr         = nullptr;
+static pyro::wl_chassis_cmd_t *wl_chassis_cmd_ptr = nullptr;
+static pyro::wl_chassis_deps_t *wl_chassis_deps   = nullptr;
 
 static void chassis_dr162cmd();
 static void deps_init();
@@ -55,10 +55,9 @@ extern "C"
         wl_chassis_ptr->configure(*wl_chassis_deps);
         wl_chassis_ptr->start();
 
-        xTaskCreate(infantry1_chassis_thread, "chassis_app_thread", 256, nullptr,
-                    configMAX_PRIORITIES - 1, &chassis_task_handle);
+        xTaskCreate(infantry1_chassis_thread, "chassis_app_thread", 256,
+                    nullptr, configMAX_PRIORITIES - 1, &chassis_task_handle);
 
-        auto &vrc = pyro::rc_drv_t::read();
 
 
         vTaskDelete(nullptr);
@@ -74,10 +73,10 @@ void chassis_dr162cmd()
     if (pyro::sw_pos_t::MID != vrc.switches.right.current_pos)
     {
         wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::PASSIVE;
-        wl_chassis_cmd_ptr->delta_leg_length[leg_def::LEFT]  = 0.0f;
-        wl_chassis_cmd_ptr->delta_leg_length[leg_def::RIGHT] = 0.0f;
-        wl_chassis_cmd_ptr->delta_leg_rad[leg_def::LEFT]     = 0.0f;
-        wl_chassis_cmd_ptr->delta_leg_rad[leg_def::RIGHT]    = 0.0f;
+        wl_chassis_cmd_ptr->delta_leg_length[leg_def::L]  = 0.0f;
+        wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = 0.0f;
+        wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]     = 0.0f;
+        wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = 0.0f;
         return;
     }
 
@@ -85,11 +84,12 @@ void chassis_dr162cmd()
 
     // 手动通道输入控制腿长和腿度（角度）的偏置量
 
-    wl_chassis_cmd_ptr->delta_leg_length[leg_def::LEFT]  = vrc.axes.ly * 0.001f;
-    wl_chassis_cmd_ptr->delta_leg_rad[leg_def::LEFT] = vrc.axes.lx * 0.001f;
+    wl_chassis_cmd_ptr->delta_leg_length[leg_def::L] = vrc.axes.ly * 0.001f;
+    wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]    = vrc.axes.lx * 0.001f;
 
-    wl_chassis_cmd_ptr->delta_leg_length[leg_def::RIGHT]  = vrc.axes.ry * 0.0001f;
-    wl_chassis_cmd_ptr->delta_leg_rad[leg_def::RIGHT] = vrc.axes.rx * 0.00001f;
+    wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] =
+        vrc.axes.ry * 0.0001f;
+    wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R] = vrc.axes.rx * 0.00001f;
 }
 
 void deps_init()
@@ -97,46 +97,70 @@ void deps_init()
     wl_chassis_deps = new pyro::wl_chassis_deps_t();
 
     // 1. 初始化二维数组形式的 4 个关节达妙电机 (使用 CAN1)
-    wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::HIP] = new pyro::dm_motor_drv_t(0x04, 0x14, pyro::bsp_can::can2);
-    wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::KNEE] = new pyro::dm_motor_drv_t(0x03, 0x13, pyro::bsp_can::can2);
-    wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::HIP] = new pyro::dm_motor_drv_t(0x02, 0x12, pyro::bsp_can::can1);
-    wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::KNEE] = new pyro::dm_motor_drv_t(0x01, 0x11, pyro::bsp_can::can1);
+    wl_chassis_deps->motor.joint[leg_def::L][motor_def::HIP] =
+        new pyro::dm_motor_drv_t(0x04, 0x14, pyro::bsp_can::can2);
+    wl_chassis_deps->motor.joint[leg_def::L][motor_def::KNEE] =
+        new pyro::dm_motor_drv_t(0x03, 0x13, pyro::bsp_can::can2);
+    wl_chassis_deps->motor.joint[leg_def::R][motor_def::HIP] =
+        new pyro::dm_motor_drv_t(0x02, 0x12, pyro::bsp_can::can1);
+    wl_chassis_deps->motor.joint[leg_def::R][motor_def::KNEE] =
+        new pyro::dm_motor_drv_t(0x01, 0x11, pyro::bsp_can::can1);
 
-    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::HIP])->set_position_range(-PI,PI);
-    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::HIP])->set_rotate_range(-45.0f, 45.0f);
-    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::HIP])->set_torque_range(-54.0f, 54.0f);
+    static_cast<dm_motor_drv_t *>(
+        wl_chassis_deps->motor.joint[leg_def::L][motor_def::HIP])
+        ->set_position_range(-PI, PI);
+    static_cast<dm_motor_drv_t *>(
+        wl_chassis_deps->motor.joint[leg_def::L][motor_def::HIP])
+        ->set_rotate_range(-45.0f, 45.0f);
+    static_cast<dm_motor_drv_t *>(
+        wl_chassis_deps->motor.joint[leg_def::L][motor_def::HIP])
+        ->set_torque_range(-54.0f, 54.0f);
 
-    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::KNEE])->set_position_range(-PI,PI);
-    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::KNEE])->set_rotate_range(-45.0f, 45.0f);
-    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::LEFT][motor_def::KNEE])->set_torque_range(-54.0f, 54.0f);
+    static_cast<dm_motor_drv_t *>(
+        wl_chassis_deps->motor.joint[leg_def::L][motor_def::KNEE])
+        ->set_position_range(-PI, PI);
+    static_cast<dm_motor_drv_t *>(
+        wl_chassis_deps->motor.joint[leg_def::L][motor_def::KNEE])
+        ->set_rotate_range(-45.0f, 45.0f);
+    static_cast<dm_motor_drv_t *>(
+        wl_chassis_deps->motor.joint[leg_def::L][motor_def::KNEE])
+        ->set_torque_range(-54.0f, 54.0f);
 
-    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::HIP])->set_position_range(-PI,PI);
-    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::HIP])->set_rotate_range(-45.0f, 45.0f);
-    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::HIP])->set_torque_range(-54.0f, 54.0f);
+    static_cast<dm_motor_drv_t *>(
+        wl_chassis_deps->motor.joint[leg_def::R][motor_def::HIP])
+        ->set_position_range(-PI, PI);
+    static_cast<dm_motor_drv_t *>(
+        wl_chassis_deps->motor.joint[leg_def::R][motor_def::HIP])
+        ->set_rotate_range(-45.0f, 45.0f);
+    static_cast<dm_motor_drv_t *>(
+        wl_chassis_deps->motor.joint[leg_def::R][motor_def::HIP])
+        ->set_torque_range(-54.0f, 54.0f);
 
-    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::KNEE])->set_position_range(-PI,PI);
-    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::KNEE])->set_rotate_range(-45.0f, 45.0f);
-    static_cast<dm_motor_drv_t* >(wl_chassis_deps->motor.joint[leg_def::RIGHT][motor_def::KNEE])->set_torque_range(-54.0f, 54.0f);
+    static_cast<dm_motor_drv_t *>(
+        wl_chassis_deps->motor.joint[leg_def::R][motor_def::KNEE])
+        ->set_position_range(-PI, PI);
+    static_cast<dm_motor_drv_t *>(
+        wl_chassis_deps->motor.joint[leg_def::R][motor_def::KNEE])
+        ->set_rotate_range(-45.0f, 45.0f);
+    static_cast<dm_motor_drv_t *>(
+        wl_chassis_deps->motor.joint[leg_def::R][motor_def::KNEE])
+        ->set_torque_range(-54.0f, 54.0f);
 
 
     // 2. Initialize conservative PD controllers for unloaded suspended testing.
     // Integral is disabled; only output and derivative filters are enabled.
-    constexpr float OUTPUT_CUTOFF_HZ = 20.0f;
-    constexpr float DERIVATIVE_CUTOFF_HZ = 30.0f;
+    constexpr float OUTPUT_CUTOFF_HZ               = 20.0f;
+    constexpr float DERIVATIVE_CUTOFF_HZ           = 30.0f;
 
     // Leg-length PD: output F_L (N), limited to 80 N.
-    wl_chassis_deps->pid.leg_length[leg_def::LEFT] =
-        new pyro::pd_ctrl_t(2400.0f, 160.0f, 80.0f, OUTPUT_CUTOFF_HZ, 1,
-                            DERIVATIVE_CUTOFF_HZ, 1);
-    wl_chassis_deps->pid.leg_length[leg_def::RIGHT] =
-        new pyro::pd_ctrl_t(2400.0f, 160.0f, 80.0f, OUTPUT_CUTOFF_HZ, 1,
-                            DERIVATIVE_CUTOFF_HZ, 1);
+    wl_chassis_deps->pid.leg_length[leg_def::L] = new pyro::pd_ctrl_t(
+        2400.0f, 160.0f, 80.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
+    wl_chassis_deps->pid.leg_length[leg_def::R] = new pyro::pd_ctrl_t(
+        2400.0f, 160.0f, 80.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
 
     // Leg-angle PD: output T_p (N m), limited to 32 N m.
-    wl_chassis_deps->pid.leg_rad[leg_def::LEFT] =
-        new pyro::pd_ctrl_t(32.0f, 1.20f, 64.0f, OUTPUT_CUTOFF_HZ, 1,
-                            DERIVATIVE_CUTOFF_HZ, 1);
-    wl_chassis_deps->pid.leg_rad[leg_def::RIGHT] =
-        new pyro::pd_ctrl_t(32.0f, 1.20f, 32.0f, OUTPUT_CUTOFF_HZ, 1,
-                            DERIVATIVE_CUTOFF_HZ, 1);
+    wl_chassis_deps->pid.leg_rad[leg_def::L] = new pyro::pd_ctrl_t(
+        32.0f, 1.20f, 64.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
+    wl_chassis_deps->pid.leg_rad[leg_def::R] = new pyro::pd_ctrl_t(
+        32.0f, 1.20f, 32.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
 }

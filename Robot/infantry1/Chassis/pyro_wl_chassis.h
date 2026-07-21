@@ -2,6 +2,7 @@
 #define __PYRO_WL_CHASSIS_H__
 
 #include "pyro_algo_pd.h"
+#include "pyro_algo_pid.h"
 #include "pyro_module_base.h"
 #include "pyro_motor_base.h"
 #include "wl_config.h"
@@ -13,12 +14,14 @@ struct wl_chassis_deps_t
     struct motor_deps_t
     {
         motor_base_t *joint[2][2];
+        motor_base_t *wheel[2];
     };
 
     struct pid_deps_t
     {
         pd_ctrl_t *leg_length[2];
         pd_ctrl_t *leg_rad[2];
+        pid_t *wheel[2];
     };
     motor_deps_t motor;
     pid_deps_t pid;
@@ -28,6 +31,8 @@ struct wl_chassis_cmd_t final : public cmd_base_t
 {
     float delta_leg_length[2];
     float delta_leg_rad[2];
+    float vx;
+    bool balance_flag = false;
 
 
     enum class wl_chassis_mode_t : uint8_t
@@ -36,7 +41,7 @@ struct wl_chassis_cmd_t final : public cmd_base_t
     };
 };
 
-struct leg_ctx
+struct leg_ctx_t
 {
     float target_leg_length;
     float target_leg_speed;
@@ -55,15 +60,54 @@ struct leg_ctx
     float current_T_p;
 
     float direction; // Motor-positive sign in the defined leg coordinate system
-    float current_motor_rad[2];// θ1，θ2
-    float current_motor_radps[2];
-    float current_motor_torque[2];
-    float out_motor_torque[2];
+    float current_joint_rad[2]; // θ1，θ2
+    float current_joint_radps[2];
+    float current_joint_torque[2];
+    float out_joint_torque[2];
 };
+
+struct wheel_ctx_t
+{
+    float direction;
+    float current_radps;
+    float current_T_w;
+    float out_T_w;
+    float out_current; // Current: 电流 (A)
+};
+
+struct state_vec_t
+{
+    union
+    {
+        struct
+        {
+            float x, dot_x, beta, dot_beta, gamma, dot_gamma;
+        };
+        float data[6];
+    };
+};
+struct control_vec_t
+{
+    union
+    {
+        struct
+        {
+            float T_p, T_w;
+        };
+        float data[2];
+    };
+};
+
+
 
 struct wl_chassis_data_ctx_t
 {
-    leg_ctx leg[2];
+    leg_ctx_t leg[2];
+    wheel_ctx_t wheel[2];
+    state_vec_t target_state;
+    state_vec_t current_state[2]; // 0 : LEFT, 1 : RIGHT
+    control_vec_t control[2];     // 0 : LEFT, 1 : RIGHT
+    float K[2][2][6];             // 0 : LEFT, 1 : RIGHT;0 : T_p, 1: T_w
 };
 
 struct wl_chassis_ctx_t
@@ -103,10 +147,11 @@ class wl_chassis_t final
     // 私有成员变量
 
     // 辅助函数
-    void _vmc_trans();
+    void _vmc_trans_j2v();
     void _calculate();
-    void _vmc_control();
-    void _send_torque();
+    void _vmc_trans_v2j();
+    void _send_joint_torque();
+    void _send_wheel_torque();
 
     using owner = wl_chassis_t;
 
@@ -125,12 +170,19 @@ class wl_chassis_t final
             void execute(owner *owner) override;
             void exit(owner *owner) override;
         };
+        struct state_normal_t final : public state_t<owner>
+        {
+            void enter(owner *owner) override;
+            void execute(owner *owner) override;
+            void exit(owner *owner) override;
+        };
         void on_enter(wl_chassis_t *ctx) override;
         void on_execute(wl_chassis_t *ctx) override;
         void on_exit(wl_chassis_t *ctx) override;
 
       private:
         state_manual_t _state_manual;
+        state_normal_t _state_normal;
     };
 
     fsm_t<owner> _main_fsm;
