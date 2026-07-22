@@ -6,6 +6,7 @@
 #include "pyro_module_base.h"
 #include "pyro_motor_base.h"
 #include "wl_config.h"
+#include "dsp/window_functions.h"
 
 namespace pyro
 {
@@ -21,7 +22,6 @@ struct wl_chassis_deps_t
     {
         pd_ctrl_t *leg_length[2];
         pd_ctrl_t *leg_rad[2];
-        pid_t *wheel[2];
     };
     motor_deps_t motor;
     pid_deps_t pid;
@@ -31,7 +31,8 @@ struct wl_chassis_cmd_t final : public cmd_base_t
 {
     float delta_leg_length[2];
     float delta_leg_rad[2];
-    float vx;
+    float v;
+    float delta_yaw;
     bool balance_flag = false;
 
 
@@ -98,7 +99,11 @@ struct control_vec_t
     };
 };
 
-
+struct ins_data_t
+{
+    float euler_rad[3];
+    float gyro[3];
+};
 
 struct wl_chassis_data_ctx_t
 {
@@ -108,6 +113,7 @@ struct wl_chassis_data_ctx_t
     state_vec_t current_state[2]; // 0 : LEFT, 1 : RIGHT
     control_vec_t control[2];     // 0 : LEFT, 1 : RIGHT
     float K[2][2][6];             // 0 : LEFT, 1 : RIGHT;0 : T_p, 1: T_w
+
 };
 
 struct wl_chassis_ctx_t

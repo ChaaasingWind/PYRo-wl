@@ -70,26 +70,34 @@ void chassis_dr162cmd()
     auto &vrc = pyro::rc_drv_t::read();
 
     // 右开关控制底盘使能模式：不处于MID或DOWN时，失能
-    if (pyro::sw_pos_t::MID != vrc.switches.right.current_pos)
+    if (pyro::sw_pos_t::DOWN == vrc.switches.right.current_pos)
     {
         wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::PASSIVE;
-        wl_chassis_cmd_ptr->delta_leg_length[leg_def::L]  = 0.0f;
+        wl_chassis_cmd_ptr->delta_leg_length[leg_def::L] = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = 0.0f;
-        wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]     = 0.0f;
+        wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]    = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = 0.0f;
-        return;
     }
+    else if (pyro::sw_pos_t::MID == vrc.switches.right.current_pos)
+    {
+        wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::ACTIVE;
 
-    wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::ACTIVE;
+        // 手动通道输入控制腿长和腿度（角度）的偏置量
 
-    // 手动通道输入控制腿长和腿度（角度）的偏置量
+        wl_chassis_cmd_ptr->delta_leg_length[leg_def::L] = vrc.axes.ly * 0.001f;
+        wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]    = vrc.axes.lx * 0.001f;
+        wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = vrc.axes.ry * 0.001f;
+        wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = vrc.axes.rx * 0.001f;
+        wl_chassis_cmd_ptr->balance_flag = false;
+    }
+    else
+    {
+        wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::ACTIVE;
+        wl_chassis_cmd_ptr->v = vrc.axes.ry * 0.5f;
+        wl_chassis_cmd_ptr->delta_yaw = vrc.axes.lx * 0.001f;
+        wl_chassis_cmd_ptr->balance_flag = true;
 
-    wl_chassis_cmd_ptr->delta_leg_length[leg_def::L] = vrc.axes.ly * 0.001f;
-    wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]    = vrc.axes.lx * 0.001f;
-
-    wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] =
-        vrc.axes.ry * 0.0001f;
-    wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R] = vrc.axes.rx * 0.00001f;
+    }
 }
 
 void deps_init()
@@ -149,8 +157,8 @@ void deps_init()
 
     // 2. Initialize conservative PD controllers for unloaded suspended testing.
     // Integral is disabled; only output and derivative filters are enabled.
-    constexpr float OUTPUT_CUTOFF_HZ               = 20.0f;
-    constexpr float DERIVATIVE_CUTOFF_HZ           = 30.0f;
+    constexpr float OUTPUT_CUTOFF_HZ            = 20.0f;
+    constexpr float DERIVATIVE_CUTOFF_HZ        = 30.0f;
 
     // Leg-length PD: output F_L (N), limited to 80 N.
     wl_chassis_deps->pid.leg_length[leg_def::L] = new pyro::pd_ctrl_t(
