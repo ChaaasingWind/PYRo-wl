@@ -55,6 +55,7 @@ struct leg_ctx_t
     float error_leg_rad;
 
     float J_L;
+    float L_wp;
     float out_F_L; // F_L * J_L = tau_2 - tau_1
     float out_T_p; // T_p = tau_2 + tau_1
     float current_F_L;

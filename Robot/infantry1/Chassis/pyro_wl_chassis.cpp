@@ -134,6 +134,19 @@ void wl_chassis_t::_update_feedback()
     _ctx.data.current_state[leg_def::R].dot_beta = - _ctx.data.leg[leg_def::R].current_leg_radps - _ctx.data.ins.gyro[1];
     _ctx.data.current_state[leg_def::R].gamma = _ctx.data.ins.euler_rad[1];
     _ctx.data.current_state[leg_def::R].dot_gamma = _ctx.data.ins.gyro[1];
+
+    for (auto leg = 0 ; leg < 2 ; leg++)
+    {
+        _ctx.data.leg[leg].L_wp = evaluate_polynomial(_ctx.data.leg[leg].current_leg_length, L_WP_POLY_COEF, L_WP_POLY_DEGREE);
+        auto K = _ctx.data.K[leg];
+        for (int i = 0 ; i < 2 ; i++)
+        {
+            for (int j = 0 ; j < 6 ; j++)
+            {
+                K[i][j] = evaluate_polynomial(_ctx.data.leg[leg].L_wp,K_POLY_COEF[i][j],K_POLY_DEGREE);
+            }
+        }
+    }
 }
 
 void wl_chassis_t::_fsm_execute()
@@ -214,11 +227,13 @@ void wl_chassis_t::_balance_calculate()
 
         //K[leg][0] -> T_s, K[leg][1] -> T_p.
         float error[6];
+        _ctx.data.control[leg].T_w = 0.0f;
+        _ctx.data.control[leg].T_p = 0.0f;
         for (uint8_t state = 0; state < 6; ++state)
         {
             error[state] = _ctx.data.target_state.data[state] - _ctx.data.current_state[leg].data[state];
-            _ctx.data.control->T_w = _ctx.data.K[leg][0][state] * error[state];
-            _ctx.data.control->T_p = _ctx.data.K[leg][1][state] * error[state];
+            _ctx.data.control[leg].T_w += _ctx.data.K[leg][0][state] * error[state];
+            _ctx.data.control[leg].T_p += _ctx.data.K[leg][1][state] * error[state];
         }
 
         // Keep leg-length
@@ -227,8 +242,8 @@ void wl_chassis_t::_balance_calculate()
             leg_ctx.current_leg_length,
             leg_ctx.current_leg_speed);
 
-        leg_ctx.out_T_p = _ctx.data.control->T_p;
-        _ctx.data.wheel[leg].out_T_w = _ctx.data.control->T_w;
+        leg_ctx.out_T_p = _ctx.data.control[leg].T_p;
+        _ctx.data.wheel[leg].out_T_w = _ctx.data.control[leg].T_w;
     }
 }
 

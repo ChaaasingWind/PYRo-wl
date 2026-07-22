@@ -29,6 +29,10 @@ constexpr float STOP_VELOCITY_DEADBAND = 0.05f;
 constexpr float K_t                   = 0.21777611f;
 constexpr float reduction_ratio       = 13.94f;
 constexpr float rec_reduction_ratio   = 1 / reduction_ratio;
+constexpr uint32_t L_WP_POLY_DEGREE = 3;
+constexpr uint32_t K_POLY_DEGREE = 3;
+constexpr float L_WP_POLY_COEF[L_WP_POLY_DEGREE + 1] = {};
+constexpr float K_POLY_COEF[2][6][K_POLY_DEGREE + 1] = {};
 
 // Incremental wheel-odometry parameter. Fill in the real wheel radius [m]
 // before using odom_x/odom_dx for walking experiments.
