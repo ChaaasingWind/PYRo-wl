@@ -23,7 +23,8 @@ constexpr float LEFT_LEG_DIRECTION    = -1.0f;
 constexpr float RIGHT_LEG_DIRECTION   = 1.0f;
 
 constexpr float LEFT_WHEEL_DIRECTION  = -1.0f;
-constexpr float RIGHT_WHEEL_DIRECTION = 0.0f;
+constexpr float RIGHT_WHEEL_DIRECTION = 1.0f;
+constexpr float STOP_VELOCITY_DEADBAND = 0.05f;
 
 constexpr float K_t                   = 0.21777611f;
 constexpr float reduction_ratio       = 13.94f;

@@ -12,13 +12,18 @@ void wl_chassis_t::fsm_active_t::on_enter(wl_chassis_t *owner)
     owner->_ctx.motor.joint[leg_def::L][motor_def::KNEE]->enable();
     owner->_ctx.motor.joint[leg_def::R][motor_def::HIP]->enable();
     owner->_ctx.motor.joint[leg_def::R][motor_def::KNEE]->enable();
-
-    change_state(&_state_manual);
 }
 
 void wl_chassis_t::fsm_active_t::on_execute(wl_chassis_t *ctx)
 {
-    (void)ctx;
+    if (ctx->_current_cmd.balance_flag)
+    {
+        change_state(&_state_normal);
+    }
+    else
+    {
+        change_state(&_state_manual);
+    }
 }
 
 void wl_chassis_t::fsm_active_t::on_exit(wl_chassis_t *ctx)
