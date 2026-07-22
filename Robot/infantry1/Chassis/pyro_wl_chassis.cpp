@@ -1,6 +1,8 @@
 #include "pyro_wl_chassis.h"
 
 #include "pyro_algo_common.h"
+#include "pyro_dwt_drv.h"
+#include "pyro_ins.h"
 #include "dsp/fast_math_functions.h"
 
 #include <algorithm>
@@ -31,6 +33,12 @@ status_t wl_chassis_t::_init()
 
 void wl_chassis_t::_update_feedback()
 {
+    static uint32_t dwt_cnt = 0;
+    const float measured_dt = dwt_drv_t::get_delta_t(&dwt_cnt);
+    _ctx.data._dt = (measured_dt > 1.0e-5f && measured_dt < 0.1f)
+                       ? measured_dt
+                       : 0.001f;
+
     _ctx.motor.joint[leg_def::L][motor_def::HIP]->update_feedback();
     _ctx.motor.joint[leg_def::L][motor_def::KNEE]->update_feedback();
     _ctx.motor.joint[leg_def::R][motor_def::HIP]->update_feedback();
@@ -102,7 +110,27 @@ void wl_chassis_t::_update_feedback()
     _ctx.data.wheel[leg_def::R].current_T_w =
         _ctx.motor.wheel[leg_def::R]->get_current_torque() * _ctx.data.wheel[leg_def::R].direction * rec_reduction_ratio;
 
+    _ctx.data.odom.real_dot_x[1] = _ctx.data.odom.real_dot_x[0];
+    _ctx.data.odom.real_dot_x[0] = 0.5f * WHEEL_RADIUS * (_ctx.data.wheel[leg_def::L].current_radps + _ctx.data.wheel[leg_def::R].current_radps);
+    _ctx.data.odom.real_x += (_ctx.data.odom.real_dot_x[0] + _ctx.data.odom.real_dot_x[1]) * 0.5f * _ctx.data._dt;
 
+    auto ins = ins_drv_t::get_instance();
+    ins->get_rads_n(&_ctx.data.ins.euler_rad[0], &_ctx.data.ins.euler_rad[1], &_ctx.data.ins.euler_rad[1]);
+    ins->get_gyro_b(&_ctx.data.ins.gyro[0], &_ctx.data.ins.gyro[1], &_ctx.data.ins.gyro[2]);
+
+    _ctx.data.current_state[leg_def::L].x = _ctx.data.odom.real_x;
+    _ctx.data.current_state[leg_def::L].dot_x = _ctx.data.odom.real_dot_x[0];
+    _ctx.data.current_state[leg_def::L].beta = PI / 2 - _ctx.data.leg[leg_def::L].current_leg_rad - _ctx.data.ins.euler_rad[1];
+    _ctx.data.current_state[leg_def::L].dot_beta = - _ctx.data.leg[leg_def::L].current_leg_radps - _ctx.data.ins.gyro[1];
+    _ctx.data.current_state[leg_def::L].gamma = _ctx.data.ins.euler_rad[1];
+    _ctx.data.current_state[leg_def::L].dot_gamma = _ctx.data.ins.gyro[1];
+
+    _ctx.data.current_state[leg_def::R].x = _ctx.data.odom.real_x;
+    _ctx.data.current_state[leg_def::R].dot_x = _ctx.data.odom.real_dot_x[0];
+    _ctx.data.current_state[leg_def::R].beta = PI / 2 - _ctx.data.leg[leg_def::R].current_leg_rad - _ctx.data.ins.euler_rad[1];
+    _ctx.data.current_state[leg_def::R].dot_beta = - _ctx.data.leg[leg_def::R].current_leg_radps - _ctx.data.ins.gyro[1];
+    _ctx.data.current_state[leg_def::R].gamma = _ctx.data.ins.euler_rad[1];
+    _ctx.data.current_state[leg_def::R].dot_gamma = _ctx.data.ins.gyro[1];
 }
 
 void wl_chassis_t::_fsm_execute()
@@ -153,7 +181,7 @@ void wl_chassis_t::_vmc_trans_j2v()
     }
 }
 
-void wl_chassis_t::_calculate()
+void wl_chassis_t::_manual_calculate()
 {
     _ctx.data.leg[leg_def::L].out_F_L =
         _ctx.pid.leg_length[leg_def::L]->calculate(
@@ -173,6 +201,32 @@ void wl_chassis_t::_calculate()
         _ctx.pid.leg_rad[leg_def::R]->calculate(
             0.0f, _ctx.data.leg[leg_def::R].error_leg_rad,
             _ctx.data.leg[leg_def::R].current_leg_radps);
+}
+
+void wl_chassis_t::_balance_calculate()
+{
+    for (uint8_t leg = 0; leg < 2; ++leg)
+    {
+        leg_ctx_t &leg_ctx = _ctx.data.leg[leg];
+
+        //K[leg][0] -> T_s, K[leg][1] -> T_p.
+        float error[6];
+        for (uint8_t state = 0; state < 6; ++state)
+        {
+            error[state] = _ctx.data.target_state.data[state] - _ctx.data.current_state[leg].data[state];
+            _ctx.data.control->T_w = _ctx.data.K[leg][0][state] * error[state];
+            _ctx.data.control->T_p = _ctx.data.K[leg][1][state] * error[state];
+        }
+
+        // Keep leg-length
+        leg_ctx.out_F_L = _ctx.pid.leg_length[leg]->calculate(
+            leg_ctx.target_leg_length,
+            leg_ctx.current_leg_length,
+            leg_ctx.current_leg_speed);
+
+        leg_ctx.out_T_p = _ctx.data.control->T_p;
+        _ctx.data.wheel[leg].out_T_w = _ctx.data.control->T_w;
+    }
 }
 
 void wl_chassis_t::_vmc_trans_v2j()

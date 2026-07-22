@@ -93,16 +93,24 @@ struct control_vec_t
     {
         struct
         {
-            float T_p, T_w;
+            float T_w, T_p;
         };
         float data[2];
     };
+};
+struct odom_t
+{
+    float real_x;
+    float real_dot_x[2]; // 0 : v_x(t) , 1 :v_x(t-1)
+    float target_x;
+    float target_dot_x[2];// 0 : v_x(t) , 1 :v_x(t-1)
 };
 
 struct ins_data_t
 {
     float euler_rad[3];
     float gyro[3];
+    float accel[3];
 };
 
 struct wl_chassis_data_ctx_t
@@ -112,8 +120,10 @@ struct wl_chassis_data_ctx_t
     state_vec_t target_state;
     state_vec_t current_state[2]; // 0 : LEFT, 1 : RIGHT
     control_vec_t control[2];     // 0 : LEFT, 1 : RIGHT
-    float K[2][2][6];             // 0 : LEFT, 1 : RIGHT;0 : T_p, 1: T_w
-
+    float K[2][2][6];             // 0 : LEFT, 1 : RIGHT;0 : T_w, 1: T_p
+    odom_t odom;
+    ins_data_t ins;
+    float _dt;
 };
 
 struct wl_chassis_ctx_t
@@ -154,7 +164,8 @@ class wl_chassis_t final
 
     // 辅助函数
     void _vmc_trans_j2v();
-    void _calculate();
+    void _manual_calculate();
+    void _balance_calculate();
     void _vmc_trans_v2j();
     void _send_joint_torque();
     void _send_wheel_torque();

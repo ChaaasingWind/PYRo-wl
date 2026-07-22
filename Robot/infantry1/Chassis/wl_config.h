@@ -29,6 +29,10 @@ constexpr float K_t                   = 0.21777611f;
 constexpr float reduction_ratio       = 13.94f;
 constexpr float rec_reduction_ratio   = 1 / reduction_ratio;
 
+// Incremental wheel-odometry parameter. Fill in the real wheel radius [m]
+// before using odom_x/odom_dx for walking experiments.
+constexpr float WHEEL_RADIUS           = 0.06f;
+
 
 namespace leg_def
 {

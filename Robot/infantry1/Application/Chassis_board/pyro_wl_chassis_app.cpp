@@ -6,6 +6,7 @@
 #include "pyro_wl_chassis.h"
 #include "pyro_dm_motor_drv.h"
 #include "pyro_bsp_can.h"
+#include "pyro_dji_motor_drv.h"
 #include "wl_config.h"
 
 using namespace pyro;
@@ -88,15 +89,14 @@ void chassis_dr162cmd()
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]    = vrc.axes.lx * 0.001f;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = vrc.axes.ry * 0.001f;
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = vrc.axes.rx * 0.001f;
-        wl_chassis_cmd_ptr->balance_flag = false;
+        wl_chassis_cmd_ptr->balance_flag                 = false;
     }
     else
     {
-        wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::ACTIVE;
-        wl_chassis_cmd_ptr->v = vrc.axes.ry * 0.5f;
-        wl_chassis_cmd_ptr->delta_yaw = vrc.axes.lx * 0.001f;
+        wl_chassis_cmd_ptr->mode         = pyro::cmd_base_t::mode_t::ACTIVE;
+        wl_chassis_cmd_ptr->v            = vrc.axes.ry * 0.5f;
+        wl_chassis_cmd_ptr->delta_yaw    = vrc.axes.lx * 0.001f;
         wl_chassis_cmd_ptr->balance_flag = true;
-
     }
 }
 
@@ -113,6 +113,10 @@ void deps_init()
         new pyro::dm_motor_drv_t(0x02, 0x12, pyro::bsp_can::can1);
     wl_chassis_deps->motor.joint[leg_def::R][motor_def::KNEE] =
         new pyro::dm_motor_drv_t(0x01, 0x11, pyro::bsp_can::can1);
+    wl_chassis_deps->motor.wheel[leg_def::L] = new pyro::dji_m3508_motor_drv_t(
+        pyro::dji_motor_tx_frame_t::id_2, pyro::bsp_can::can2);
+    wl_chassis_deps->motor.wheel[leg_def::R] = new pyro::dji_m3508_motor_drv_t(
+        pyro::dji_motor_tx_frame_t::id_3, pyro::bsp_can::can1);
 
     static_cast<dm_motor_drv_t *>(
         wl_chassis_deps->motor.joint[leg_def::L][motor_def::HIP])

@@ -1,24 +1,43 @@
-#include "pyro_dm_motor_drv.h"
 #include "pyro_wl_chassis.h"
+
+#include <cmath>
 
 namespace pyro
 {
 
 void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
 {
-    owner->_ctx.data.target_state = {};
-    owner->_ctx.data.current_state[0].x = 0;
-    owner->_ctx.data.current_state[1].x = 0;
+    owner->_ctx.data.odom.real_x            = 0;
+    owner->_ctx.data.odom.target_x          = 0;
+    owner->_ctx.data.odom.target_dot_x[0]   = 0;
+    owner->_ctx.data.odom.target_dot_x[1]   = 0;
+
+    owner->_ctx.data.target_state.x         = 0;
+    owner->_ctx.data.target_state.dot_x     = 0.0f;
+    owner->_ctx.data.target_state.beta      = 0.0f;
+    owner->_ctx.data.target_state.dot_beta  = 0.0f;
+    owner->_ctx.data.target_state.gamma     = 0.0f;
+    owner->_ctx.data.target_state.dot_gamma = 0.0f;
 }
 
-void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *ctx)
+void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
 {
-    (void)ctx;
+    owner->_ctx.data.odom.target_dot_x[1] =
+        owner->_ctx.data.odom.target_dot_x[0];
+    owner->_ctx.data.odom.target_dot_x[0] = owner->_current_cmd.v;
+    owner->_ctx.data.odom.target_x += (owner->_ctx.data.odom.target_dot_x[0] +
+                                       owner->_ctx.data.odom.target_dot_x[1]) *
+                                      0.5f * owner->_ctx.data._dt;
+
+
+    owner->_balance_calculate();
+    owner->_vmc_trans_v2j();
+    owner->_send_joint_torque();
 }
 
-void wl_chassis_t::fsm_active_t::state_normal_t::exit(wl_chassis_t *ctx)
+void wl_chassis_t::fsm_active_t::state_normal_t::exit(wl_chassis_t *owner)
 {
-    (void)ctx;
+    (void)owner;
 }
 
 } // namespace pyro
