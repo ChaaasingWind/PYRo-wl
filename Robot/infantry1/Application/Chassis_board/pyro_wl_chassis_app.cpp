@@ -24,7 +24,6 @@ extern "C"
 {
     void infantry1_chassis_thread(void *argument)
     {
-        static bool leg_toggle_state = false;
 
         while (true)
         {
@@ -78,8 +77,8 @@ void chassis_dr162cmd()
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]    = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = 0.0f;
-        wl_chassis_cmd_ptr->v            = 0.0f;
-        wl_chassis_cmd_ptr->delta_yaw    = 0.0f;
+        wl_chassis_cmd_ptr->v                            = 0.0f;
+        wl_chassis_cmd_ptr->delta_yaw                    = 0.0f;
     }
     else if (pyro::sw_pos_t::MID == vrc.switches.right.current_pos)
     {
@@ -91,20 +90,20 @@ void chassis_dr162cmd()
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]    = vrc.axes.lx * 0.001f;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = vrc.axes.ry * 0.001f;
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = vrc.axes.rx * 0.001f;
-        wl_chassis_cmd_ptr->v            = 0.0f;
-        wl_chassis_cmd_ptr->delta_yaw    = 0.0f;
+        wl_chassis_cmd_ptr->v                            = 0.0f;
+        wl_chassis_cmd_ptr->delta_yaw                    = 0.0f;
         wl_chassis_cmd_ptr->balance_flag                 = false;
     }
     else
     {
-        wl_chassis_cmd_ptr->mode         = pyro::cmd_base_t::mode_t::ACTIVE;
+        wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::ACTIVE;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::L] = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]    = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = 0.0f;
-        wl_chassis_cmd_ptr->v            = vrc.axes.ry * 0.5f;
-        wl_chassis_cmd_ptr->delta_yaw    = vrc.axes.lx * 0.001f;
-        wl_chassis_cmd_ptr->balance_flag = true;
+        wl_chassis_cmd_ptr->v                            = vrc.axes.ry * 0.5f;
+        wl_chassis_cmd_ptr->delta_yaw                    = vrc.axes.lx * 0.001f;
+        wl_chassis_cmd_ptr->balance_flag                 = true;
     }
 }
 

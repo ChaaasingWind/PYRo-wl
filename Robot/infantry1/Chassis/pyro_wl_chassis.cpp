@@ -16,134 +16,115 @@ wl_chassis_t::wl_chassis_t() : module_base_t("wl_chassis")
 
 status_t wl_chassis_t::_init()
 {
-    _ctx                                          = {};
-    _ctx.motor                                    = _module_deps.motor;
-    _ctx.pid                                      = _module_deps.pid;
+    _ctx                                      = {};
+    _ctx.motor                                = _module_deps.motor;
+    _ctx.pid                                  = _module_deps.pid;
 
-    _current_cmd.delta_leg_length[leg_def::L]  = 0.0f;
+    _current_cmd.delta_leg_length[leg_def::L] = 0.0f;
     _current_cmd.delta_leg_length[leg_def::R] = 0.0f;
-    _current_cmd.delta_leg_rad[leg_def::L]     = 0.0f;
+    _current_cmd.delta_leg_rad[leg_def::L]    = 0.0f;
     _current_cmd.delta_leg_rad[leg_def::R]    = 0.0f;
 
-    _ctx.data.leg[leg_def::L].direction        = LEFT_LEG_DIRECTION;
+    _ctx.data.leg[leg_def::L].direction       = LEFT_LEG_DIRECTION;
     _ctx.data.leg[leg_def::R].direction       = RIGHT_LEG_DIRECTION;
 
-    _ctx.data.wheel[leg_def::L].direction        = LEFT_WHEEL_DIRECTION;
-    _ctx.data.wheel[leg_def::R].direction       = RIGHT_WHEEL_DIRECTION;
+    _ctx.data.wheel[leg_def::L].direction     = LEFT_WHEEL_DIRECTION;
+    _ctx.data.wheel[leg_def::R].direction     = RIGHT_WHEEL_DIRECTION;
 
     return PYRO_OK;
 }
 
 void wl_chassis_t::_update_feedback()
 {
+    // 1. Update timing.
     static uint32_t dwt_cnt = 0;
     const float measured_dt = dwt_drv_t::get_delta_t(&dwt_cnt);
-    _ctx.data._dt = (measured_dt > 1.0e-5f && measured_dt < 0.1f)
-                       ? measured_dt
-                       : 0.001f;
+    _ctx.data._dt =
+        (measured_dt > 1.0e-5f && measured_dt < 0.1f) ? measured_dt : 0.001f;
 
-    _ctx.motor.joint[leg_def::L][motor_def::HIP]->update_feedback();
-    _ctx.motor.joint[leg_def::L][motor_def::KNEE]->update_feedback();
-    _ctx.motor.joint[leg_def::R][motor_def::HIP]->update_feedback();
-    _ctx.motor.joint[leg_def::R][motor_def::KNEE]->update_feedback();
-    _ctx.motor.wheel[leg_def::L]->update_feedback();
-    _ctx.motor.wheel[leg_def::R]->update_feedback();
+    // 2. Update all motor feedback before reading cached values.
+    for (uint8_t leg = 0; leg < 2; ++leg)
+    {
+        for (uint8_t joint = 0; joint < 2; ++joint)
+        {
+            _ctx.motor.joint[leg][joint]->update_feedback();
+        }
+        _ctx.motor.wheel[leg]->update_feedback();
+    }
 
+    // 3. Read and organize all leg-related feedback.
+    constexpr float JOINT_POSITION_OFFSET[2][2] = {
+        {LEFT_HIP_OFFSET, LEFT_KNEE_OFFSET},
+        {RIGHT_HIP_OFFSET, RIGHT_KNEE_OFFSET},
+    };
 
-    float raw_rad_lh = _ctx.motor.joint[leg_def::L][motor_def::HIP]
-                           ->get_current_position() +
-                       LEFT_HIP_OFFSET;
-    float raw_rad_lk = _ctx.motor.joint[leg_def::L][motor_def::KNEE]
-                           ->get_current_position() +
-                       LEFT_KNEE_OFFSET;
-    float raw_rad_rh = _ctx.motor.joint[leg_def::R][motor_def::HIP]
-                           ->get_current_position() +
-                       RIGHT_HIP_OFFSET;
-    float raw_rad_rk = _ctx.motor.joint[leg_def::R][motor_def::KNEE]
-                           ->get_current_position() +
-                       RIGHT_KNEE_OFFSET;
-    _ctx.data.leg[leg_def::L].current_joint_rad[motor_def::HIP] =
-        loop_fp32_constrain(raw_rad_lh, -PI, PI) *
-        _ctx.data.leg[leg_def::L].direction;
-    _ctx.data.leg[leg_def::L].current_joint_rad[motor_def::KNEE] =
-        loop_fp32_constrain(raw_rad_lk, -PI, PI) *
-        _ctx.data.leg[leg_def::L].direction;
-    _ctx.data.leg[leg_def::R].current_joint_rad[motor_def::HIP] =
-        loop_fp32_constrain(raw_rad_rh, -PI, PI) *
-        _ctx.data.leg[leg_def::R].direction;
-    _ctx.data.leg[leg_def::R].current_joint_rad[motor_def::KNEE] =
-        loop_fp32_constrain(raw_rad_rk, -PI, PI) *
-        _ctx.data.leg[leg_def::R].direction;
+    for (uint8_t leg = 0; leg < 2; ++leg)
+    {
+        leg_ctx_t &leg_ctx     = _ctx.data.leg[leg];
+        wheel_ctx_t &wheel_ctx = _ctx.data.wheel[leg];
 
-    _ctx.data.leg[leg_def::L].current_joint_torque[motor_def::HIP] =
-        _ctx.data.leg[leg_def::L].direction *
-        _ctx.motor.joint[leg_def::L][motor_def::HIP]->get_current_torque();
-    _ctx.data.leg[leg_def::L].current_joint_torque[motor_def::KNEE] =
-        _ctx.data.leg[leg_def::L].direction *
-        _ctx.motor.joint[leg_def::L][motor_def::KNEE]->get_current_torque();
-    _ctx.data.leg[leg_def::R].current_joint_torque[motor_def::HIP] =
-        _ctx.data.leg[leg_def::R].direction *
-        _ctx.motor.joint[leg_def::R][motor_def::HIP]->get_current_torque();
-    _ctx.data.leg[leg_def::R].current_joint_torque[motor_def::KNEE] =
-        _ctx.data.leg[leg_def::R].direction *
-        _ctx.motor.joint[leg_def::R][motor_def::KNEE]->get_current_torque();
+        for (uint8_t joint = 0; joint < 2; ++joint)
+        {
+            motor_base_t *motor = _ctx.motor.joint[leg][joint];
+            const float raw_rad = motor->get_current_position() +
+                                  JOINT_POSITION_OFFSET[leg][joint];
 
-    _ctx.data.leg[leg_def::L].current_joint_radps[motor_def::HIP] =
-        _ctx.data.leg[leg_def::L].direction *
-        _ctx.motor.joint[leg_def::L][motor_def::HIP]->get_current_rotate();
-    _ctx.data.leg[leg_def::L].current_joint_radps[motor_def::KNEE] =
-        _ctx.data.leg[leg_def::L].direction *
-        _ctx.motor.joint[leg_def::L][motor_def::KNEE]->get_current_rotate();
-    _ctx.data.leg[leg_def::R].current_joint_radps[motor_def::HIP] =
-        _ctx.data.leg[leg_def::R].direction *
-        _ctx.motor.joint[leg_def::R][motor_def::HIP]->get_current_rotate();
-    _ctx.data.leg[leg_def::R].current_joint_radps[motor_def::KNEE] =
-        _ctx.data.leg[leg_def::R].direction *
-        _ctx.motor.joint[leg_def::R][motor_def::KNEE]->get_current_rotate();
-    // The existing VMC transform is intentionally left unchanged.
+            leg_ctx.current_joint_rad[joint] =
+                leg_ctx.direction * loop_fp32_constrain(raw_rad, -PI, PI);
+            leg_ctx.current_joint_torque[joint] =
+                leg_ctx.direction * motor->get_current_torque();
+            leg_ctx.current_joint_radps[joint] =
+                leg_ctx.direction * motor->get_current_rotate();
+        }
+
+        motor_base_t *wheel_motor = _ctx.motor.wheel[leg];
+        wheel_ctx.current_radps   = wheel_motor->get_current_rotate() *
+                                  wheel_ctx.direction * rec_reduction_ratio;
+        wheel_ctx.current_T_w = wheel_motor->get_current_torque() *
+                                wheel_ctx.direction * rec_reduction_ratio;
+    }
+
+    // 4. Convert joint-space feedback to virtual-mechanism feedback.
     _vmc_trans_j2v();
 
-    _ctx.data.wheel[leg_def::L].current_radps =
-        _ctx.motor.wheel[leg_def::L]->get_current_rotate() * _ctx.data.wheel[leg_def::L].direction * rec_reduction_ratio;
-    _ctx.data.wheel[leg_def::R].current_radps =
-        _ctx.motor.wheel[leg_def::R]->get_current_rotate() * _ctx.data.wheel[leg_def::R].direction * rec_reduction_ratio;
-
-    _ctx.data.wheel[leg_def::L].current_T_w =
-        _ctx.motor.wheel[leg_def::L]->get_current_torque() * _ctx.data.wheel[leg_def::L].direction * rec_reduction_ratio;
-    _ctx.data.wheel[leg_def::R].current_T_w =
-        _ctx.motor.wheel[leg_def::R]->get_current_torque() * _ctx.data.wheel[leg_def::R].direction * rec_reduction_ratio;
-
+    // 5. Update wheel odometry.
     _ctx.data.odom.real_dot_x[1] = _ctx.data.odom.real_dot_x[0];
-    _ctx.data.odom.real_dot_x[0] = 0.5f * WHEEL_RADIUS * (_ctx.data.wheel[leg_def::L].current_radps + _ctx.data.wheel[leg_def::R].current_radps);
-    _ctx.data.odom.real_x += (_ctx.data.odom.real_dot_x[0] + _ctx.data.odom.real_dot_x[1]) * 0.5f * _ctx.data._dt;
+    _ctx.data.odom.real_dot_x[0] = 0.5f * WHEEL_RADIUS *
+                                   (_ctx.data.wheel[leg_def::L].current_radps +
+                                    _ctx.data.wheel[leg_def::R].current_radps);
+    _ctx.data.odom.real_x +=
+        0.5f * (_ctx.data.odom.real_dot_x[0] + _ctx.data.odom.real_dot_x[1]) *
+        _ctx.data._dt;
 
+    // 6. Read IMU feedback.
     auto ins = ins_drv_t::get_instance();
-    ins->get_rads_n(&_ctx.data.ins.euler_rad[0], &_ctx.data.ins.euler_rad[1], &_ctx.data.ins.euler_rad[2]);
-    ins->get_gyro_b(&_ctx.data.ins.gyro[0], &_ctx.data.ins.gyro[1], &_ctx.data.ins.gyro[2]);
+    ins->get_rads_n(&_ctx.data.ins.euler_rad[0], &_ctx.data.ins.euler_rad[1],
+                    &_ctx.data.ins.euler_rad[2]);
+    ins->get_gyro_b(&_ctx.data.ins.gyro[0], &_ctx.data.ins.gyro[1],
+                    &_ctx.data.ins.gyro[2]);
 
-    _ctx.data.current_state[leg_def::L].x = _ctx.data.odom.real_x;
-    _ctx.data.current_state[leg_def::L].dot_x = _ctx.data.odom.real_dot_x[0];
-    _ctx.data.current_state[leg_def::L].beta = PI / 2 - _ctx.data.leg[leg_def::L].current_leg_rad - _ctx.data.ins.euler_rad[1];
-    _ctx.data.current_state[leg_def::L].dot_beta = - _ctx.data.leg[leg_def::L].current_leg_radps - _ctx.data.ins.gyro[1];
-    _ctx.data.current_state[leg_def::L].gamma = _ctx.data.ins.euler_rad[1];
-    _ctx.data.current_state[leg_def::L].dot_gamma = _ctx.data.ins.gyro[1];
-
-    _ctx.data.current_state[leg_def::R].x = _ctx.data.odom.real_x;
-    _ctx.data.current_state[leg_def::R].dot_x = _ctx.data.odom.real_dot_x[0];
-    _ctx.data.current_state[leg_def::R].beta = PI / 2 - _ctx.data.leg[leg_def::R].current_leg_rad - _ctx.data.ins.euler_rad[1];
-    _ctx.data.current_state[leg_def::R].dot_beta = - _ctx.data.leg[leg_def::R].current_leg_radps - _ctx.data.ins.gyro[1];
-    _ctx.data.current_state[leg_def::R].gamma = _ctx.data.ins.euler_rad[1];
-    _ctx.data.current_state[leg_def::R].dot_gamma = _ctx.data.ins.gyro[1];
-
-    for (auto leg = 0 ; leg < 2 ; leg++)
+    // 7. Build current states and schedule LQR gains.
+    for (uint8_t leg = 0; leg < 2; ++leg)
     {
-        _ctx.data.leg[leg].L_wp = evaluate_polynomial(_ctx.data.leg[leg].current_leg_length, L_WP_POLY_COEF, L_WP_POLY_DEGREE);
-        auto K = _ctx.data.K[leg];
-        for (int i = 0 ; i < 2 ; i++)
+        leg_ctx_t &leg_ctx = _ctx.data.leg[leg];
+        state_vec_t &state = _ctx.data.current_state[leg];
+
+        state.x            = _ctx.data.odom.real_x;
+        state.dot_x        = _ctx.data.odom.real_dot_x[0];
+        state.beta =
+            PI / 2 - leg_ctx.current_leg_rad - _ctx.data.ins.euler_rad[1];
+        state.dot_beta  = -leg_ctx.current_leg_radps - _ctx.data.ins.gyro[1];
+        state.gamma     = _ctx.data.ins.euler_rad[1];
+        state.dot_gamma = _ctx.data.ins.gyro[1];
+
+        auto &K         = _ctx.data.K[leg];
+        for (uint8_t input = 0; input < 2; ++input)
         {
-            for (int j = 0 ; j < 6 ; j++)
+            for (uint8_t state_index = 0; state_index < 6; ++state_index)
             {
-                K[i][j] = evaluate_polynomial(_ctx.data.leg[leg].L_wp,K_POLY_COEF[i][j],K_POLY_DEGREE);
+                K[input][state_index] = evaluate_polynomial(
+                    leg_ctx.L_wp, K_POLY_COEF[input][state_index],
+                    K_POLY_DEGREE);
             }
         }
     }
@@ -181,12 +162,14 @@ void wl_chassis_t::_vmc_trans_j2v()
         float OJ4              = OH + HJ4;
         leg.J_L                = -OJ8 * sin_theta * (OJ4 / HJ4);
         leg.current_leg_length = OJ4 * OJ8 / OJ5;
-        leg.current_leg_speed  = dot_theta * leg.J_L;
+        leg.L_wp = evaluate_polynomial(leg.current_leg_length, L_WP_POLY_COEF,
+                                       L_WP_POLY_DEGREE);
+        leg.current_leg_speed = dot_theta * leg.J_L;
 
-        const float raw_beta   = leg.current_joint_rad[motor_def::HIP] + theta;
-        const float beta       = loop_fp32_constrain(raw_beta, -PI, PI);
-        leg.current_leg_rad    = beta;
-        leg.current_leg_radps  = (leg.current_joint_radps[motor_def::KNEE] +
+        const float raw_beta  = leg.current_joint_rad[motor_def::HIP] + theta;
+        const float beta      = loop_fp32_constrain(raw_beta, -PI, PI);
+        leg.current_leg_rad   = beta;
+        leg.current_leg_radps = (leg.current_joint_radps[motor_def::KNEE] +
                                  leg.current_joint_radps[motor_def::HIP]) /
                                 2;
         leg.current_F_L = (leg.out_joint_torque[motor_def::KNEE] -
@@ -204,19 +187,17 @@ void wl_chassis_t::_manual_calculate()
             _ctx.data.leg[leg_def::L].target_leg_length,
             _ctx.data.leg[leg_def::L].current_leg_length,
             _ctx.data.leg[leg_def::L].current_leg_speed);
-    _ctx.data.leg[leg_def::L].out_T_p =
-        _ctx.pid.leg_rad[leg_def::L]->calculate(
-            0.0f, _ctx.data.leg[leg_def::L].error_leg_rad,
-            _ctx.data.leg[leg_def::L].current_leg_radps);
+    _ctx.data.leg[leg_def::L].out_T_p = _ctx.pid.leg_rad[leg_def::L]->calculate(
+        0.0f, _ctx.data.leg[leg_def::L].error_leg_rad,
+        _ctx.data.leg[leg_def::L].current_leg_radps);
     _ctx.data.leg[leg_def::R].out_F_L =
         _ctx.pid.leg_length[leg_def::R]->calculate(
             _ctx.data.leg[leg_def::R].target_leg_length,
             _ctx.data.leg[leg_def::R].current_leg_length,
             _ctx.data.leg[leg_def::R].current_leg_speed);
-    _ctx.data.leg[leg_def::R].out_T_p =
-        _ctx.pid.leg_rad[leg_def::R]->calculate(
-            0.0f, _ctx.data.leg[leg_def::R].error_leg_rad,
-            _ctx.data.leg[leg_def::R].current_leg_radps);
+    _ctx.data.leg[leg_def::R].out_T_p = _ctx.pid.leg_rad[leg_def::R]->calculate(
+        0.0f, _ctx.data.leg[leg_def::R].error_leg_rad,
+        _ctx.data.leg[leg_def::R].current_leg_radps);
 }
 
 void wl_chassis_t::_balance_calculate()
@@ -225,24 +206,26 @@ void wl_chassis_t::_balance_calculate()
     {
         leg_ctx_t &leg_ctx = _ctx.data.leg[leg];
 
-        //K[leg][0] -> T_s, K[leg][1] -> T_p.
+        // K[leg][0] -> T_s, K[leg][1] -> T_p.
         float error[6];
         _ctx.data.control[leg].T_w = 0.0f;
         _ctx.data.control[leg].T_p = 0.0f;
         for (uint8_t state = 0; state < 6; ++state)
         {
-            error[state] = _ctx.data.target_state.data[state] - _ctx.data.current_state[leg].data[state];
-            _ctx.data.control[leg].T_w += _ctx.data.K[leg][0][state] * error[state];
-            _ctx.data.control[leg].T_p += _ctx.data.K[leg][1][state] * error[state];
+            error[state] = _ctx.data.target_state.data[state] -
+                           _ctx.data.current_state[leg].data[state];
+            _ctx.data.control[leg].T_w +=
+                _ctx.data.K[leg][0][state] * error[state];
+            _ctx.data.control[leg].T_p +=
+                _ctx.data.K[leg][1][state] * error[state];
         }
 
         // Keep leg-length
         leg_ctx.out_F_L = _ctx.pid.leg_length[leg]->calculate(
-            leg_ctx.target_leg_length,
-            leg_ctx.current_leg_length,
+            leg_ctx.target_leg_length, leg_ctx.current_leg_length,
             leg_ctx.current_leg_speed);
 
-        leg_ctx.out_T_p = _ctx.data.control[leg].T_p;
+        leg_ctx.out_T_p              = _ctx.data.control[leg].T_p;
         _ctx.data.wheel[leg].out_T_w = _ctx.data.control[leg].T_w;
     }
 }
