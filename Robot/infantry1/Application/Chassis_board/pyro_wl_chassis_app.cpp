@@ -171,16 +171,15 @@ void deps_init()
     constexpr float OUTPUT_CUTOFF_HZ            = 20.0f;
     constexpr float DERIVATIVE_CUTOFF_HZ        = 10.0f;
 
-    // First hardware-test starting point.
-    // Leg-length PD: output F_L [N].
+    // Leg-length PD: output F_L (N), limited to 80 N.
     wl_chassis_deps->pid.leg_length[leg_def::L] = new pyro::pd_ctrl_t(
-        400.0f, 70.0f, 80.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
+        800.0f, 40.0f, 30.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
     wl_chassis_deps->pid.leg_length[leg_def::R] = new pyro::pd_ctrl_t(
-        400.0f, 70.0f, 80.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
+        800.0f, 40.0f, 30.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
 
-    // Leg-angle PD: output T_p [N m].
+    // Leg-angle PD: output T_p (N m), limited to 32 N m.
     wl_chassis_deps->pid.leg_rad[leg_def::L] = new pyro::pd_ctrl_t(
-        3.0f, 0.4f, 5.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
+        6.0f, 0.3f, 8.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
     wl_chassis_deps->pid.leg_rad[leg_def::R] = new pyro::pd_ctrl_t(
-        3.0f, 0.4f, 5.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
+        6.0f, 0.3f, 8.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
 }

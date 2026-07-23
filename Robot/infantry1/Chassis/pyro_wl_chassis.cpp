@@ -209,7 +209,7 @@ void wl_chassis_t::_balance_calculate()
 
 void wl_chassis_t::_vmc_trans_v2j()
 {
-    constexpr float MAX_MOTOR_TORQUE = 20.0f;
+    constexpr float MAX_MOTOR_TORQUE = 25.0f;
 
     for (auto &leg : _ctx.data.leg)
     {
@@ -245,14 +245,14 @@ void wl_chassis_t::_send_joint_torque()
 
 void wl_chassis_t::_send_wheel_torque()
 {
-    // _ctx.motor.wheel[leg_def::LEFT]->send_torque(
-    //     _ctx.data.wheel[leg_def::LEFT].direction *
-    //     _ctx.data.wheel[leg_def::LEFT].out_current);
-    // _ctx.motor.wheel[leg_def::RIGHT]->send_torque(
-    //     _ctx.data.wheel[leg_def::RIGHT].direction *
-    //     _ctx.data.wheel[leg_def::RIGHT].out_current);
-    _ctx.motor.wheel[leg_def::L]->send_torque(0);
-    _ctx.motor.wheel[leg_def::R]->send_torque(0);
+    _ctx.motor.wheel[leg_def::L]->send_torque(
+        _ctx.data.wheel[leg_def::L].direction *
+        _ctx.data.wheel[leg_def::L].out_current);
+    _ctx.motor.wheel[leg_def::R]->send_torque(
+        _ctx.data.wheel[leg_def::R].direction *
+        _ctx.data.wheel[leg_def::R].out_current);
+    // _ctx.motor.wheel[leg_def::L]->send_torque(0);
+    // _ctx.motor.wheel[leg_def::R]->send_torque(0);
 }
 
 } // namespace pyro
