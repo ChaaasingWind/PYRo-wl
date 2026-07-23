@@ -138,7 +138,7 @@ void wl_chassis_t::_vmc_trans_j2v()
         float OJ4              = OH + HJ4;
         leg.J_L                = -OJ8 * sin_theta * (OJ4 / HJ4);
         leg.current_leg_length = OJ4 * OJ8 / OJ5;
-        leg.L_wp = evaluate_polynomial(leg.current_leg_length, L_WP_POLY_COEF,
+        leg.L_wp = evaluate_polynomial_ascending(leg.current_leg_length, L_WP_POLY_COEF,
                                        L_WP_POLY_DEGREE);
         leg.current_leg_speed = dot_theta * leg.J_L;
 
@@ -203,12 +203,13 @@ void wl_chassis_t::_balance_calculate()
 
         leg_ctx.out_T_p              = _ctx.data.control[leg].T_p;
         _ctx.data.wheel[leg].out_T_w = _ctx.data.control[leg].T_w;
+        _ctx.data.wheel[leg].out_current = std::clamp(_ctx.data.wheel[leg].out_T_w * K_t,-20.0f,20.0f);
     }
 }
 
 void wl_chassis_t::_vmc_trans_v2j()
 {
-    constexpr float MAX_MOTOR_TORQUE = 15.0f;
+    constexpr float MAX_MOTOR_TORQUE = 20.0f;
 
     for (auto &leg : _ctx.data.leg)
     {

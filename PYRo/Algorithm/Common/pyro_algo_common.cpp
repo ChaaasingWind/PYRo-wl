@@ -27,6 +27,18 @@ float wrap2pi_f32_normalized(const float input)
     return ret;
 }
 
+float evaluate_polynomial_ascending(const float x, const float *coeffs,
+                                    const uint32_t degree)
+{
+    // Coefficients are ordered as c0 + c1*x + ... + cn*x^n.
+    float result = coeffs[degree];
+    for (uint32_t i = degree; i > 0; --i)
+    {
+        result = result * x + coeffs[i - 1];
+    }
+    return result;
+}
+
 float radps_to_rpm(const float radps)
 {
     return radps * 9.5492966f;

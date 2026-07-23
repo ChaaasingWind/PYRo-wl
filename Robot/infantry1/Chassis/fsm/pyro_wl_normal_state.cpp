@@ -56,7 +56,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
         {
             for (uint8_t state_index = 0; state_index < 6; ++state_index)
             {
-                K[input][state_index] = evaluate_polynomial(
+                K[input][state_index] = evaluate_polynomial_ascending(
                     leg_ctx.current_leg_length, K_POLY_COEF[input][state_index],
                     K_POLY_DEGREE);
             }
