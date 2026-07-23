@@ -1,5 +1,6 @@
 #include "pyro_wl_chassis.h"
 
+#include <algorithm>
 #include <cmath>
 
 namespace pyro
@@ -42,6 +43,19 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
 
 void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
 {
+
+    owner->_ctx.data.leg[leg_def::L].target_leg_length +=
+        owner->_current_cmd.delta_leg_length[leg_def::L];
+    owner->_ctx.data.leg[leg_def::R].target_leg_length +=
+        owner->_current_cmd.delta_leg_length[leg_def::R];
+
+    owner->_ctx.data.leg[leg_def::L].target_leg_length =
+        std::clamp(owner->_ctx.data.leg[leg_def::L].target_leg_length,
+                   MIN_LEG_LENGTH, MAX_LEG_LENGTH);
+    owner->_ctx.data.leg[leg_def::R].target_leg_length =
+        std::clamp(owner->_ctx.data.leg[leg_def::R].target_leg_length,
+                   MIN_LEG_LENGTH, MAX_LEG_LENGTH);
+
     owner->_ctx.data.odom.target_dot_x[1] =
         owner->_ctx.data.odom.target_dot_x[0];
     owner->_ctx.data.odom.target_dot_x[0] =
@@ -101,6 +115,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
     owner->_balance_calculate();
     owner->_vmc_trans_v2j();
     owner->_send_joint_torque();
+    owner->_send_wheel_torque();
 }
 
 void wl_chassis_t::fsm_active_t::state_normal_t::exit(wl_chassis_t *owner)
