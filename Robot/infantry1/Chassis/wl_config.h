@@ -10,9 +10,11 @@ constexpr float J4J5                  = 0.1125f;
 constexpr float OJ8                   = 0.2100f;
 // constexpr float MIN_LEG_LENGTH = 0.18f;
 // constexpr float MAX_LEG_LENGTH = 2.5f;
+constexpr float HIP_CALIBRATION_OFFSET = PI;
+constexpr float KNEE_CALIBRATION_OFFSET = 0.0f;
+
 constexpr float LEFT_HIP_OFFSET       = 0.6f;
 constexpr float LEFT_KNEE_OFFSET      = 3.11f;
-
 constexpr float RIGHT_HIP_OFFSET      = 0.0f;
 constexpr float RIGHT_KNEE_OFFSET     = 0.0f;
 
@@ -47,7 +49,7 @@ enum : uint8_t
     R = 1  //RIGHT
 };
 }
-namespace motor_def
+namespace joint_def
 {
 enum : uint8_t
 {

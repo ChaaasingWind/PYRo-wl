@@ -5,10 +5,10 @@ namespace pyro
 
 void wl_chassis_t::state_passive_t::enter(wl_chassis_t *owner)
 {
-    owner->_ctx.motor.joint[leg_def::L][motor_def::HIP]  ->disable();
-    owner->_ctx.motor.joint[leg_def::L][motor_def::KNEE] ->disable();
-    owner->_ctx.motor.joint[leg_def::R][motor_def::HIP] ->disable();
-    owner->_ctx.motor.joint[leg_def::R][motor_def::KNEE]->disable();
+    owner->_ctx.motor.joint[leg_def::L][joint_def::HIP]  ->disable();
+    owner->_ctx.motor.joint[leg_def::L][joint_def::KNEE] ->disable();
+    owner->_ctx.motor.joint[leg_def::R][joint_def::HIP] ->disable();
+    owner->_ctx.motor.joint[leg_def::R][joint_def::KNEE]->disable();
 
     for (auto &leg : owner->_ctx.data.leg)
     {
@@ -18,8 +18,8 @@ void wl_chassis_t::state_passive_t::enter(wl_chassis_t *owner)
         leg.target_leg_radps = leg.current_leg_radps;
         leg.out_F_L = 0;
         leg.out_T_p = 0;
-        leg.out_joint_torque[motor_def::HIP]  = 0;
-        leg.out_joint_torque[motor_def::KNEE] = 0;
+        leg.out_joint_torque[joint_def::HIP]  = 0;
+        leg.out_joint_torque[joint_def::KNEE] = 0;
     }
 }
 
@@ -32,10 +32,10 @@ void wl_chassis_t::state_passive_t::execute(wl_chassis_t *owner)
         leg.target_leg_speed = leg.current_leg_speed;
         leg.target_leg_radps = leg.current_leg_radps;
     }
-    owner->_ctx.motor.joint[leg_def::L][motor_def::HIP]  ->send_torque(0);
-    owner->_ctx.motor.joint[leg_def::L][motor_def::KNEE] ->send_torque(0);
-    owner->_ctx.motor.joint[leg_def::R][motor_def::HIP] ->send_torque(0);
-    owner->_ctx.motor.joint[leg_def::R][motor_def::KNEE]->send_torque(0);
+    owner->_ctx.motor.joint[leg_def::L][joint_def::HIP]  ->send_torque(0);
+    owner->_ctx.motor.joint[leg_def::L][joint_def::KNEE] ->send_torque(0);
+    owner->_ctx.motor.joint[leg_def::R][joint_def::HIP] ->send_torque(0);
+    owner->_ctx.motor.joint[leg_def::R][joint_def::KNEE]->send_torque(0);
 }
 
 void wl_chassis_t::state_passive_t::exit(wl_chassis_t *owner)

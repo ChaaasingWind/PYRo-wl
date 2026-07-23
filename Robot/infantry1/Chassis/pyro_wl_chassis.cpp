@@ -148,11 +148,11 @@ void wl_chassis_t::_vmc_trans_j2v()
 {
     for (auto &leg : _ctx.data.leg)
     {
-        const float raw_2_theta = leg.current_joint_rad[motor_def::KNEE] -
-                                  leg.current_joint_rad[motor_def::HIP];
+        const float raw_2_theta = leg.current_joint_rad[joint_def::KNEE] -
+                                  leg.current_joint_rad[joint_def::HIP];
         const float theta     = loop_fp32_constrain(raw_2_theta, -PI, PI) / 2;
-        const float dot_theta = (leg.current_joint_radps[motor_def::KNEE] -
-                                 leg.current_joint_radps[motor_def::HIP]) /
+        const float dot_theta = (leg.current_joint_radps[joint_def::KNEE] -
+                                 leg.current_joint_radps[joint_def::HIP]) /
                                 2;
         const float sin_theta  = arm_sin_f32(theta);
         const float cos_theta  = arm_cos_f32(theta);
@@ -166,17 +166,17 @@ void wl_chassis_t::_vmc_trans_j2v()
                                        L_WP_POLY_DEGREE);
         leg.current_leg_speed = dot_theta * leg.J_L;
 
-        const float raw_beta  = leg.current_joint_rad[motor_def::HIP] + theta;
+        const float raw_beta  = leg.current_joint_rad[joint_def::HIP] + theta;
         const float beta      = loop_fp32_constrain(raw_beta, -PI, PI);
         leg.current_leg_rad   = beta;
-        leg.current_leg_radps = (leg.current_joint_radps[motor_def::KNEE] +
-                                 leg.current_joint_radps[motor_def::HIP]) /
+        leg.current_leg_radps = (leg.current_joint_radps[joint_def::KNEE] +
+                                 leg.current_joint_radps[joint_def::HIP]) /
                                 2;
-        leg.current_F_L = (leg.out_joint_torque[motor_def::KNEE] -
-                           leg.out_joint_torque[motor_def::HIP]) /
+        leg.current_F_L = (leg.out_joint_torque[joint_def::KNEE] -
+                           leg.out_joint_torque[joint_def::HIP]) /
                           leg.J_L;
-        leg.current_T_p = leg.out_joint_torque[motor_def::KNEE] +
-                          leg.out_joint_torque[motor_def::HIP];
+        leg.current_T_p = leg.out_joint_torque[joint_def::KNEE] +
+                          leg.out_joint_torque[joint_def::HIP];
     }
 }
 
@@ -238,9 +238,9 @@ void wl_chassis_t::_vmc_trans_v2j()
     {
         float tau_sum                        = leg.out_T_p;
         float tau_diff                       = leg.out_F_L * leg.J_L;
-        leg.out_joint_torque[motor_def::HIP] = std::clamp(
+        leg.out_joint_torque[joint_def::HIP] = std::clamp(
             (tau_sum - tau_diff) / 2, -MAX_MOTOR_TORQUE, MAX_MOTOR_TORQUE);
-        leg.out_joint_torque[motor_def::KNEE] = std::clamp(
+        leg.out_joint_torque[joint_def::KNEE] = std::clamp(
             (tau_sum + tau_diff) / 2, -MAX_MOTOR_TORQUE, MAX_MOTOR_TORQUE);
     }
 }
@@ -260,10 +260,10 @@ void wl_chassis_t::_send_joint_torque()
     //     _ctx.data.leg[leg_def::R].direction *
     //     _ctx.data.leg[leg_def::R].out_joint_torque[motor_def::KNEE]);
 
-    _ctx.motor.joint[leg_def::L][motor_def::HIP]->send_torque(0);
-    _ctx.motor.joint[leg_def::L][motor_def::KNEE]->send_torque(0);
-    _ctx.motor.joint[leg_def::R][motor_def::HIP]->send_torque(0);
-    _ctx.motor.joint[leg_def::R][motor_def::KNEE]->send_torque(0);
+    _ctx.motor.joint[leg_def::L][joint_def::HIP]->send_torque(0);
+    _ctx.motor.joint[leg_def::L][joint_def::KNEE]->send_torque(0);
+    _ctx.motor.joint[leg_def::R][joint_def::HIP]->send_torque(0);
+    _ctx.motor.joint[leg_def::R][joint_def::KNEE]->send_torque(0);
 }
 
 void wl_chassis_t::_send_wheel_torque()

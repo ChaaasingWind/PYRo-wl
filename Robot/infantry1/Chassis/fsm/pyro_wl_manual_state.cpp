@@ -16,8 +16,8 @@ void wl_chassis_t::fsm_active_t::state_manual_t::enter(wl_chassis_t *owner)
         leg.target_leg_radps                  = leg.current_leg_radps;
         leg.out_F_L                           = 0;
         leg.out_T_p                           = 0;
-        leg.out_joint_torque[motor_def::HIP]  = 0;
-        leg.out_joint_torque[motor_def::KNEE] = 0;
+        leg.out_joint_torque[joint_def::HIP]  = 0;
+        leg.out_joint_torque[joint_def::KNEE] = 0;
     }
     owner->_ctx.motor.wheel[leg_def::L]->disable();
     owner->_ctx.motor.wheel[leg_def::R]->disable();

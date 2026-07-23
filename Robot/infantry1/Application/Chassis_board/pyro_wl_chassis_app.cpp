@@ -112,13 +112,13 @@ void deps_init()
     wl_chassis_deps = new pyro::wl_chassis_deps_t();
 
     // 1. 初始化二维数组形式的 4 个关节达妙电机 (使用 CAN1)
-    wl_chassis_deps->motor.joint[leg_def::L][motor_def::HIP] =
+    wl_chassis_deps->motor.joint[leg_def::L][joint_def::HIP] =
         new pyro::dm_motor_drv_t(0x04, 0x14, pyro::bsp_can::can2);
-    wl_chassis_deps->motor.joint[leg_def::L][motor_def::KNEE] =
+    wl_chassis_deps->motor.joint[leg_def::L][joint_def::KNEE] =
         new pyro::dm_motor_drv_t(0x03, 0x13, pyro::bsp_can::can2);
-    wl_chassis_deps->motor.joint[leg_def::R][motor_def::HIP] =
+    wl_chassis_deps->motor.joint[leg_def::R][joint_def::HIP] =
         new pyro::dm_motor_drv_t(0x02, 0x12, pyro::bsp_can::can1);
-    wl_chassis_deps->motor.joint[leg_def::R][motor_def::KNEE] =
+    wl_chassis_deps->motor.joint[leg_def::R][joint_def::KNEE] =
         new pyro::dm_motor_drv_t(0x01, 0x11, pyro::bsp_can::can1);
     wl_chassis_deps->motor.wheel[leg_def::L] = new pyro::dji_m3508_motor_drv_t(
         pyro::dji_motor_tx_frame_t::id_2, pyro::bsp_can::can2);
@@ -126,43 +126,43 @@ void deps_init()
         pyro::dji_motor_tx_frame_t::id_3, pyro::bsp_can::can1);
 
     static_cast<dm_motor_drv_t *>(
-        wl_chassis_deps->motor.joint[leg_def::L][motor_def::HIP])
+        wl_chassis_deps->motor.joint[leg_def::L][joint_def::HIP])
         ->set_position_range(-PI, PI);
     static_cast<dm_motor_drv_t *>(
-        wl_chassis_deps->motor.joint[leg_def::L][motor_def::HIP])
+        wl_chassis_deps->motor.joint[leg_def::L][joint_def::HIP])
         ->set_rotate_range(-45.0f, 45.0f);
     static_cast<dm_motor_drv_t *>(
-        wl_chassis_deps->motor.joint[leg_def::L][motor_def::HIP])
+        wl_chassis_deps->motor.joint[leg_def::L][joint_def::HIP])
         ->set_torque_range(-54.0f, 54.0f);
 
     static_cast<dm_motor_drv_t *>(
-        wl_chassis_deps->motor.joint[leg_def::L][motor_def::KNEE])
+        wl_chassis_deps->motor.joint[leg_def::L][joint_def::KNEE])
         ->set_position_range(-PI, PI);
     static_cast<dm_motor_drv_t *>(
-        wl_chassis_deps->motor.joint[leg_def::L][motor_def::KNEE])
+        wl_chassis_deps->motor.joint[leg_def::L][joint_def::KNEE])
         ->set_rotate_range(-45.0f, 45.0f);
     static_cast<dm_motor_drv_t *>(
-        wl_chassis_deps->motor.joint[leg_def::L][motor_def::KNEE])
+        wl_chassis_deps->motor.joint[leg_def::L][joint_def::KNEE])
         ->set_torque_range(-54.0f, 54.0f);
 
     static_cast<dm_motor_drv_t *>(
-        wl_chassis_deps->motor.joint[leg_def::R][motor_def::HIP])
+        wl_chassis_deps->motor.joint[leg_def::R][joint_def::HIP])
         ->set_position_range(-PI, PI);
     static_cast<dm_motor_drv_t *>(
-        wl_chassis_deps->motor.joint[leg_def::R][motor_def::HIP])
+        wl_chassis_deps->motor.joint[leg_def::R][joint_def::HIP])
         ->set_rotate_range(-45.0f, 45.0f);
     static_cast<dm_motor_drv_t *>(
-        wl_chassis_deps->motor.joint[leg_def::R][motor_def::HIP])
+        wl_chassis_deps->motor.joint[leg_def::R][joint_def::HIP])
         ->set_torque_range(-54.0f, 54.0f);
 
     static_cast<dm_motor_drv_t *>(
-        wl_chassis_deps->motor.joint[leg_def::R][motor_def::KNEE])
+        wl_chassis_deps->motor.joint[leg_def::R][joint_def::KNEE])
         ->set_position_range(-PI, PI);
     static_cast<dm_motor_drv_t *>(
-        wl_chassis_deps->motor.joint[leg_def::R][motor_def::KNEE])
+        wl_chassis_deps->motor.joint[leg_def::R][joint_def::KNEE])
         ->set_rotate_range(-45.0f, 45.0f);
     static_cast<dm_motor_drv_t *>(
-        wl_chassis_deps->motor.joint[leg_def::R][motor_def::KNEE])
+        wl_chassis_deps->motor.joint[leg_def::R][joint_def::KNEE])
         ->set_torque_range(-54.0f, 54.0f);
 
 
