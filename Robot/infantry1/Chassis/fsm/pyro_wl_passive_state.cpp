@@ -39,6 +39,9 @@ void wl_chassis_t::state_passive_t::execute(wl_chassis_t *owner)
     owner->_ctx.motor.joint[leg_def::L][joint_def::KNEE] ->send_torque(0);
     owner->_ctx.motor.joint[leg_def::R][joint_def::HIP] ->send_torque(0);
     owner->_ctx.motor.joint[leg_def::R][joint_def::KNEE]->send_torque(0);
+    owner->_ctx.motor.wheel[leg_def::L]->send_torque(0);
+    owner->_ctx.motor.wheel[leg_def::R]->send_torque(0);
+
 }
 
 void wl_chassis_t::state_passive_t::exit(wl_chassis_t *owner)

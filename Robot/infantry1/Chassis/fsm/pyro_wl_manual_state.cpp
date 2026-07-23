@@ -61,6 +61,8 @@ void wl_chassis_t::fsm_active_t::state_manual_t::execute(wl_chassis_t *owner)
     owner->_manual_calculate();
     owner->_vmc_trans_v2j();
     owner->_send_joint_torque();
+    owner->_ctx.motor.wheel[leg_def::L]->send_torque(0);
+    owner->_ctx.motor.wheel[leg_def::R]->send_torque(0);
 }
 
 void wl_chassis_t::fsm_active_t::state_manual_t::exit(wl_chassis_t *owner)

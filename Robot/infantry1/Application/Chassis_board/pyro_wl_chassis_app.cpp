@@ -95,7 +95,7 @@ void chassis_dr162cmd()
         wl_chassis_cmd_ptr->delta_yaw                    = 0.0f;
         wl_chassis_cmd_ptr->balance_flag                 = false;
     }
-    else
+    else if (pyro::sw_pos_t::UP == vrc.switches.right.current_pos)
     {
         wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::ACTIVE;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::L] = 0.0f;
