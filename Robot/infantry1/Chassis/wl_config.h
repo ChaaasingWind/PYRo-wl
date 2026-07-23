@@ -1,22 +1,36 @@
 #ifndef __WL_CONFIG_H__
 #define __WL_CONFIG_H__
+#include "pyro_algo_common.h"
 
 
 namespace pyro
 {
-
+constexpr float loop_fp32_PI(float val)
+{
+    while (val > PI)
+    {
+        val -= 2 * PI;
+    }
+    while (val < -PI)
+    {
+        val += 2 * PI;
+    }
+    return val;
+}
 constexpr float OJ5                   = 0.0945f;
 constexpr float J4J5                  = 0.1125f;
 constexpr float OJ8                   = 0.2100f;
 // constexpr float MIN_LEG_LENGTH = 0.18f;
 // constexpr float MAX_LEG_LENGTH = 2.5f;
 constexpr float HIP_CALIBRATION_OFFSET = PI;
-constexpr float KNEE_CALIBRATION_OFFSET = 0.0f;
+constexpr float KNEE_CALIBRATION_OFFSET = 0.33231068958f;
 
-constexpr float LEFT_HIP_OFFSET       = 0.6f;
-constexpr float LEFT_KNEE_OFFSET      = 3.11f;
-constexpr float RIGHT_HIP_OFFSET      = 0.0f;
-constexpr float RIGHT_KNEE_OFFSET     = 0.0f;
+// constexpr float LEFT_HIP_OFFSET       = 0.6f;
+// constexpr float LEFT_KNEE_OFFSET      = 3.11f;
+constexpr float LEFT_HIP_OFFSET       = -loop_fp32_PI(-2.51256f + HIP_CALIBRATION_OFFSET);
+constexpr float LEFT_KNEE_OFFSET      = -loop_fp32_PI(2.87429f+KNEE_CALIBRATION_OFFSET);
+constexpr float RIGHT_HIP_OFFSET      = -loop_fp32_PI(0.15709f+HIP_CALIBRATION_OFFSET);
+constexpr float RIGHT_KNEE_OFFSET     = -loop_fp32_PI(-3.02165f+KNEE_CALIBRATION_OFFSET);
 
 constexpr float MAX_LEG_LENGTH        = 0.38f;
 constexpr float MIN_LEG_LENGTH        = 0.18f;
