@@ -21,7 +21,9 @@ struct wl_chassis_deps_t
     struct pid_deps_t
     {
         pd_ctrl_t *leg_length[2];
+        pd_ctrl_t *leg_length_diff;
         pd_ctrl_t *leg_rad[2];
+        pd_ctrl_t *leg_rad_diff;
     };
     motor_deps_t motor;
     pid_deps_t pid;

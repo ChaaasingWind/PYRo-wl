@@ -20,21 +20,25 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
     owner->_ctx.data.target_state.gamma     = 0.0f;
     owner->_ctx.data.target_state.dot_gamma = 0.0f;
 
+    float avg_length =
+    (owner->_ctx.data.leg[leg_def::L].current_leg_length + owner->_ctx.data.leg[leg_def::R].current_leg_length) * 0.5f;
     for (auto &leg : owner->_ctx.data.leg)
     {
-        leg.target_leg_length = leg.current_leg_length;
         leg.target_leg_rad    = leg.current_leg_rad;
         leg.target_leg_speed  = leg.current_leg_speed;
         leg.target_leg_radps  = leg.current_leg_radps;
+        leg.target_leg_length = avg_length;
         leg.out_F_L                           = 0;
         leg.out_T_p                           = 0;
         leg.out_joint_torque[joint_def::HIP]  = 0;
         leg.out_joint_torque[joint_def::KNEE] = 0;
     }
-    owner->_ctx.pid.leg_length[leg_def::L]->clear();
-    owner->_ctx.pid.leg_length[leg_def::R]->clear();
+    // owner->_ctx.pid.leg_length[leg_def::L]->clear();
+    // owner->_ctx.pid.leg_length[leg_def::R]->clear();
+    owner->_ctx.pid.leg_length_diff->clear();
     owner->_ctx.pid.leg_rad[leg_def::L]->clear();
     owner->_ctx.pid.leg_rad[leg_def::R]->clear();
+    owner->_ctx.pid.leg_rad_diff->clear();
 
 
     owner->_ctx.motor.wheel[leg_def::L]->enable();
