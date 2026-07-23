@@ -25,6 +25,7 @@ extern "C"
     void infantry1_chassis_thread(void *argument)
     {
 
+        vTaskDelay(2000);
         while (true)
         {
             uint32_t notify_val = 0;
@@ -175,13 +176,13 @@ void deps_init()
 
     // Leg-length PD: output F_L (N), limited to 80 N.
     wl_chassis_deps->pid.leg_length[leg_def::L] = new pyro::pd_ctrl_t(
-        800.0f, 40.0f, 80.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
+        900.0f, 42.0f, 80.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
     wl_chassis_deps->pid.leg_length[leg_def::R] = new pyro::pd_ctrl_t(
-        800.0f, 40.0f, 80.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
+        900.0f, 42.0f, 80.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
 
     // Leg-angle PD: output T_p (N m), limited to 32 N m.
     wl_chassis_deps->pid.leg_rad[leg_def::L] = new pyro::pd_ctrl_t(
-        12.0f, 0.3f, 10.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
+        20.0f, 0.6f, 15.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
     wl_chassis_deps->pid.leg_rad[leg_def::R] = new pyro::pd_ctrl_t(
-        12.0f, 0.3f, 10.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
+        20.0f, 0.6f, 15.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
 }

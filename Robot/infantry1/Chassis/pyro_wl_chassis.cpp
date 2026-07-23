@@ -215,7 +215,7 @@ void wl_chassis_t::_balance_calculate()
 
 void wl_chassis_t::_vmc_trans_v2j()
 {
-    constexpr float MAX_MOTOR_TORQUE = 30.0f;
+    constexpr float MAX_MOTOR_TORQUE = 40.0f;
 
     for (auto &leg : _ctx.data.leg)
     {

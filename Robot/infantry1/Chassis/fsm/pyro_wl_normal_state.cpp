@@ -15,7 +15,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
 
     owner->_ctx.data.target_state.x         = 0;
     owner->_ctx.data.target_state.dot_x     = 0.0f;
-    owner->_ctx.data.target_state.beta      = 0.0f;
+    owner->_ctx.data.target_state.beta      = 0.1f;
     owner->_ctx.data.target_state.dot_beta  = 0.0f;
     owner->_ctx.data.target_state.gamma     = 0.0f;
     owner->_ctx.data.target_state.dot_gamma = 0.0f;

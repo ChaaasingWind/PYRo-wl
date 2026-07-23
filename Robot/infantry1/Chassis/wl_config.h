@@ -36,23 +36,23 @@ constexpr float RIGHT_HIP_OFFSET =
 constexpr float RIGHT_KNEE_OFFSET =
     -loop_fp32_PI(-3.02165f + KNEE_CALIBRATION_OFFSET);
 
-constexpr float MAX_LEG_LENGTH                       = 0.38f;
-constexpr float MIN_LEG_LENGTH                       = 0.18f;
+constexpr float MAX_LEG_LENGTH         = 0.38f;
+constexpr float MIN_LEG_LENGTH         = 0.18f;
 
-constexpr float LEFT_LEG_DIRECTION                   = -1.0f;
-constexpr float RIGHT_LEG_DIRECTION                  = 1.0f;
+constexpr float LEFT_LEG_DIRECTION     = -1.0f;
+constexpr float RIGHT_LEG_DIRECTION    = 1.0f;
 
-constexpr float LEFT_WHEEL_DIRECTION                 = -1.0f;
-constexpr float RIGHT_WHEEL_DIRECTION                = 1.0f;
-constexpr float STOP_VELOCITY_DEADBAND               = 0.05f;
+constexpr float LEFT_WHEEL_DIRECTION   = -1.0f;
+constexpr float RIGHT_WHEEL_DIRECTION  = 1.0f;
+constexpr float STOP_VELOCITY_DEADBAND = 0.05f;
 
 // Single-leg gravity compensation parameters.
-constexpr float SINGLE_LEG_BODY_MASS                  = 6.0f;
-constexpr float LEG_MASS                               = 1.232f;
-constexpr float GRAVITY_ACCELERATION                  = 9.81f;
+constexpr float SINGLE_LEG_BODY_MASS   = 6.0f;
+constexpr float LEG_MASS               = 1.232f;
+constexpr float GRAVITY_ACCELERATION   = 9.81f;
 constexpr float LEG_GRAVITY_FORCE =
     (SINGLE_LEG_BODY_MASS + LEG_MASS) * GRAVITY_ACCELERATION;
-constexpr float MAX_TOTAL_LEG_FORCE                   = 100.0f;
+constexpr float MAX_TOTAL_LEG_FORCE                  = 100.0f;
 
 constexpr float K_t                                  = 0.21777611f;
 constexpr float reduction_ratio                      = 13.94f;
@@ -61,33 +61,33 @@ constexpr uint32_t L_WP_POLY_DEGREE                  = 3;
 constexpr uint32_t K_POLY_DEGREE                     = 3;
 // L_wp(L) = 0.0581 + 0.3760*L + 0.7972*L^2 - 0.7381*L^3.
 // Coefficients are in ascending-power order: c0, c1, c2, c3.
-constexpr float L_WP_POLY_COEF[L_WP_POLY_DEGREE + 1] = {
-    0.0581f, 0.3760f, 0.7972f, -0.7381f};
+constexpr float L_WP_POLY_COEF[L_WP_POLY_DEGREE + 1] = {0.0581f, 0.3760f,
+                                                        0.7972f, -0.7381f};
 constexpr float K_POLY_COEF[2][6][K_POLY_DEGREE + 1] = {
-    {{-2.2511405690e+00f, -1.3787627377e+01f, 1.8199995743e+01f,
-      -3.9921055309e+00f},
-     {-4.0374942379e+00f, -8.6005350490e+00f, -8.1370577156e-01f,
-      1.5764201307e+01f},
-     {8.7032690090e-01f, 1.3461569166e+02f, -2.3572317345e+02f,
-      1.8000387217e+02f},
-     {3.4704696690e-03f, 1.2758931780e+01f, -1.9465925895e+00f,
-      -4.1155181304e-01f},
-     {-1.3711006700e+01f, 2.9832498720e+01f, -1.7194364391e+01f,
-      -1.3692258979e+01f},
-     {-2.5637696237e+00f, 5.6068136602e+00f, -5.3973128262e+00f,
-      7.5147572243e-01f}},
-    {{3.8908861144e+00f, 9.6739506975e+01f, -4.1565251565e+02f,
-      4.8693148314e+02f},
-     {5.9985177075e+00f, 1.0607369732e+02f, -4.7383355572e+02f,
-      5.6498290536e+02f},
-     {-2.7852598841e+01f, -3.3775101587e+02f, 1.4420728438e+03f,
-      -1.6682849344e+03f},
-     {-1.6669111181e+00f, -5.0640026102e+01f, 1.7039142010e+02f,
-      -1.8094685384e+02f},
-     {-5.6118770865e+00f, -1.8557286679e+02f, 3.3226343334e+02f,
-      -2.0407868896e+02f},
-     {-6.1344936527e-01f, -2.7287267129e+01f, 3.8817417453e+01f,
-      -1.3951639600e+01f}}};
+    {{-2.5760390761e+00f, -1.0918047588e+01f, 8.2455759447e+00f,
+      7.2067514987e+00f},
+     {-4.3700672681e+00f, -4.6576385923e+00f, -1.1685683548e+01f,
+      2.6896963847e+01f},
+     {4.5946835683e-01f, 1.3228538470e+02f, -2.2870950919e+02f,
+      1.6421748343e+02f},
+     {1.6201939145e-02f, 1.1226057862e+01f, 1.1531708402e+00f,
+      -4.3325614993e+00f},
+     {-1.2241623602e+01f, 2.4539702212e+01f, -7.0584338453e+00f,
+      -2.0894766066e+01f},
+     {-2.3597192210e+00f, 4.9348966694e+00f, -4.1132356269e+00f,
+      -1.1580700881e-01f}},
+    {{4.7167183070e+00f, 1.1834986918e+02f, -5.1286174196e+02f,
+      6.0247753752e+02f},
+     {6.6252695206e+00f, 1.2681924101e+02f, -5.7041325676e+02f,
+      6.8238059344e+02f},
+     {-3.8359934395e+01f, -4.0542310260e+02f, 1.8115317477e+03f,
+      -2.1218156300e+03f},
+     {-1.5218468500e+00f, -5.9563538882e+01f, 2.0109992317e+02f,
+      -2.1220384563e+02f},
+     {-2.2493423432e+00f, -1.9214712587e+02f, 3.1371028533e+02f,
+      -1.6005001403e+02f},
+     {1.5749098093e-02f, -2.7932451730e+01f, 3.2487248357e+01f,
+      -2.1614638873e+00f}}};
 
 // Incremental wheel-odometry parameter. Fill in the real wheel radius [m]
 // before using odom_x/odom_dx for walking experiments.
