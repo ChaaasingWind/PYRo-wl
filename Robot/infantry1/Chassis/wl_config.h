@@ -46,6 +46,14 @@ constexpr float LEFT_WHEEL_DIRECTION                 = -1.0f;
 constexpr float RIGHT_WHEEL_DIRECTION                = 1.0f;
 constexpr float STOP_VELOCITY_DEADBAND               = 0.05f;
 
+// Single-leg gravity compensation parameters.
+constexpr float SINGLE_LEG_BODY_MASS                  = 6.0f;
+constexpr float LEG_MASS                               = 1.232f;
+constexpr float GRAVITY_ACCELERATION                  = 9.81f;
+constexpr float LEG_GRAVITY_FORCE =
+    (SINGLE_LEG_BODY_MASS + LEG_MASS) * GRAVITY_ACCELERATION;
+constexpr float MAX_TOTAL_LEG_FORCE                   = 100.0f;
+
 constexpr float K_t                                  = 0.21777611f;
 constexpr float reduction_ratio                      = 13.94f;
 constexpr float rec_reduction_ratio                  = 1 / reduction_ratio;

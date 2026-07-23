@@ -196,20 +196,26 @@ void wl_chassis_t::_balance_calculate()
                 _ctx.data.K[leg][1][state] * error[state];
         }
 
-        // Keep leg-length
-        leg_ctx.out_F_L = _ctx.pid.leg_length[leg]->calculate(
+        // Keep leg-length and compensate the gravity component along the leg.
+        const float beta_world = _ctx.data.current_state[leg].beta;
+        const float gravity_force =
+            LEG_GRAVITY_FORCE * std::max(0.0f, arm_cos_f32(beta_world));
+        const float pd_force = _ctx.pid.leg_length[leg]->calculate(
             leg_ctx.target_leg_length, leg_ctx.current_leg_length,
             leg_ctx.current_leg_speed);
+        leg_ctx.out_F_L = std::clamp(pd_force + gravity_force,
+                                     -MAX_TOTAL_LEG_FORCE,
+                                     MAX_TOTAL_LEG_FORCE);
 
         leg_ctx.out_T_p              = _ctx.data.control[leg].T_p;
         _ctx.data.wheel[leg].out_T_w = _ctx.data.control[leg].T_w;
-        _ctx.data.wheel[leg].out_current = std::clamp(_ctx.data.wheel[leg].out_T_w * K_t,-20.0f,20.0f);
+        _ctx.data.wheel[leg].out_current = std::clamp(_ctx.data.wheel[leg].out_T_w * (1 / K_t),-10.0f,10.0f);
     }
 }
 
 void wl_chassis_t::_vmc_trans_v2j()
 {
-    constexpr float MAX_MOTOR_TORQUE = 25.0f;
+    constexpr float MAX_MOTOR_TORQUE = 30.0f;
 
     for (auto &leg : _ctx.data.leg)
     {

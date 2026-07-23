@@ -101,7 +101,7 @@ void chassis_dr162cmd()
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]    = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = 0.0f;
-        wl_chassis_cmd_ptr->v                            = vrc.axes.ry * 0.5f;
+        wl_chassis_cmd_ptr->v                            = vrc.axes.ry * 1.5f;
         wl_chassis_cmd_ptr->delta_yaw                    = vrc.axes.lx * 0.001f;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::L] = vrc.axes.ly * 0.0003f;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = vrc.axes.ly * 0.0003f;
@@ -175,13 +175,13 @@ void deps_init()
 
     // Leg-length PD: output F_L (N), limited to 80 N.
     wl_chassis_deps->pid.leg_length[leg_def::L] = new pyro::pd_ctrl_t(
-        800.0f, 40.0f, 30.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
+        800.0f, 40.0f, 80.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
     wl_chassis_deps->pid.leg_length[leg_def::R] = new pyro::pd_ctrl_t(
-        800.0f, 40.0f, 30.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
+        800.0f, 40.0f, 80.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
 
     // Leg-angle PD: output T_p (N m), limited to 32 N m.
     wl_chassis_deps->pid.leg_rad[leg_def::L] = new pyro::pd_ctrl_t(
-        6.0f, 0.3f, 8.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
+        12.0f, 0.3f, 10.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
     wl_chassis_deps->pid.leg_rad[leg_def::R] = new pyro::pd_ctrl_t(
-        6.0f, 0.3f, 8.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
+        12.0f, 0.3f, 10.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
 }
