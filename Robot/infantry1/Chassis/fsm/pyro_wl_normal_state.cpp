@@ -37,6 +37,32 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
                           (std::fabs(owner->_ctx.data.odom.target_dot_x[1]) >=
                            STOP_VELOCITY_DEADBAND);
 
+    // calculate current states and schedule LQR gains.
+    for (uint8_t leg = 0; leg < 2; ++leg)
+    {
+        leg_ctx_t &leg_ctx = owner->_ctx.data.leg[leg];
+        state_vec_t &state = owner->_ctx.data.current_state[leg];
+
+        state.x            = owner->_ctx.data.odom.real_x;
+        state.dot_x        = owner->_ctx.data.odom.real_dot_x[0];
+        state.beta =
+            PI / 2 - leg_ctx.current_leg_rad - owner->_ctx.data.ins.euler_rad[1];
+        state.dot_beta  = -leg_ctx.current_leg_radps - owner->_ctx.data.ins.gyro[1];
+        state.gamma     = owner->_ctx.data.ins.euler_rad[1];
+        state.dot_gamma = owner->_ctx.data.ins.gyro[1];
+
+        auto &K         = owner->_ctx.data.K[leg];
+        for (uint8_t input = 0; input < 2; ++input)
+        {
+            for (uint8_t state_index = 0; state_index < 6; ++state_index)
+            {
+                K[input][state_index] = evaluate_polynomial(
+                    leg_ctx.current_leg_length, K_POLY_COEF[input][state_index],
+                    K_POLY_DEGREE);
+            }
+        }
+    }
+
 
     // 判断停止时重置里程计
     if (breaking)

@@ -103,31 +103,7 @@ void wl_chassis_t::_update_feedback()
     ins->get_gyro_b(&_ctx.data.ins.gyro[0], &_ctx.data.ins.gyro[1],
                     &_ctx.data.ins.gyro[2]);
 
-    // 7. Build current states and schedule LQR gains.
-    for (uint8_t leg = 0; leg < 2; ++leg)
-    {
-        leg_ctx_t &leg_ctx = _ctx.data.leg[leg];
-        state_vec_t &state = _ctx.data.current_state[leg];
 
-        state.x            = _ctx.data.odom.real_x;
-        state.dot_x        = _ctx.data.odom.real_dot_x[0];
-        state.beta =
-            PI / 2 - leg_ctx.current_leg_rad - _ctx.data.ins.euler_rad[1];
-        state.dot_beta  = -leg_ctx.current_leg_radps - _ctx.data.ins.gyro[1];
-        state.gamma     = _ctx.data.ins.euler_rad[1];
-        state.dot_gamma = _ctx.data.ins.gyro[1];
-
-        auto &K         = _ctx.data.K[leg];
-        for (uint8_t input = 0; input < 2; ++input)
-        {
-            for (uint8_t state_index = 0; state_index < 6; ++state_index)
-            {
-                K[input][state_index] = evaluate_polynomial(
-                    leg_ctx.L_wp, K_POLY_COEF[input][state_index],
-                    K_POLY_DEGREE);
-            }
-        }
-    }
 }
 
 void wl_chassis_t::_fsm_execute()
@@ -232,7 +208,7 @@ void wl_chassis_t::_balance_calculate()
 
 void wl_chassis_t::_vmc_trans_v2j()
 {
-    constexpr float MAX_MOTOR_TORQUE = 20.0f;
+    constexpr float MAX_MOTOR_TORQUE = 15.0f;
 
     for (auto &leg : _ctx.data.leg)
     {

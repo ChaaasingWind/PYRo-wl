@@ -40,7 +40,7 @@ void wl_chassis_t::fsm_active_t::state_manual_t::execute(wl_chassis_t *owner)
 
 
     owner->_ctx.data.leg[leg_def::L].target_leg_rad =
-        fp32_constrain(owner->_ctx.data.leg[leg_def::L].target_leg_rad +
+        loop_fp32_constrain(owner->_ctx.data.leg[leg_def::L].target_leg_rad +
                            owner->_current_cmd.delta_leg_rad[leg_def::L],
                        -PI, PI);
     owner->_ctx.data.leg[leg_def::L].error_leg_rad =
@@ -49,7 +49,7 @@ void wl_chassis_t::fsm_active_t::state_manual_t::execute(wl_chassis_t *owner)
                             -PI, PI);
 
     owner->_ctx.data.leg[leg_def::R].target_leg_rad =
-        fp32_constrain(owner->_ctx.data.leg[leg_def::R].target_leg_rad +
+        loop_fp32_constrain(owner->_ctx.data.leg[leg_def::R].target_leg_rad +
                            owner->_current_cmd.delta_leg_rad[leg_def::R],
                        -PI, PI);
     owner->_ctx.data.leg[leg_def::R].error_leg_rad =
