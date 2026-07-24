@@ -195,6 +195,11 @@ void wl_chassis_t::_balance_calculate()
     const float diff_F_L = _ctx.pid.leg_length_diff->calculate(
         0.0f, leg_length_difference, leg_length_difference_speed);
 
+    const float yaw_error = loop_fp32_constrain(
+        _ctx.data.ins.euler_rad[0] - _ctx.data.target_yaw, -PI, PI);
+    const float yaw_wheel_torque = _ctx.pid.yaw->calculate(
+        0.0f, yaw_error, _ctx.data.ins.gyro[2]);
+
     for (uint8_t leg = 0; leg < 2; ++leg)
     {
         leg_ctx_t &leg_ctx = _ctx.data.leg[leg];
@@ -230,16 +235,19 @@ void wl_chassis_t::_balance_calculate()
         {
             _ctx.data.control[leg].T_p += diff_T_p;
             leg_ctx.out_F_L += diff_F_L;
+            _ctx.data.control[leg].T_w -= yaw_wheel_torque;
         }
         else
         {
             _ctx.data.control[leg].T_p -= diff_T_p;
             leg_ctx.out_F_L -= diff_F_L;
+            _ctx.data.control[leg].T_w += yaw_wheel_torque;
         }
 
         leg_ctx.out_F_L = std::clamp(leg_ctx.out_F_L, -MAX_F_L, MAX_F_L);
         leg_ctx.out_T_p =
             std::clamp(_ctx.data.control[leg].T_p, -MAX_T_P, MAX_T_P);
+
         _ctx.data.wheel[leg].out_T_w = _ctx.data.control[leg].T_w;
         _ctx.data.wheel[leg].out_current =
             std::clamp(_ctx.data.wheel[leg].out_T_w * (1 / K_t), -10.0f, 10.0f);

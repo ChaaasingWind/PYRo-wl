@@ -41,6 +41,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
     owner->_ctx.pid.leg_rad[leg_def::L]->clear();
     owner->_ctx.pid.leg_rad[leg_def::R]->clear();
     owner->_ctx.pid.leg_rad_diff->clear();
+    owner->_ctx.pid.yaw->clear();
 
 
     owner->_ctx.motor.wheel[leg_def::L]->enable();

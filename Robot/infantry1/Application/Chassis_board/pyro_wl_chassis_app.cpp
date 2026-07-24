@@ -195,4 +195,9 @@ void deps_init()
     // The output is added to the left T_p and subtracted from the right T_p.
     wl_chassis_deps->pid.leg_rad_diff = new pyro::pd_ctrl_t(
         10.0f, 0.3f, 5.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
+
+    // Balance-only yaw PD. Output unit: wheel torque [N m].
+    // Positive output means right wheel forward and left wheel backward.
+    wl_chassis_deps->pid.yaw = new pyro::pd_ctrl_t(
+        1.0f, 0.05f, 2.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
 }
