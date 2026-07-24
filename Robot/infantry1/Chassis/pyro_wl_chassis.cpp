@@ -66,8 +66,9 @@ void wl_chassis_t::_update_feedback()
         for (uint8_t joint = 0; joint < 2; ++joint)
         {
             motor_base_t *motor = _ctx.motor.joint[leg][joint];
-            const float raw_rad = motor->get_current_position() +
-                                  leg_ctx.direction * JOINT_POSITION_OFFSET[leg][joint];
+            const float raw_rad =
+                motor->get_current_position() +
+                leg_ctx.direction * JOINT_POSITION_OFFSET[leg][joint];
 
             leg_ctx.current_joint_rad[joint] =
                 leg_ctx.direction * loop_fp32_constrain(raw_rad, -PI, PI);
@@ -102,8 +103,6 @@ void wl_chassis_t::_update_feedback()
                     &_ctx.data.ins.euler_rad[2]);
     ins->get_gyro_b(&_ctx.data.ins.gyro[0], &_ctx.data.ins.gyro[1],
                     &_ctx.data.ins.gyro[2]);
-
-
 }
 
 void wl_chassis_t::_fsm_execute()
@@ -138,8 +137,8 @@ void wl_chassis_t::_vmc_trans_j2v()
         float OJ4              = OH + HJ4;
         leg.J_L                = -OJ8 * sin_theta * (OJ4 / HJ4);
         leg.current_leg_length = OJ4 * OJ8 / OJ5;
-        leg.L_wp = evaluate_polynomial_ascending(leg.current_leg_length, L_WP_POLY_COEF,
-                                       L_WP_POLY_DEGREE);
+        leg.L_wp               = evaluate_polynomial_ascending(
+            leg.current_leg_length, L_WP_POLY_COEF, L_WP_POLY_DEGREE);
         leg.current_leg_speed = dot_theta * leg.J_L;
 
         const float raw_beta  = leg.current_joint_rad[joint_def::HIP] + theta;
@@ -184,7 +183,7 @@ void wl_chassis_t::_balance_calculate()
     const float leg_angle_difference_speed =
         _ctx.data.leg[leg_def::L].current_leg_radps -
         _ctx.data.leg[leg_def::R].current_leg_radps;
-    const float differential_T_p = _ctx.pid.leg_rad_diff->calculate(
+    const float diff_T_p = _ctx.pid.leg_rad_diff->calculate(
         0.0f, leg_angle_difference, leg_angle_difference_speed);
 
     const float leg_length_difference =
@@ -193,7 +192,7 @@ void wl_chassis_t::_balance_calculate()
     const float leg_length_difference_speed =
         _ctx.data.leg[leg_def::L].current_leg_speed -
         _ctx.data.leg[leg_def::R].current_leg_speed;
-    const float differential_F_L = _ctx.pid.leg_length_diff->calculate(
+    const float diff_F_L = _ctx.pid.leg_length_diff->calculate(
         0.0f, leg_length_difference, leg_length_difference_speed);
 
     for (uint8_t leg = 0; leg < 2; ++leg)
@@ -221,25 +220,29 @@ void wl_chassis_t::_balance_calculate()
         const float pd_force = _ctx.pid.leg_length[leg]->calculate(
             leg_ctx.target_leg_length, leg_ctx.current_leg_length,
             leg_ctx.current_leg_speed);
-        const float differential_force =
-            leg == leg_def::L ? differential_F_L : -differential_F_L;
-        leg_ctx.out_F_L = std::clamp(
-            pd_force + gravity_force + differential_force,
-            -MAX_TOTAL_LEG_FORCE, MAX_TOTAL_LEG_FORCE);
 
-        // Preserve the average T_p while correcting the left/right angle difference.
+        leg_ctx.out_F_L = gravity_force + pd_force;
+
+
+        // Preserve the average T_p while correcting the left/right angle
+        // difference.
         if (leg == leg_def::L)
         {
-            _ctx.data.control[leg].T_p += differential_T_p;
+            _ctx.data.control[leg].T_p += diff_T_p;
+            leg_ctx.out_F_L += diff_F_L;
         }
         else
         {
-            _ctx.data.control[leg].T_p -= differential_T_p;
+            _ctx.data.control[leg].T_p -= diff_T_p;
+            leg_ctx.out_F_L -= diff_F_L;
         }
 
-        leg_ctx.out_T_p              = _ctx.data.control[leg].T_p;
+        leg_ctx.out_F_L = std::clamp(leg_ctx.out_F_L, -MAX_F_L, MAX_F_L);
+        leg_ctx.out_T_p =
+            std::clamp(_ctx.data.control[leg].T_p, -MAX_T_P, MAX_T_P);
         _ctx.data.wheel[leg].out_T_w = _ctx.data.control[leg].T_w;
-        _ctx.data.wheel[leg].out_current = std::clamp(_ctx.data.wheel[leg].out_T_w * (1 / K_t),-10.0f,10.0f);
+        _ctx.data.wheel[leg].out_current =
+            std::clamp(_ctx.data.wheel[leg].out_T_w * (1 / K_t), -10.0f, 10.0f);
     }
 }
 

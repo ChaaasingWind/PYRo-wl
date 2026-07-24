@@ -8,6 +8,8 @@ namespace pyro
 
 void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
 {
+    owner->_ctx.data.target_yaw = owner->_ctx.data.ins.euler_rad[0];
+
     owner->_ctx.data.odom.real_x            = 0;
     owner->_ctx.data.odom.target_x          = 0;
     owner->_ctx.data.odom.target_dot_x[0]   = 0;
@@ -47,6 +49,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
 
 void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
 {
+    owner->_ctx.data.target_yaw += owner->_current_cmd.delta_yaw;
 
     owner->_ctx.data.leg[leg_def::L].target_leg_length +=
         owner->_current_cmd.delta_leg_length[leg_def::L];

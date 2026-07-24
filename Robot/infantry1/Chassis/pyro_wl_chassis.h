@@ -126,6 +126,7 @@ struct wl_chassis_data_ctx_t
     float K[2][2][6];             // 0 : LEFT, 1 : RIGHT;0 : T_w, 1: T_p
     odom_t odom;
     ins_data_t ins;
+    float target_yaw;
     float _dt;
 };
 
