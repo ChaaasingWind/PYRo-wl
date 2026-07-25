@@ -97,10 +97,10 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
         state.x            = owner->_ctx.data.odom.real_x;
         state.dot_x        = owner->_ctx.data.odom.real_dot_x[0];
         state.beta =
-            PI / 2 - leg_ctx.current_leg_rad -
+            leg_ctx.current_leg_rad - PI / 2 -
                      owner->_ctx.data.ins.euler_rad[1];
         state.dot_beta =
-            -leg_ctx.current_leg_radps - owner->_ctx.data.ins.gyro[1];
+            leg_ctx.current_leg_radps - owner->_ctx.data.ins.gyro[1];
         state.gamma     = owner->_ctx.data.ins.euler_rad[1];
         state.dot_gamma = owner->_ctx.data.ins.gyro[1];
 
