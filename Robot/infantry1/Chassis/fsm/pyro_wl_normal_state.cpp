@@ -64,17 +64,29 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
         std::clamp(owner->_ctx.data.leg[leg_def::R].target_leg_length,
                    MIN_LEG_LENGTH, MAX_LEG_LENGTH);
 
-    owner->_ctx.data.odom.target_dot_x[1] =
-        owner->_ctx.data.odom.target_dot_x[0];
-    owner->_ctx.data.odom.target_dot_x[0] =
-        fabs(owner->_current_cmd.v) > STOP_VELOCITY_DEADBAND
+    const float desired_target_velocity =
+        std::fabs(owner->_current_cmd.v) > STOP_VELOCITY_DEADBAND
             ? owner->_current_cmd.v
-            : 0;
+            : 0.0f;
+    const float previous_target_velocity =
+        owner->_ctx.data.odom.target_dot_x[0];
+    const bool same_direction =
+        previous_target_velocity == 0.0f || desired_target_velocity == 0.0f ||
+        previous_target_velocity * desired_target_velocity > 0.0f;
+    const bool accelerating =
+        same_direction &&
+        std::fabs(desired_target_velocity) >
+            std::fabs(previous_target_velocity);
+    const float velocity_slew_rate =
+        accelerating ? TARGET_VELOCITY_ACCELERATION
+                     : TARGET_VELOCITY_DECELERATION;
+    const float max_velocity_step = velocity_slew_rate * owner->_ctx.data._dt;
 
-    const bool breaking = (std::fabs(owner->_ctx.data.odom.target_dot_x[0]) <
-                           STOP_VELOCITY_DEADBAND) &&
-                          (std::fabs(owner->_ctx.data.odom.target_dot_x[1]) >=
-                           STOP_VELOCITY_DEADBAND);
+    owner->_ctx.data.odom.target_dot_x[1] = previous_target_velocity;
+    owner->_ctx.data.odom.target_dot_x[0] = previous_target_velocity +
+        std::clamp(desired_target_velocity - previous_target_velocity,
+                   -max_velocity_step, max_velocity_step);
+    const bool stop_requested = desired_target_velocity == 0.0f;
 
     // calculate current states and schedule LQR gains.
     for (uint8_t leg = 0; leg < 2; ++leg)
@@ -85,8 +97,10 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
         state.x            = owner->_ctx.data.odom.real_x;
         state.dot_x        = owner->_ctx.data.odom.real_dot_x[0];
         state.beta =
-            PI / 2 - leg_ctx.current_leg_rad - owner->_ctx.data.ins.euler_rad[1];
-        state.dot_beta  = -leg_ctx.current_leg_radps - owner->_ctx.data.ins.gyro[1];
+            PI / 2 - leg_ctx.current_leg_rad -
+                     owner->_ctx.data.ins.euler_rad[1];
+        state.dot_beta =
+            -leg_ctx.current_leg_radps - owner->_ctx.data.ins.gyro[1];
         state.gamma     = owner->_ctx.data.ins.euler_rad[1];
         state.dot_gamma = owner->_ctx.data.ins.gyro[1];
 
@@ -103,17 +117,23 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
     }
 
 
-    // 判断停止时重置里程计
-    if (breaking)
+    owner->_ctx.data.odom.target_x +=
+        0.5f * owner->_ctx.data._dt *
+        (owner->_ctx.data.odom.target_dot_x[0] +
+         owner->_ctx.data.odom.target_dot_x[1]);
+
+    // Smoothly capture the actual position after the commanded stop.
+    // This replaces the previous one-cycle target_x = real_x jump.
+    if (stop_requested &&
+        std::fabs(owner->_ctx.data.odom.target_dot_x[0]) <=
+            TARGET_VELOCITY_EPSILON)
     {
-        owner->_ctx.data.odom.target_x = owner->_ctx.data.odom.real_x;
-    }
-    else
-    {
+        const float max_capture_step =
+            TARGET_POSITION_CAPTURE_SPEED * owner->_ctx.data._dt;
         owner->_ctx.data.odom.target_x +=
-            0.5f * owner->_ctx.data._dt *
-            (owner->_ctx.data.odom.target_dot_x[0] +
-             owner->_ctx.data.odom.target_dot_x[1]);
+            std::clamp(owner->_ctx.data.odom.real_x -
+                           owner->_ctx.data.odom.target_x,
+                       -max_capture_step, max_capture_step);
     }
 
     // 写入 LQR 目标状态。
