@@ -198,7 +198,7 @@ void wl_chassis_t::_balance_calculate()
     const float yaw_error = loop_fp32_constrain(
         _ctx.data.ins.euler_rad[0] - _ctx.data.target_yaw, -PI, PI);
     const float yaw_wheel_torque = _ctx.pid.yaw->calculate(
-        0.0f, yaw_error, _ctx.data.ins.gyro[2]);
+        0.0f, yaw_error, _ctx.data.ins.gyro[0]);
 
     for (uint8_t leg = 0; leg < 2; ++leg)
     {
