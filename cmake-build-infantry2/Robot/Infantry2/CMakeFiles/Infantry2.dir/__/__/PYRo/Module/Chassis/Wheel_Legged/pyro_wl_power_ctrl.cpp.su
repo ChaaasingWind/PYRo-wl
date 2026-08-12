@@ -1,5 +1,0 @@
-E:/Develop/a_PYRo/PYRo-wl/PYRo-wl_2027/PYRo-wl_2027/PYRo/Module/Chassis/Wheel_Legged/pyro_wl_power_ctrl.cpp:30:10:pyro::status_t pyro::wl_power_ctrl_t::init(const pyro::wl_power_ctrl_cfg_t*)	24	static
-E:/Develop/a_PYRo/PYRo-wl/PYRo-wl_2027/PYRo-wl_2027/PYRo/Module/Chassis/Wheel_Legged/pyro_wl_power_ctrl.cpp:47:6:void pyro::wl_power_ctrl_t::update_energy_loop(float, float, float)	40	static
-E:/Develop/a_PYRo/PYRo-wl/PYRo-wl_2027/PYRo-wl_2027/PYRo/Module/Chassis/Wheel_Legged/pyro_wl_power_ctrl.cpp:77:6:void pyro::wl_power_ctrl_t::update(const pyro::wl_wheel_cmd_t*, float*)	80	static
-E:/Develop/a_PYRo/PYRo-wl/PYRo-wl_2027/PYRo-wl_2027/PYRo/Module/Chassis/Wheel_Legged/pyro_wl_power_ctrl.cpp:170:7:float pyro::wl_power_ctrl_t::predict_power(uint8_t, float, float) const	24	static
-E:/Develop/a_PYRo/PYRo-wl/PYRo-wl_2027/PYRo-wl_2027/PYRo/Module/Chassis/Wheel_Legged/pyro_wl_power_ctrl.cpp:181:7:float pyro::wl_power_ctrl_t::_solve_max_torque(uint8_t, float, float, float) const	72	static

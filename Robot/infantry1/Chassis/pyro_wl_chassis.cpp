@@ -197,8 +197,8 @@ void wl_chassis_t::_balance_calculate()
 
     const float yaw_error = loop_fp32_constrain(
         _ctx.data.ins.euler_rad[0] - _ctx.data.target_yaw, -PI, PI);
-    const float yaw_wheel_torque = _ctx.pid.yaw->calculate(
-        0.0f, yaw_error, _ctx.data.ins.gyro[0]);
+    const float yaw_wheel_torque =
+        _ctx.pid.yaw->calculate(0.0f, yaw_error, _ctx.data.ins.gyro[0]);
 
     for (uint8_t leg = 0; leg < 2; ++leg)
     {
@@ -208,7 +208,7 @@ void wl_chassis_t::_balance_calculate()
         float error[6];
         _ctx.data.control[leg].T_w = 0.0f;
         _ctx.data.control[leg].T_p = 0.0f;
-        for (uint8_t state = 0; state < 2; ++state)
+        for (uint8_t state = 0; state < 6; ++state)
         {
             error[state] = _ctx.data.target_state.data[state] -
                            _ctx.data.current_state[leg].data[state];
@@ -271,34 +271,35 @@ void wl_chassis_t::_vmc_trans_v2j()
 
 void wl_chassis_t::_send_joint_torque()
 {
-    // _ctx.motor.joint[leg_def::L][joint_def::HIP]->send_torque(
-    //     _ctx.data.leg[leg_def::L].direction *
-    //     _ctx.data.leg[leg_def::L].out_joint_torque[joint_def::HIP]);
-    // _ctx.motor.joint[leg_def::L][joint_def::KNEE]->send_torque(
-    //     _ctx.data.leg[leg_def::L].direction *
-    //     _ctx.data.leg[leg_def::L].out_joint_torque[joint_def::KNEE]);
-    // _ctx.motor.joint[leg_def::R][joint_def::HIP]->send_torque(
-    //     _ctx.data.leg[leg_def::R].direction *
-    //     _ctx.data.leg[leg_def::R].out_joint_torque[joint_def::HIP]);
-    // _ctx.motor.joint[leg_def::R][joint_def::KNEE]->send_torque(
-    //     _ctx.data.leg[leg_def::R].direction *
-    //     _ctx.data.leg[leg_def::R].out_joint_torque[joint_def::KNEE]);
+    _ctx.motor.joint[leg_def::L][joint_def::HIP]->send_torque(
+        _ctx.data.leg[leg_def::L].direction *
+        _ctx.data.leg[leg_def::L].out_joint_torque[joint_def::HIP]);
+    _ctx.motor.joint[leg_def::L][joint_def::KNEE]->send_torque(
+        _ctx.data.leg[leg_def::L].direction *
+        _ctx.data.leg[leg_def::L].out_joint_torque[joint_def::KNEE]);
+    _ctx.motor.joint[leg_def::R][joint_def::HIP]->send_torque(
+        _ctx.data.leg[leg_def::R].direction *
+        _ctx.data.leg[leg_def::R].out_joint_torque[joint_def::HIP]);
+    _ctx.motor.joint[leg_def::R][joint_def::KNEE]->send_torque(
+        _ctx.data.leg[leg_def::R].direction *
+        _ctx.data.leg[leg_def::R].out_joint_torque[joint_def::KNEE]);
 
-    _ctx.motor.joint[leg_def::L][joint_def::HIP]->send_torque(0);
-    _ctx.motor.joint[leg_def::L][joint_def::KNEE]->send_torque(0);
-    _ctx.motor.joint[leg_def::R][joint_def::HIP]->send_torque(0);
-    _ctx.motor.joint[leg_def::R][joint_def::KNEE]->send_torque(0);
+    // _ctx.motor.joint[leg_def::L][joint_def::HIP]->send_torque(0);
+    // _ctx.motor.joint[leg_def::L][joint_def::KNEE]->send_torque(0);
+    // _ctx.motor.joint[leg_def::R][joint_def::HIP]->send_torque(0);
+    // _ctx.motor.joint[leg_def::R][joint_def::KNEE]->send_torque(0);
 }
 
 void wl_chassis_t::_send_wheel_torque()
 {
     _ctx.motor.wheel[leg_def::L]->send_torque(
+        _ctx.data.wheel[leg_def::R].direction *
         _ctx.data.wheel[leg_def::L].out_current);
-    // _ctx.motor.wheel[leg_def::R]->send_torque(
-    //     _ctx.data.wheel[leg_def::R].direction *
-    //     _ctx.data.wheel[leg_def::R].out_current);
+    _ctx.motor.wheel[leg_def::R]->send_torque(
+        _ctx.data.wheel[leg_def::R].direction *
+        _ctx.data.wheel[leg_def::R].out_current);
     // _ctx.motor.wheel[leg_def::L]->send_torque(0);
-    _ctx.motor.wheel[leg_def::R]->send_torque(0);
+    // _ctx.motor.wheel[leg_def::R]->send_torque(0);
 }
 
 } // namespace pyro
