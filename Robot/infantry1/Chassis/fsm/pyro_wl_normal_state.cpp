@@ -1,7 +1,6 @@
 #include "pyro_wl_chassis.h"
 
 #include <algorithm>
-#include <cmath>
 
 namespace pyro
 {
@@ -13,7 +12,6 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
     owner->_ctx.data.odom.real_x            = 0;
     owner->_ctx.data.odom.target_x          = 0;
     owner->_ctx.data.odom.target_dot_x[0]   = 0;
-    owner->_ctx.data.odom.target_dot_x[1]   = 0;
 
     owner->_ctx.data.target_state.x         = 0;
     owner->_ctx.data.target_state.dot_x     = 0.0f;
@@ -64,29 +62,8 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
         std::clamp(owner->_ctx.data.leg[leg_def::R].target_leg_length,
                    MIN_LEG_LENGTH, MAX_LEG_LENGTH);
 
-    const float desired_target_velocity =
-        std::fabs(owner->_current_cmd.v) > STOP_VELOCITY_DEADBAND
-            ? owner->_current_cmd.v
-            : 0.0f;
-    const float previous_target_velocity =
-        owner->_ctx.data.odom.target_dot_x[0];
-    const bool same_direction =
-        previous_target_velocity == 0.0f || desired_target_velocity == 0.0f ||
-        previous_target_velocity * desired_target_velocity > 0.0f;
-    const bool accelerating =
-        same_direction &&
-        std::fabs(desired_target_velocity) >
-            std::fabs(previous_target_velocity);
-    const float velocity_slew_rate =
-        accelerating ? TARGET_VELOCITY_ACCELERATION
-                     : TARGET_VELOCITY_DECELERATION;
-    const float max_velocity_step = velocity_slew_rate * owner->_ctx.data._dt;
-
-    owner->_ctx.data.odom.target_dot_x[1] = previous_target_velocity;
-    owner->_ctx.data.odom.target_dot_x[0] = previous_target_velocity +
-        std::clamp(desired_target_velocity - previous_target_velocity,
-                   -max_velocity_step, max_velocity_step);
-    const bool stop_requested = desired_target_velocity == 0.0f;
+    const float target_vx = owner->_current_cmd.v;
+    owner->_ctx.data.odom.target_dot_x[0] = target_vx;
 
     // calculate current states and schedule LQR gains.
     for (uint8_t leg = 0; leg < 2; ++leg)
@@ -117,24 +94,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
     }
 
 
-    owner->_ctx.data.odom.target_x +=
-        0.5f * owner->_ctx.data._dt *
-        (owner->_ctx.data.odom.target_dot_x[0] +
-         owner->_ctx.data.odom.target_dot_x[1]);
-
-    // Smoothly capture the actual position after the commanded stop.
-    // This replaces the previous one-cycle target_x = real_x jump.
-    if (stop_requested &&
-        std::fabs(owner->_ctx.data.odom.target_dot_x[0]) <=
-            TARGET_VELOCITY_EPSILON)
-    {
-        const float max_capture_step =
-            TARGET_POSITION_CAPTURE_SPEED * owner->_ctx.data._dt;
-        owner->_ctx.data.odom.target_x +=
-            std::clamp(owner->_ctx.data.odom.real_x -
-                           owner->_ctx.data.odom.target_x,
-                       -max_capture_step, max_capture_step);
-    }
+    owner->_ctx.data.odom.target_x += target_vx * owner->_ctx.data._dt;
 
     // 写入 LQR 目标状态。
     owner->_ctx.data.target_state.x     = owner->_ctx.data.odom.target_x;
