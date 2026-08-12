@@ -103,6 +103,22 @@ void wl_chassis_t::_update_feedback()
                     &_ctx.data.ins.euler_rad[2]);
     ins->get_gyro_b(&_ctx.data.ins.gyro[0], &_ctx.data.ins.gyro[1],
                     &_ctx.data.ins.gyro[2]);
+    
+    for (uint8_t leg = 0; leg < 2; ++leg)
+    {
+        leg_ctx_t &leg_ctx = _ctx.data.leg[leg];
+        state_vec_t &state = _ctx.data.current_state[leg];
+
+        state.x            = _ctx.data.odom.real_x;
+        state.dot_x        = _ctx.data.odom.real_dot_x[0];
+        state.beta =
+            leg_ctx.current_leg_rad - PI / 2 -
+                     _ctx.data.ins.euler_rad[1];
+        state.dot_beta =
+            leg_ctx.current_leg_radps - _ctx.data.ins.gyro[1];
+        state.gamma     = _ctx.data.ins.euler_rad[1];
+        state.dot_gamma = _ctx.data.ins.gyro[1];
+    }
 }
 
 void wl_chassis_t::_fsm_execute()

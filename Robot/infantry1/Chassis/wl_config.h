@@ -48,14 +48,6 @@ constexpr float RIGHT_LEG_DIRECTION    = 1.0f;
 
 constexpr float LEFT_WHEEL_DIRECTION   = -1.0f;
 constexpr float RIGHT_WHEEL_DIRECTION  = 1.0f;
-constexpr float STOP_VELOCITY_DEADBAND = 0.05f;
-
-// Reference-motion smoothing parameters.
-// Units: velocity in m/s, acceleration in m/s^2.
-constexpr float TARGET_VELOCITY_ACCELERATION = 1.0f;
-constexpr float TARGET_VELOCITY_DECELERATION = 2.0f;
-constexpr float TARGET_POSITION_CAPTURE_SPEED = 0.5f;
-constexpr float TARGET_VELOCITY_EPSILON = 1.0e-3f;
 
 // Single-leg gravity compensation parameters.
 constexpr float SINGLE_LEG_BODY_MASS   = 6.0f;
