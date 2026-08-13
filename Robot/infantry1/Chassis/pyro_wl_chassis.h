@@ -86,9 +86,15 @@ struct state_vec_t
     {
         struct
         {
-            float x, dot_x, beta, dot_beta, gamma, dot_gamma;
+            float x, dot_x;
+            float psi, dot_psi;
+            float theta, dot_theta;
+            float phi, dot_phi;
+            float h, dot_h;
+            float beta1, dot_beta1;
+            float beta2, dot_beta2;
         };
-        float data[6];
+        float data[14];
     };
 };
 struct control_vec_t
@@ -97,9 +103,11 @@ struct control_vec_t
     {
         struct
         {
-            float T_w, T_p;
+            float T_w1,T_w2;
+            float T_p1,T_p2;
+            float F_l1,F_l2;
         };
-        float data[2];
+        float data[6];
     };
 };
 struct odom_t
@@ -122,9 +130,10 @@ struct wl_chassis_data_ctx_t
     leg_ctx_t leg[2];
     wheel_ctx_t wheel[2];
     state_vec_t target_state;
-    state_vec_t current_state[2]; // 0 : LEFT, 1 : RIGHT
-    control_vec_t control[2];     // 0 : LEFT, 1 : RIGHT
-    float K[2][2][6];             // 0 : LEFT, 1 : RIGHT;0 : T_w, 1: T_p
+    state_vec_t current_state;
+    control_vec_t control;
+    float K[INPUT_DIM][STATE_DIM];
+    float U0[INPUT_DIM];
     odom_t odom;
     ins_data_t ins;
     float target_yaw;

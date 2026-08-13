@@ -65,22 +65,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
     const float target_vx = owner->_current_cmd.v;
     owner->_ctx.data.odom.target_dot_x[0] = target_vx;
 
-    // calculate current states and schedule LQR gains.
-    for (uint8_t leg = 0; leg < 2; ++leg)
-    {
-        leg_ctx_t &leg_ctx = owner->_ctx.data.leg[leg];
 
-        auto &K         = owner->_ctx.data.K[leg];
-        for (uint8_t input = 0; input < 2; ++input)
-        {
-            for (uint8_t state_index = 0; state_index < 6; ++state_index)
-            {
-                K[input][state_index] = evaluate_polynomial_ascending(
-                    leg_ctx.current_leg_length, K_POLY_COEF[input][state_index],
-                    K_POLY_DEGREE);
-            }
-        }
-    }
 
 
     owner->_ctx.data.odom.target_x += target_vx * owner->_ctx.data._dt;
