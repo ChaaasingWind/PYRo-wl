@@ -210,16 +210,17 @@ void wl_chassis_t::_manual_control()
 
 void wl_chassis_t::_gain_calculate()
 {
-    const float delta_L = _ctx.data.leg[leg_def::L].current_leg_length -
-                          _ctx.data.leg[leg_def::R].current_leg_length;
+    const float norm_delta_L = (_ctx.data.leg[leg_def::L].current_leg_length -
+                                _ctx.data.leg[leg_def::R].current_leg_length) *
+                               (1.0f / 0.2f);
     for (uint8_t input = 0; input < INPUT_DIM; ++input)
     {
         _ctx.data.U0[input] = evaluate_polynomial_ascending(
-            delta_L, U0_POLY_COEF[input], U0_POLY_DEGREE);
+            norm_delta_L, U0_POLY_COEF[input], U0_POLY_DEGREE);
         for (uint8_t state = 0; state < STATE_DIM; ++state)
         {
             _ctx.data.K[input][state] = evaluate_polynomial_ascending(
-                delta_L, K_POLY_COEF[input][state], K_POLY_DEGREE);
+                norm_delta_L, K_POLY_COEF[input][state], K_POLY_DEGREE);
         }
     }
 }
