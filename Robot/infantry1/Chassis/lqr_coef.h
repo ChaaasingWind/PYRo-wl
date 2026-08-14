@@ -17,12 +17,14 @@
  *  0.004,0.004]
  */
 
-constexpr uint32_t STATE_DIM                = 14;
-constexpr uint32_t INPUT_DIM                = 6;
-constexpr uint32_t K_POLY_DEGREE            = 3;
-constexpr uint32_t U0_POLY_DEGREE           = 3;
+constexpr uint32_t STATE_DIM                                         = 14;
+constexpr uint32_t INPUT_DIM                                         = 6;
+constexpr uint32_t K_POLY_DEGREE                                     = 3;
+constexpr uint32_t U0_POLY_DEGREE                                    = 3;
 
-constexpr float DOUBLE_LEG_K_COEF[6][14][4] = {
+// Coefficients use ascending powers of
+// xi = clamp((L_left - L_right) / 0.2f, -1.0f, 1.0f).
+constexpr float K_POLY_COEF[INPUT_DIM][STATE_DIM][K_POLY_DEGREE + 1] = {
     {
         {-4.4774713522e+00f, -2.4619481090e+00f, 4.2352047822e-01f,
          8.4300501652e-02f},
@@ -205,15 +207,11 @@ constexpr float DOUBLE_LEG_K_COEF[6][14][4] = {
     },
 };
 
-constexpr float DOUBLE_LEG_U0_COEF[6][4] = {
-    {0.0000000000e+00f, 0.0000000000e+00f, 0.0000000000e+00f,
-     0.0000000000e+00f},
-    {0.0000000000e+00f, 0.0000000000e+00f, 0.0000000000e+00f,
-     0.0000000000e+00f},
-    {0.0000000000e+00f, 0.0000000000e+00f, 0.0000000000e+00f,
-     0.0000000000e+00f},
-    {0.0000000000e+00f, 0.0000000000e+00f, 0.0000000000e+00f,
-     0.0000000000e+00f},
+constexpr float U0_POLY_COEF[INPUT_DIM][U0_POLY_DEGREE + 1] = {
+    {0.0f, 0.0f, 0.0f, 0.0f},
+    {0.0f, 0.0f, 0.0f, 0.0f},
+    {0.0f, 0.0f, 0.0f, 0.0f},
+    {0.0f, 0.0f, 0.0f, 0.0f},
     {6.6701718109e+01f, 4.2831533606e-01f, -2.6761852656e-01f,
      8.4494275562e-14f},
     {6.6701718109e+01f, -4.2831533606e-01f, -2.6761852656e-01f,
