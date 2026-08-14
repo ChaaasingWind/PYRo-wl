@@ -21,10 +21,7 @@ struct wl_chassis_deps_t
     struct pid_deps_t
     {
         pd_ctrl_t *leg_length[2];
-        pd_ctrl_t *leg_length_diff;
         pd_ctrl_t *leg_rad[2];
-        pd_ctrl_t *leg_rad_diff;
-        pd_ctrl_t *yaw;
     };
     motor_deps_t motor;
     pid_deps_t pid;
@@ -35,7 +32,7 @@ struct wl_chassis_cmd_t final : public cmd_base_t
     float delta_leg_length[2];
     float delta_leg_rad[2];
     float v;
-    float delta_yaw;
+    float wz;
     bool balance_flag = false;
 
 
@@ -114,8 +111,6 @@ struct odom_t
 {
     float real_x;
     float real_dot_x[2]; // 0 : v_x(t) , 1 :v_x(t-1)
-    float target_x;
-    float target_dot_x[2];// 0 : v_x(t) , 1 :v_x(t-1)
 };
 
 struct ins_data_t
@@ -136,7 +131,6 @@ struct wl_chassis_data_ctx_t
     float U0[INPUT_DIM];
     odom_t odom;
     ins_data_t ins;
-    float target_yaw;
     float _dt;
 };
 
@@ -178,8 +172,9 @@ class wl_chassis_t final
 
     // 辅助函数
     void _vmc_trans_j2v();
-    void _manual_calculate();
-    void _balance_calculate();
+    void _manual_control();
+    void _gain_calculate();
+    void _balance_control();
     void _vmc_trans_v2j();
     void _send_joint_torque();
     void _send_wheel_torque();

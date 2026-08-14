@@ -79,7 +79,7 @@ void chassis_dr162cmd()
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]    = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = 0.0f;
         wl_chassis_cmd_ptr->v                            = 0.0f;
-        wl_chassis_cmd_ptr->delta_yaw                    = 0.0f;
+        wl_chassis_cmd_ptr->wz                           = 0.0f;
     }
     else if (pyro::sw_pos_t::MID == vrc.switches.right.current_pos)
     {
@@ -92,7 +92,7 @@ void chassis_dr162cmd()
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = vrc.axes.ry * 0.001f;
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = vrc.axes.rx * 0.001f;
         wl_chassis_cmd_ptr->v                            = 0.0f;
-        wl_chassis_cmd_ptr->delta_yaw                    = 0.0f;
+        wl_chassis_cmd_ptr->wz                           = 0.0f;
         wl_chassis_cmd_ptr->balance_flag                 = false;
     }
     else if (pyro::sw_pos_t::UP == vrc.switches.right.current_pos)
@@ -103,10 +103,12 @@ void chassis_dr162cmd()
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = 0.0f;
         wl_chassis_cmd_ptr->v                            = vrc.axes.ry * 1.5f;
-        wl_chassis_cmd_ptr->delta_yaw                    = vrc.axes.lx * 0.001f;
-        wl_chassis_cmd_ptr->delta_leg_length[leg_def::L] = vrc.axes.ly * 0.0003f;
-        wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = vrc.axes.ly * 0.0003f;
-        wl_chassis_cmd_ptr->balance_flag                 = true;
+        wl_chassis_cmd_ptr->wz                           = vrc.axes.lx * 0.001f;
+        wl_chassis_cmd_ptr->delta_leg_length[leg_def::L] =
+            vrc.axes.ly * 0.0003f;
+        wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] =
+            vrc.axes.ly * 0.0003f;
+        wl_chassis_cmd_ptr->balance_flag = true;
     }
 }
 
@@ -180,24 +182,10 @@ void deps_init()
     wl_chassis_deps->pid.leg_length[leg_def::R] = new pyro::pd_ctrl_t(
         900.0f, 42.0f, 80.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
 
-    // Balance-only differential leg-length PD.
-    // Output unit: F_L [N], applied with opposite signs to the two legs.
-    wl_chassis_deps->pid.leg_length_diff = new pyro::pd_ctrl_t(
-        200.0f, 10.0f, 20.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
 
     // Leg-angle PD: output T_p (N m), limited to 32 N m.
     wl_chassis_deps->pid.leg_rad[leg_def::L] = new pyro::pd_ctrl_t(
         20.0f, 0.6f, 15.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
     wl_chassis_deps->pid.leg_rad[leg_def::R] = new pyro::pd_ctrl_t(
         20.0f, 0.6f, 15.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
-
-    // Balance-only differential leg-angle PD.
-    // The output is added to the left T_p and subtracted from the right T_p.
-    wl_chassis_deps->pid.leg_rad_diff = new pyro::pd_ctrl_t(
-        10.0f, 0.3f, 5.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
-
-    // Balance-only yaw PD. Output unit: wheel torque [N m].
-    // Positive output means right wheel forward and left wheel backward.
-    wl_chassis_deps->pid.yaw = new pyro::pd_ctrl_t(
-        1.0f, 0.05f, 2.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
 }
