@@ -214,26 +214,47 @@ void wl_chassis_t::_manual_control()
 
 void wl_chassis_t::_gain_calculate()
 {
-    const float norm_delta_L =
+    // const float norm_delta_L =
+    //     std::clamp((_ctx.data.leg[leg_def::L].current_leg_length -
+    //                 _ctx.data.leg[leg_def::R].current_leg_length) *
+    //                    (1.0f / 0.2f),
+    //                -1.0f, 1.0f);
+    const float norm_L1 =
         std::clamp((_ctx.data.leg[leg_def::L].current_leg_length -
-                    _ctx.data.leg[leg_def::R].current_leg_length) *
-                       (1.0f / 0.2f),
+                    0.5f * (MAX_LEG_LENGTH + MIN_LEG_LENGTH)) *
+                       (1.0f / (0.5f * (MAX_LEG_LENGTH - MIN_LEG_LENGTH))),
                    -1.0f, 1.0f);
-    for (uint8_t input = 0; input < INPUT_DIM; ++input)
+    const float norm_L2 =
+        std::clamp((_ctx.data.leg[leg_def::R].current_leg_length -
+                    0.5f * (MAX_LEG_LENGTH + MIN_LEG_LENGTH)) *
+                       (1.0f / (0.5f * (MAX_LEG_LENGTH - MIN_LEG_LENGTH))),
+                   -1.0f, 1.0f);
+
+    for (uint32_t input = 0; input < INPUT_DIM; ++input)
     {
-        _ctx.data.U0[input] = evaluate_polynomial_ascending(
-            norm_delta_L, U0_POLY_COEF[input], U0_POLY_DEGREE);
-        for (uint8_t state = 0; state < STATE_DIM; ++state)
+        for (uint32_t state = 0; state < STATE_DIM; ++state)
         {
-            _ctx.data.K[input][state] = evaluate_polynomial_ascending(
-                norm_delta_L, K_POLY_COEF[input][state], K_POLY_DEGREE);
+            float p_terms[K_POLY_DEGREE + 1];
+            for (uint32_t p = 0; p <= K_POLY_DEGREE; ++p)
+            {
+                p_terms[p] = evaluate_polynomial_ascending(
+                    norm_L2, K_POLY_COEF[input][state][p], K_POLY_DEGREE);
+            }
+            _ctx.data.K[input][state] =
+                evaluate_polynomial_ascending(norm_L1, p_terms, K_POLY_DEGREE);
         }
     }
 
-    _ctx.data.target_state.beta1 = evaluate_polynomial_ascending(_ctx.data.leg[leg_def::L].target_leg_length,
-        BETA_TRIM_POLY_COEF, BETA_TRIM_POLY_DEGREE);
-    _ctx.data.target_state.beta2 = evaluate_polynomial_ascending(_ctx.data.leg[leg_def::R].target_leg_length,
-        BETA_TRIM_POLY_COEF, BETA_TRIM_POLY_DEGREE);
+    _ctx.data.U0[lqr_input_def::F_L1] =
+        evaluate_polynomial_ascending(norm_L1, FL_U0_POLY_COEF, U0_POLY_DEGREE);
+    _ctx.data.U0[lqr_input_def::F_L2] =
+        evaluate_polynomial_ascending(norm_L2, FL_U0_POLY_COEF, U0_POLY_DEGREE);
+    _ctx.data.target_state.beta1 = evaluate_polynomial_ascending(
+        _ctx.data.leg[leg_def::L].target_leg_length, BETA_TRIM_POLY_COEF,
+        BETA_TRIM_POLY_DEGREE);
+    _ctx.data.target_state.beta2 = evaluate_polynomial_ascending(
+        _ctx.data.leg[leg_def::R].target_leg_length, BETA_TRIM_POLY_COEF,
+        BETA_TRIM_POLY_DEGREE);
 }
 
 void wl_chassis_t::_balance_control()
