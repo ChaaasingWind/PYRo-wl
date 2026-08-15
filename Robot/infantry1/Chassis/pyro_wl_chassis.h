@@ -176,8 +176,8 @@ class wl_chassis_t final
     void _gain_calculate();
     void _balance_control();
     void _vmc_trans_v2j();
-    void _send_joint_torque();
-    void _send_wheel_torque();
+    void _send_joint_torque() const;
+    void _send_wheel_torque() const;
 
     using owner = wl_chassis_t;
 

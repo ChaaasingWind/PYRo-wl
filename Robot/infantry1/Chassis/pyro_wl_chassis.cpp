@@ -111,11 +111,15 @@ void wl_chassis_t::_update_feedback()
     state.dot_x        = _ctx.data.odom.real_dot_x[0];
     state.psi          = _ctx.data.ins.euler_rad[0];
     state.dot_psi      = _ctx.data.ins.gyro[0];
-    state.beta1        = _ctx.data.leg[leg_def::L].current_leg_radps - PI / 2 -
+    state.theta        = _ctx.data.ins.euler_rad[1];
+    state.dot_theta    = _ctx.data.ins.gyro[1];
+    state.phi          = _ctx.data.ins.euler_rad[2];
+    state.dot_phi      = _ctx.data.ins.gyro[2];
+    state.beta1        = _ctx.data.leg[leg_def::L].current_leg_rad - PI / 2 -
                   _ctx.data.ins.euler_rad[1];
     state.dot_beta1 =
         _ctx.data.leg[leg_def::L].current_leg_radps - _ctx.data.ins.gyro[1];
-    state.beta2 = _ctx.data.leg[leg_def::R].current_leg_radps - PI / 2 -
+    state.beta2 = _ctx.data.leg[leg_def::R].current_leg_rad - PI / 2 -
                   _ctx.data.ins.euler_rad[1];
     state.dot_beta2 =
         _ctx.data.leg[leg_def::R].current_leg_radps - _ctx.data.ins.gyro[1];
@@ -210,9 +214,11 @@ void wl_chassis_t::_manual_control()
 
 void wl_chassis_t::_gain_calculate()
 {
-    const float norm_delta_L = (_ctx.data.leg[leg_def::L].current_leg_length -
-                                _ctx.data.leg[leg_def::R].current_leg_length) *
-                               (1.0f / 0.2f);
+    const float norm_delta_L =
+        std::clamp((_ctx.data.leg[leg_def::L].current_leg_length -
+                    _ctx.data.leg[leg_def::R].current_leg_length) *
+                       (1.0f / 0.2f),
+                   -1.0f, 1.0f);
     for (uint8_t input = 0; input < INPUT_DIM; ++input)
     {
         _ctx.data.U0[input] = evaluate_polynomial_ascending(
@@ -271,7 +277,7 @@ void wl_chassis_t::_balance_control()
     for (auto &wheel : _ctx.data.wheel)
     {
         wheel.out_current =
-            std::clamp(wheel.out_T_w * (1 / K_t), -10.0f, 10.0f);
+            std::clamp(wheel.out_T_w * (1 / K_t), -MAX_CURRENT, MAX_CURRENT);
     }
 }
 
@@ -291,7 +297,7 @@ void wl_chassis_t::_vmc_trans_v2j()
     }
 }
 
-void wl_chassis_t::_send_joint_torque()
+void wl_chassis_t::_send_joint_torque() const
 {
     _ctx.motor.joint[leg_def::L][joint_def::HIP]->send_torque(
         _ctx.data.leg[leg_def::L].direction *
@@ -312,10 +318,10 @@ void wl_chassis_t::_send_joint_torque()
     // _ctx.motor.joint[leg_def::R][joint_def::KNEE]->send_torque(0);
 }
 
-void wl_chassis_t::_send_wheel_torque()
+void wl_chassis_t::_send_wheel_torque() const
 {
     _ctx.motor.wheel[leg_def::L]->send_torque(
-        _ctx.data.wheel[leg_def::R].direction *
+        _ctx.data.wheel[leg_def::L].direction *
         _ctx.data.wheel[leg_def::L].out_current);
     _ctx.motor.wheel[leg_def::R]->send_torque(
         _ctx.data.wheel[leg_def::R].direction *

@@ -53,14 +53,13 @@ constexpr float RIGHT_WHEEL_DIRECTION = 1.0f;
 constexpr float SINGLE_LEG_BODY_MASS  = 6.0f;
 constexpr float LEG_MASS              = 1.232f;
 constexpr float GRAVITY_ACCELERATION  = 9.81f;
-constexpr float LEG_GRAVITY_FORCE =
-    (SINGLE_LEG_BODY_MASS + LEG_MASS) * GRAVITY_ACCELERATION * 0.9f;
 constexpr float K_t                                  = 0.21777611f;
 constexpr float reduction_ratio                      = 13.94f;
 constexpr float rec_reduction_ratio                  = 1 / reduction_ratio;
 constexpr float MAX_F_L                              = 300.0f;
 constexpr float MAX_T_P                              = 60.0f;
-constexpr float MAX_T_W                              = K_t * 10.0f;
+constexpr float MAX_CURRENT                          = 15.0f;
+constexpr float MAX_T_W                              = K_t * MAX_CURRENT;
 
 
 constexpr uint32_t L_WP_POLY_DEGREE                  = 3;
@@ -69,13 +68,6 @@ constexpr uint32_t L_WP_POLY_DEGREE                  = 3;
 // Coefficients are in ascending-power order: c0, c1, c2, c3.
 constexpr float L_WP_POLY_COEF[L_WP_POLY_DEGREE + 1] = {0.0581f, 0.3760f,
                                                         0.7972f, -0.7381f};
-
-// Q , R 矩阵
-// Q_diag = [80.0, 20.0, 500.0, 5.0, 100.0, 5.0]
-// R_diag = [2.4, 0.1]
-
-
-
 
 constexpr float WHEEL_RADIUS                         = 0.06f;
 
