@@ -103,7 +103,7 @@ void chassis_dr162cmd()
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = 0.0f;
         wl_chassis_cmd_ptr->v                            = vrc.axes.ry * 1.5f;
-        wl_chassis_cmd_ptr->wz                           = vrc.axes.lx * 0.001f;
+        wl_chassis_cmd_ptr->wz                           = vrc.axes.lx * 1.0f;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::L] =
             vrc.axes.ly * 0.0003f;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] =
