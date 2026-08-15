@@ -57,6 +57,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
 
     const float target_wz               = owner->_current_cmd.wz;
     owner->_ctx.data.target_state.psi += target_wz * owner->_ctx.data._dt;
+    owner->_ctx.data.target_state.psi = loop_fp32_constrain(owner->_ctx.data.target_state.psi,-PI,PI);
     owner->_ctx.data.target_state.dot_psi = target_wz;
 
     owner->_gain_calculate();
