@@ -229,6 +229,11 @@ void wl_chassis_t::_gain_calculate()
                 norm_delta_L, K_POLY_COEF[input][state], K_POLY_DEGREE);
         }
     }
+
+    _ctx.data.target_state.beta1 = evaluate_polynomial_ascending(_ctx.data.leg[leg_def::L].target_leg_length,
+        BETA_TRIM_POLY_COEF, BETA_TRIM_POLY_DEGREE);
+    _ctx.data.target_state.beta2 = evaluate_polynomial_ascending(_ctx.data.leg[leg_def::R].target_leg_length,
+        BETA_TRIM_POLY_COEF, BETA_TRIM_POLY_DEGREE);
 }
 
 void wl_chassis_t::_balance_control()
