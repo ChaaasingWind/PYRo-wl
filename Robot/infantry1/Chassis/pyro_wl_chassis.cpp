@@ -250,10 +250,10 @@ void wl_chassis_t::_gain_calculate()
     _ctx.data.U0[lqr_input_def::F_L2] =
         evaluate_polynomial_ascending(norm_L2, FL_U0_POLY_COEF, U0_POLY_DEGREE);
     _ctx.data.target_state.beta1 = evaluate_polynomial_ascending(
-        _ctx.data.leg[leg_def::L].target_leg_length, BETA_TRIM_POLY_COEF,
+        _ctx.data.leg[leg_def::L].current_leg_length, BETA_TRIM_POLY_COEF,
         BETA_TRIM_POLY_DEGREE);
     _ctx.data.target_state.beta2 = evaluate_polynomial_ascending(
-        _ctx.data.leg[leg_def::R].target_leg_length, BETA_TRIM_POLY_COEF,
+        _ctx.data.leg[leg_def::R].current_leg_length, BETA_TRIM_POLY_COEF,
         BETA_TRIM_POLY_DEGREE);
 }
 
