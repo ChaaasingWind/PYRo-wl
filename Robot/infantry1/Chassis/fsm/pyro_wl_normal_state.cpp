@@ -14,7 +14,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
     owner->_ctx.data.target_state.dot_x     = 0.0f;
     owner->_ctx.data.target_state.psi       = owner->_ctx.data.ins.euler_rad[0];
     owner->_ctx.data.target_state.dot_psi   = 0.0f;
-    owner->_ctx.data.target_state.h         = 0.28f;
+    owner->_ctx.data.target_state.h         = 0.24f;
     owner->_ctx.data.target_state.dot_h     = 0.0f;
     owner->_ctx.data.target_state.theta     = 0.0f;
     owner->_ctx.data.target_state.dot_theta = 0.0f;
