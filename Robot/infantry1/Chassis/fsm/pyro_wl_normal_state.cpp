@@ -15,7 +15,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
     owner->_ctx.data.target_state.dot_x     = 0.0f;
     owner->_ctx.data.target_state.psi       = owner->_ctx.data.current_state.psi;
     owner->_ctx.data.target_state.dot_psi   = 0.0f;
-    owner->_ctx.data.target_state.h         = 0.28f;
+    owner->_ctx.data.target_state.h         = 0.24f;
     owner->_ctx.data.target_state.dot_h     = 0.0f;
     owner->_ctx.data.target_state.theta     = 0.0f;
     owner->_ctx.data.target_state.dot_theta = 0.0f;
@@ -25,6 +25,11 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
     owner->_ctx.data.target_state.beta2     = 0.0f;
     owner->_ctx.data.target_state.dot_beta1 = 0.0f;
     owner->_ctx.data.target_state.dot_beta2 = 0.0f;
+
+    for (float & i : owner->_ctx.data.U0)
+    {
+        i = 0.0f;
+    }
 
     float avg_length = (owner->_ctx.data.leg[leg_def::L].current_leg_length +
                         owner->_ctx.data.leg[leg_def::R].current_leg_length) *
