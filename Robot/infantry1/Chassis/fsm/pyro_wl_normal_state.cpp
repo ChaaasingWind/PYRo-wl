@@ -25,6 +25,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
     owner->_ctx.data.target_state.dot_beta1 = 0.0f;
     owner->_ctx.data.target_state.dot_beta2 = 0.0f;
 
+
     for (float & i : owner->_ctx.data.U0)
     {
         i = 0.0f;
@@ -74,6 +75,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
 
 void wl_chassis_t::fsm_active_t::state_normal_t::exit(wl_chassis_t *owner)
 {
+    owner->_ctx.data.leg_is_ready = false;
     (void)owner;
 }
 

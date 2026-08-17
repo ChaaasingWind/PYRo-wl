@@ -132,6 +132,7 @@ struct wl_chassis_data_ctx_t
     odom_t odom;
     ins_data_t ins;
     float _dt;
+    bool leg_is_ready;
 };
 
 struct wl_chassis_ctx_t
@@ -202,6 +203,12 @@ class wl_chassis_t final
             void execute(owner *owner) override;
             void exit(owner *owner) override;
         };
+        struct state_align_t final : public state_t<owner>
+        {
+            void enter(owner *owner) override;
+            void execute(owner *owner) override;
+            void exit(owner *owner) override;
+        };
         void on_enter(wl_chassis_t *ctx) override;
         void on_execute(wl_chassis_t *ctx) override;
         void on_exit(wl_chassis_t *ctx) override;
@@ -209,6 +216,7 @@ class wl_chassis_t final
       private:
         state_manual_t _state_manual;
         state_normal_t _state_normal;
+        state_align_t  _state_align;
     };
 
     fsm_t<owner> _main_fsm;
