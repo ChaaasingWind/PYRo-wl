@@ -1,3 +1,4 @@
+#include "pyro_algo_common.h"
 #include "pyro_dm_motor_drv.h"
 #include "pyro_wl_chassis.h"
 
@@ -5,14 +6,19 @@
 
 namespace pyro
 {
-    #define ALIGN_MAX_RAD 1.6f
-    #define ALIGN_MIN_RAD 0.7f
-    #define ALIGN_TARGET_RAD 0.9f
-    #define ALIGN_RAD_ALPHA 0.001f
+    constexpr float align_time_ms       = 2000.0f;
 
-    #define ALIGN_TARGET_LENGTH 0.20f
-    #define ALIGN_DELTA_LEG_RAD 0.002f
-    #define ALIGN_DELTA_LEG_LENGTH 0.0001f
+    constexpr float align_max_rad       = 1.2f;
+    constexpr float align_min_rad       = 0.7f;
+    constexpr float align_target_rad    = 0.9f;
+
+    constexpr float align_target_length = 0.20f;
+
+    static float right_leg_delta_rad;
+    static float left_leg_delta_rad;
+    static float right_leg_delta_length;
+    static float left_leg_delta_length;
+    static int count;
 
     void wl_chassis_t::fsm_active_t::state_align_t::enter(wl_chassis_t *owner)
     {
@@ -27,6 +33,14 @@ namespace pyro
             leg.out_joint_torque[joint_def::HIP]  = 0;
             leg.out_joint_torque[joint_def::KNEE] = 0;
         }
+
+        //复位的角度小量计算
+        right_leg_delta_rad    = (loop_fp32_constrain(align_target_rad-owner->_ctx.data.leg[leg_def::R].target_leg_rad,0,2*PI))/align_time_ms;
+        left_leg_delta_rad     = (loop_fp32_constrain(align_target_rad-owner->_ctx.data.leg[leg_def::L].target_leg_rad,0,2*PI))/align_time_ms;
+        right_leg_delta_length = (align_target_length - owner->_ctx.data.leg[leg_def::R].target_leg_length)/align_time_ms;
+        left_leg_delta_length  = (align_target_length - owner->_ctx.data.leg[leg_def::L].target_leg_length)/align_time_ms;
+        count                  = (int)align_time_ms;
+
         owner->_ctx.motor.wheel[leg_def::L]->disable();
         owner->_ctx.motor.wheel[leg_def::R]->disable();
     }
@@ -35,10 +49,10 @@ namespace pyro
     {
         //判断双腿是否在可以起身的位置
         static uint8_t keep_tick =0;
-        if(owner->_ctx.data.leg[leg_def::L].current_leg_rad <= ALIGN_MAX_RAD &&
-           owner->_ctx.data.leg[leg_def::L].current_leg_rad >= ALIGN_MIN_RAD &&
-           owner->_ctx.data.leg[leg_def::R].current_leg_rad <= ALIGN_MAX_RAD &&
-           owner->_ctx.data.leg[leg_def::R].current_leg_rad >= ALIGN_MIN_RAD &&
+        if(owner->_ctx.data.leg[leg_def::L].current_leg_rad <= align_max_rad &&
+           owner->_ctx.data.leg[leg_def::L].current_leg_rad >= align_min_rad &&
+           owner->_ctx.data.leg[leg_def::R].current_leg_rad <= align_max_rad &&
+           owner->_ctx.data.leg[leg_def::R].current_leg_rad >= align_min_rad &&
            owner->_ctx.data.leg[leg_def::L].current_leg_length <=MIN_LEG_LENGTH+0.04f&&
            owner->_ctx.data.leg[leg_def::R].current_leg_length <=MIN_LEG_LENGTH+0.04f&&
            
@@ -56,42 +70,16 @@ namespace pyro
         }
 
 
+        if(count > 0)
+        {
+            owner->_ctx.data.leg[leg_def::L].target_leg_rad    += left_leg_delta_rad;
+            owner->_ctx.data.leg[leg_def::R].target_leg_rad    += right_leg_delta_rad;
+            owner->_ctx.data.leg[leg_def::L].target_leg_length += left_leg_delta_length;
+            owner->_ctx.data.leg[leg_def::R].target_leg_length += right_leg_delta_length;
+            count--;
+        }
+        
 
-
-        owner->_ctx.data.leg[leg_def::L].target_leg_rad =
-                ALIGN_TARGET_RAD*ALIGN_RAD_ALPHA + owner->_ctx.data.leg[leg_def::L].target_leg_rad*(1.0f-ALIGN_RAD_ALPHA);
-        owner->_ctx.data.leg[leg_def::R].target_leg_rad =
-                ALIGN_TARGET_RAD*ALIGN_RAD_ALPHA + owner->_ctx.data.leg[leg_def::R].target_leg_rad*(1.0f-ALIGN_RAD_ALPHA);
-        owner->_ctx.data.leg[leg_def::R].target_leg_rad = ALIGN_TARGET_LENGTH*ALIGN_TARGET_LENGTH 
-                + owner->_ctx.data.leg[leg_def::R].target_leg_rad * (1.0f-ALIGN_RAD_ALPHA);
-        owner->_ctx.data.leg[leg_def::L].target_leg_rad = ALIGN_TARGET_LENGTH*ALIGN_TARGET_LENGTH 
-                + owner->_ctx.data.leg[leg_def::L].target_leg_rad * (1.0f-ALIGN_RAD_ALPHA);
-        // //左腿目标角度变化
-        // if(owner->_ctx.data.leg[leg_def::L].target_leg_rad >= ALIGN_MAX_RAD ||
-        //    owner->_ctx.data.leg[leg_def::L].target_leg_rad <= (ALIGN_MIN_RAD+ALIGN_MAX_RAD)*0.5f)
-        // {
-        //     owner->_ctx.data.leg[leg_def::L].target_leg_rad +=ALIGN_DELTA_LEG_RAD;
-        // }
-
-
-        // //右腿目标角度变化
-        // if(owner->_ctx.data.leg[leg_def::R].target_leg_rad >= ALIGN_MAX_RAD ||
-        //    owner->_ctx.data.leg[leg_def::R].target_leg_rad <= (ALIGN_MIN_RAD+ALIGN_MAX_RAD)*0.5f)
-        // {
-        //     owner->_ctx.data.leg[leg_def::R].target_leg_rad +=ALIGN_DELTA_LEG_RAD;
-        // }
-
-        // //左腿目标腿长变化
-        // if(owner->_ctx.data.leg[leg_def::L].target_leg_length >=MIN_LEG_LENGTH+0.04f)
-        // {
-        //     owner->_ctx.data.leg[leg_def::L].target_leg_length-=ALIGN_DELTA_LEG_LENGTH;
-        // }
-
-        // //右腿目标腿长变化
-        // if(owner->_ctx.data.leg[leg_def::R].target_leg_length >=MIN_LEG_LENGTH+0.04f)
-        // {
-        //     owner->_ctx.data.leg[leg_def::R].target_leg_length-=ALIGN_DELTA_LEG_LENGTH;
-        // }
 
         //限幅
         owner->_ctx.data.leg[leg_def::L].target_leg_rad =
@@ -123,8 +111,8 @@ namespace pyro
 
         owner->_ctx.data.leg[leg_def::R].error_leg_rad =
             loop_fp32_constrain(owner->_ctx.data.leg[leg_def::R].current_leg_rad -
-                                    owner->_ctx.data.leg[leg_def::R].target_leg_rad,
-                                -PI, PI);
+                                owner->_ctx.data.leg[leg_def::R].target_leg_rad,
+                            -PI, PI);
 
 
         owner->_manual_control();
