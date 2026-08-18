@@ -108,7 +108,7 @@ void wl_chassis_t::_update_feedback()
     state_vec_t &state = _ctx.data.current_state;
 
     state.x            = _ctx.data.odom.real_x;
-    state.dot_x        = _ctx.data.odom.real_dot_x[0];
+    state.dot_x        = (_ctx.data.odom.real_dot_x[0] + _ctx.data.odom.real_dot_x[1]) / 2;
     state.psi          = _ctx.data.ins.euler_rad[0];
     state.dot_psi      = _ctx.data.ins.gyro[0];
     state.theta        = _ctx.data.ins.euler_rad[1];
@@ -255,12 +255,12 @@ void wl_chassis_t::_gain_calculate()
         evaluate_polynomial_ascending(norm_L1, FL_U0_POLY_COEF, U0_POLY_DEGREE);
     _ctx.data.U0[lqr_input_def::F_L2] =
         evaluate_polynomial_ascending(norm_L2, FL_U0_POLY_COEF, U0_POLY_DEGREE);
-    // _ctx.data.target_state.beta1 = evaluate_polynomial_ascending(
-    //     _ctx.data.leg[leg_def::L].current_leg_length, BETA_TRIM_POLY_COEF,
-    //     BETA_TRIM_POLY_DEGREE);
-    // _ctx.data.target_state.beta2 = evaluate_polynomial_ascending(
-    //     _ctx.data.leg[leg_def::R].current_leg_length, BETA_TRIM_POLY_COEF,
-    //     BETA_TRIM_POLY_DEGREE);
+    _ctx.data.target_state.beta1 = evaluate_polynomial_ascending(
+        _ctx.data.leg[leg_def::L].current_leg_length, BETA_TRIM_POLY_COEF,
+        BETA_TRIM_POLY_DEGREE);
+    _ctx.data.target_state.beta2 = evaluate_polynomial_ascending(
+        _ctx.data.leg[leg_def::R].current_leg_length, BETA_TRIM_POLY_COEF,
+        BETA_TRIM_POLY_DEGREE);
 }
 
 void wl_chassis_t::_balance_control()
