@@ -144,7 +144,13 @@ void wl_chassis_t::_update_feedback()
 
 void wl_chassis_t::_fsm_execute()
 {
-    if (_current_cmd.mode == cmd_base_t::mode_t::ACTIVE)
+    static int last_chassis_reset_times = 0;
+    if(_current_cmd.reset_chassis_times != last_chassis_reset_times)
+    {
+        _ctx.data.flag.leg_is_should_restart = false;
+    }
+    last_chassis_reset_times = _current_cmd.reset_chassis_times;
+    if (_current_cmd.mode == cmd_base_t::mode_t::ACTIVE && (!_ctx.data.flag.leg_is_should_restart))
     {
         _main_fsm.change_state(&_state_active);
     }
@@ -249,12 +255,12 @@ void wl_chassis_t::_gain_calculate()
         evaluate_polynomial_ascending(norm_L1, FL_U0_POLY_COEF, U0_POLY_DEGREE);
     _ctx.data.U0[lqr_input_def::F_L2] =
         evaluate_polynomial_ascending(norm_L2, FL_U0_POLY_COEF, U0_POLY_DEGREE);
-    _ctx.data.target_state.beta1 = evaluate_polynomial_ascending(
-        _ctx.data.leg[leg_def::L].current_leg_length, BETA_TRIM_POLY_COEF,
-        BETA_TRIM_POLY_DEGREE);
-    _ctx.data.target_state.beta2 = evaluate_polynomial_ascending(
-        _ctx.data.leg[leg_def::R].current_leg_length, BETA_TRIM_POLY_COEF,
-        BETA_TRIM_POLY_DEGREE);
+    // _ctx.data.target_state.beta1 = evaluate_polynomial_ascending(
+    //     _ctx.data.leg[leg_def::L].current_leg_length, BETA_TRIM_POLY_COEF,
+    //     BETA_TRIM_POLY_DEGREE);
+    // _ctx.data.target_state.beta2 = evaluate_polynomial_ascending(
+    //     _ctx.data.leg[leg_def::R].current_leg_length, BETA_TRIM_POLY_COEF,
+    //     BETA_TRIM_POLY_DEGREE);
 }
 
 void wl_chassis_t::_balance_control()
@@ -352,6 +358,7 @@ void wl_chassis_t::_send_wheel_torque() const
     _ctx.motor.wheel[leg_def::R]->send_torque(
         _ctx.data.wheel[leg_def::R].direction *
         _ctx.data.wheel[leg_def::R].out_current);
+
     // _ctx.motor.wheel[leg_def::L]->send_torque(0);
     // _ctx.motor.wheel[leg_def::R]->send_torque(0);
 }

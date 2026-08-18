@@ -4,7 +4,7 @@
 
 namespace pyro
 {
-
+static int reset_count;
 void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
 {
 
@@ -14,7 +14,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
     owner->_ctx.data.target_state.dot_x     = 0.0f;
     owner->_ctx.data.target_state.psi       = owner->_ctx.data.ins.euler_rad[0];
     owner->_ctx.data.target_state.dot_psi   = 0.0f;
-    owner->_ctx.data.target_state.h         = 0.24f;
+    owner->_ctx.data.target_state.h         = 0.2f;
     owner->_ctx.data.target_state.dot_h     = 0.0f;
     owner->_ctx.data.target_state.theta     = 0.0f;
     owner->_ctx.data.target_state.dot_theta = 0.0f;
@@ -24,6 +24,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
     owner->_ctx.data.target_state.beta2     = 0.0f;
     owner->_ctx.data.target_state.dot_beta1 = 0.0f;
     owner->_ctx.data.target_state.dot_beta2 = 0.0f;
+
 
     for (float & i : owner->_ctx.data.U0)
     {
@@ -56,6 +57,21 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
 
 void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
 {
+    
+    if(abs(owner->_ctx.data.ins.euler_rad[1]) >= PI / 6.0f ||
+       abs(owner->_ctx.data.ins.euler_rad[2]) >= PI / 9.0f)
+    {
+        if(reset_count >= 50)
+        {
+            owner->_ctx.data.flag.leg_is_should_restart = true;
+        }
+        reset_count++;
+    }
+    else 
+    {
+        reset_count = 0;
+    }
+
     const float target_vx = owner->_current_cmd.v;
     owner->_ctx.data.target_state.x += target_vx * owner->_ctx.data._dt;
     owner->_ctx.data.target_state.dot_x = target_vx;
@@ -74,6 +90,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
 
 void wl_chassis_t::fsm_active_t::state_normal_t::exit(wl_chassis_t *owner)
 {
+    owner->_ctx.data.flag.leg_is_ready = false;
     (void)owner;
 }
 

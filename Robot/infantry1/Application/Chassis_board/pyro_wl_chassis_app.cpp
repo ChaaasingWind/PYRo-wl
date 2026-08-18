@@ -1,6 +1,7 @@
 #include "pyro_module_base.h"
 #include "pyro_mutex.h"
 #include "pyro_dr16_rc_drv.h"
+#include "pyro_rc_core.h"
 #include "pyro_vt03_rc_drv.h"
 #include "pyro_rc_base_drv.h"
 #include "pyro_wl_chassis.h"
@@ -12,12 +13,19 @@
 using namespace pyro;
 
 
+constexpr uint32_t EVENT_BIT_RESTART   = (1 << 0); 
+
+
+
+
+
+
 static TaskHandle_t chassis_task_handle           = nullptr;
 static pyro::wl_chassis_t *wl_chassis_ptr         = nullptr;
 static pyro::wl_chassis_cmd_t *wl_chassis_cmd_ptr = nullptr;
 static pyro::wl_chassis_deps_t *wl_chassis_deps   = nullptr;
 
-static void chassis_dr162cmd();
+static void chassis_dr162cmd(uint32_t notify);
 static void deps_init();
 
 extern "C"
@@ -31,11 +39,12 @@ extern "C"
             uint32_t notify_val = 0;
             // 接收任务通知事件（不阻塞等待，0 tick延时）
             xTaskNotifyWait(0x00, UINT32_MAX, &notify_val, 0);
+            
 
             // 当前没有板间通信，直接检测并使用遥控器控制
             if (dr16_drv_t::instance().check_online())
             {
-                chassis_dr162cmd();
+                chassis_dr162cmd(notify_val);
             }
             else
             {
@@ -49,6 +58,9 @@ extern "C"
 
     void infantry1_chassis_init(void *argument)
     {
+        
+
+
         wl_chassis_cmd_ptr = new pyro::wl_chassis_cmd_t();
         wl_chassis_ptr     = pyro::wl_chassis_t::instance();
 
@@ -59,14 +71,20 @@ extern "C"
         xTaskCreate(infantry1_chassis_thread, "chassis_app_thread", 256,
                     nullptr, configMAX_PRIORITIES - 1, &chassis_task_handle);
 
-
+        //订阅按键部分
+        auto &vrc = pyro::rc_drv_t::read();
+        //订阅紧急停止后的复位事件
+        pyro::sw_broker::subscribe(&vrc.switches.right, pyro::sw_event_t::MID_TO_UP, 
+                            chassis_task_handle, EVENT_BIT_RESTART);
 
         vTaskDelete(nullptr);
     }
 }
 
-void chassis_dr162cmd()
+void chassis_dr162cmd(uint32_t notify)
 {
+    
+
     pyro::read_scope_lock lock(pyro::rc_drv_t::get_lock());
     auto &vrc = pyro::rc_drv_t::read();
 
@@ -80,8 +98,15 @@ void chassis_dr162cmd()
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = 0.0f;
         wl_chassis_cmd_ptr->v                            = 0.0f;
         wl_chassis_cmd_ptr->wz                           = 0.0f;
+        return;
     }
-    else if (pyro::sw_pos_t::MID == vrc.switches.right.current_pos)
+    if (notify & EVENT_BIT_RESTART)
+    {
+        static int restart_times = 0;
+        restart_times++;
+        wl_chassis_cmd_ptr->reset_chassis_times = restart_times;
+    }
+    if (pyro::sw_pos_t::MID == vrc.switches.right.current_pos)
     {
         wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::ACTIVE;
 
@@ -97,6 +122,7 @@ void chassis_dr162cmd()
     }
     else if (pyro::sw_pos_t::UP == vrc.switches.right.current_pos)
     {
+        
         wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::ACTIVE;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::L] = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]    = 0.0f;
@@ -188,4 +214,7 @@ void deps_init()
         20.0f, 0.6f, 15.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
     wl_chassis_deps->pid.leg_rad[leg_def::R] = new pyro::pd_ctrl_t(
         20.0f, 0.6f, 15.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
+
+
+    
 }

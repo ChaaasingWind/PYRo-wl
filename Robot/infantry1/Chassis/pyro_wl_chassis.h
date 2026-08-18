@@ -34,6 +34,7 @@ struct wl_chassis_cmd_t final : public cmd_base_t
     float v;
     float wz;
     bool balance_flag = false;
+    int reset_chassis_times;
 
 
     enum class wl_chassis_mode_t : uint8_t
@@ -120,6 +121,13 @@ struct ins_data_t
     float accel[3];
 };
 
+struct flag_data_t
+{
+    bool leg_is_should_restart;
+    bool leg_is_ready;
+};
+
+
 struct wl_chassis_data_ctx_t
 {
     leg_ctx_t leg[2];
@@ -127,6 +135,7 @@ struct wl_chassis_data_ctx_t
     state_vec_t target_state;
     state_vec_t current_state;
     control_vec_t control;
+    flag_data_t flag;
     float K[INPUT_DIM][STATE_DIM];
     float U0[INPUT_DIM];
     odom_t odom;
@@ -202,6 +211,12 @@ class wl_chassis_t final
             void execute(owner *owner) override;
             void exit(owner *owner) override;
         };
+        struct state_align_t final : public state_t<owner>
+        {
+            void enter(owner *owner) override;
+            void execute(owner *owner) override;
+            void exit(owner *owner) override;
+        };
         void on_enter(wl_chassis_t *ctx) override;
         void on_execute(wl_chassis_t *ctx) override;
         void on_exit(wl_chassis_t *ctx) override;
@@ -209,6 +224,7 @@ class wl_chassis_t final
       private:
         state_manual_t _state_manual;
         state_normal_t _state_normal;
+        state_align_t  _state_align;
     };
 
     fsm_t<owner> _main_fsm;
