@@ -312,27 +312,6 @@ status_t kf_t::init_impl(float *A_data, float *B_data, float *H_data, float *G_d
 	return PYRO_OK;
 }
 
-status_t kf_t::set_predict_model(const float *A_data, const float *B_data,
-								 const float *G_data, const float *Q_data)
-{
-	if (!_is_init)
-	{
-		return PYRO_NOT_FOUND;
-	}
-
-	if (A_data == nullptr || B_data == nullptr || G_data == nullptr ||
-		Q_data == nullptr || !validate_covariance_data(Q_data, _w_size))
-	{
-		return PYRO_PARAM_ERROR;
-	}
-
-	fill_mat(_mat_A, A_data);
-	fill_mat(_mat_B, B_data);
-	fill_mat(_mat_G, G_data);
-	fill_mat(_mat_Q, Q_data);
-	return PYRO_OK;
-}
-
 status_t kf_t::update(float *measure_vec, float *control_vec, float *estimated_ret)
 {
 	/* 1. Validate input pointers */

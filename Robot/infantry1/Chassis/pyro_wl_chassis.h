@@ -3,7 +3,6 @@
 
 #include "pyro_algo_pd.h"
 #include "pyro_algo_pid.h"
-#include "kf.h"
 #include "pyro_module_base.h"
 #include "pyro_motor_base.h"
 #include "wl_config.h"
@@ -129,20 +128,6 @@ struct flag_data_t
 };
 
 
-struct pose_kf_data_t
-{
-    float x;
-    float v;
-    float yaw;
-    float yaw_rate;
-    float accel_forward_y;
-    float wheel_velocity;
-    float wheel_yaw_rate;
-    float gyro_yaw_rate;
-    uint32_t update_errors;
-    bool initialized;
-};
-
 struct wl_chassis_data_ctx_t
 {
     leg_ctx_t leg[2];
@@ -155,7 +140,6 @@ struct wl_chassis_data_ctx_t
     float U0[INPUT_DIM];
     odom_t odom;
     ins_data_t ins;
-    pose_kf_data_t pose_kf;
     float _dt;
 };
 
@@ -192,14 +176,6 @@ class wl_chassis_t final
     status_t _init() override;
     void _update_feedback() override;
     void _fsm_execute() override;
-
-    status_t _init_pose_kf();
-    void _init_imu_to_body_rotation();
-    void _transform_imu_feedback(const float *imu_euler_rad,
-                                 const float *imu_gyro,
-                                 const float *imu_accel);
-    void _update_pose_kf(float dt);
-    void _reset_pose_kf();
 
     // 私有成员变量
 
@@ -251,17 +227,6 @@ class wl_chassis_t final
         state_align_t  _state_align;
     };
 
-    struct pose_kf_model_t
-    {
-        float A[16];
-        float B[4];
-        float G[16];
-        float Q[16];
-    };
-
-    kf_t _pose_kf;
-    pose_kf_model_t _pose_kf_model;
-    float _imu_to_body_rotation[9];
     fsm_t<owner> _main_fsm;
     state_passive_t _state_passive;
     fsm_active_t _state_active;

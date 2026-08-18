@@ -70,44 +70,6 @@ constexpr float L_WP_POLY_COEF[L_WP_POLY_DEGREE + 1] = {0.0581f, 0.3760f,
 
 constexpr float WHEEL_RADIUS                         = 0.06f;
 
-namespace pose_kf_cfg
-{
-// Timing and geometry.
-constexpr float NOMINAL_DT_S                         = 0.001f;
-constexpr float WHEEL_HALF_TRACK_M                   = 0.20025f;
-constexpr float WHEEL_TRACK_M                        = 2.0f * WHEEL_HALF_TRACK_M;
-constexpr float WHEEL_YAW_RATE_SIGN                  = 1.0f;
-
-// Fixed IMU-frame orientation in the chassis body frame. The implementation
-// builds R_I^B = Rz(yaw) * Ry(pitch) * Rx(roll). DIRECT_3 handles only the
-// coarse axis mapping; use these angles for the remaining mounting error.
-constexpr float IMU_MOUNT_ROLL_RAD                   = 0.0f;
-constexpr float IMU_MOUNT_PITCH_RAD                  = 0.0f;
-constexpr float IMU_MOUNT_YAW_RAD                    = 0.0f;
-
-// Positive when the IMU is in front of the wheel-center midpoint.
-constexpr float IMU_FORWARD_OFFSET_M                 = 0.0f;
-constexpr float MIN_ABS_COS_PITCH                    = 0.10f;
-
-// Continuous-time process noise amplitude densities. The implementation
-// squares these values to obtain q_a and q_alpha when constructing Q_d(dt).
-constexpr float ACCEL_PROCESS_NOISE_DENSITY          = 3.16227766f;
-constexpr float YAW_ACCEL_PROCESS_NOISE_DENSITY      = 3.16227766f;
-
-// Measurement standard deviations. Wheel values are linear speeds in m/s;
-// gyro yaw-rate is in rad/s. Correlation must stay in [-1, 1].
-constexpr float WHEEL_LEFT_VELOCITY_STD_MPS          = 0.31622777f;
-constexpr float WHEEL_RIGHT_VELOCITY_STD_MPS         = 0.31622777f;
-constexpr float WHEEL_VELOCITY_CORRELATION           = 0.0f;
-constexpr float GYRO_YAW_RATE_STD_RADPS               = 0.07071068f;
-
-// Initial-state standard deviations used to construct P0.
-constexpr float INITIAL_X_STD_M                       = 0.02f;
-constexpr float INITIAL_V_STD_MPS                     = 0.25f;
-constexpr float INITIAL_YAW_STD_RAD                   = 0.08726646f;
-constexpr float INITIAL_YAW_RATE_STD_RADPS            = 0.10f;
-} // namespace pose_kf_cfg
-
 
 namespace leg_def
 {

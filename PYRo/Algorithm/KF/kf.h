@@ -64,20 +64,6 @@ public:
                   float *x0_data, float *P0_data);
 
     /**
-     * @description: Replace the prediction model without resetting the filter
-     * @param {const float} *A_data State transition matrix data
-     * @param {const float} *B_data Control input matrix data
-     * @param {const float} *G_data Noise transition matrix data
-     * @param {const float} *Q_data Process noise covariance matrix data
-     * @return {status_t}
-     *          PYRO_OK if the model is updated successfully
-     *          PYRO_PARAM_ERROR if any pointer is null or Q is invalid
-     *          PYRO_NOT_FOUND if the filter is not initialized
-     */
-    status_t set_predict_model(const float *A_data, const float *B_data,
-                               const float *G_data, const float *Q_data);
-
-    /**
      * @description: Update the Kalman filter with the given measurement and control vectors
      * @param {float} *measure_vec Measurement vector
      * @param {float} *control_vec Control input vector
