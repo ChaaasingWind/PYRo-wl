@@ -20,7 +20,7 @@ void wl_chassis_t::fsm_active_t::on_execute(wl_chassis_t *ctx)
 {
     if (ctx->_current_cmd.balance_flag)
     {
-        if(ctx->_ctx.data.leg_is_ready)
+        if(ctx->_ctx.data.flag.leg_is_ready)
         {
             change_state(&_state_normal);
         }

@@ -4,7 +4,7 @@
 
 namespace pyro
 {
-
+static int reset_count;
 void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
 {
 
@@ -57,14 +57,13 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
 
 void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
 {
-    static int reset_count;
-    if(0)
+    
+    if(abs(owner->_ctx.data.ins.euler_rad[1]) >= PI / 6.0f ||
+       abs(owner->_ctx.data.ins.euler_rad[2]) >= PI / 9.0f)
     {
         if(reset_count >= 50)
         {
-            owner->_ctx.data.leg_is_should_restart = true;
-            owner->_ctx.data.leg_is_ready = false;
-            return;
+            owner->_ctx.data.flag.leg_is_should_restart = true;
         }
         reset_count++;
     }
@@ -72,11 +71,6 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
     {
         reset_count = 0;
     }
-
-
-
-
-
 
     const float target_vx = owner->_current_cmd.v;
     owner->_ctx.data.target_state.x += target_vx * owner->_ctx.data._dt;
@@ -96,7 +90,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
 
 void wl_chassis_t::fsm_active_t::state_normal_t::exit(wl_chassis_t *owner)
 {
-    owner->_ctx.data.leg_is_ready = false;
+    owner->_ctx.data.flag.leg_is_ready = false;
     (void)owner;
 }
 

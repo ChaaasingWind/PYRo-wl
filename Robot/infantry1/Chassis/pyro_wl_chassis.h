@@ -34,7 +34,7 @@ struct wl_chassis_cmd_t final : public cmd_base_t
     float v;
     float wz;
     bool balance_flag = false;
-    bool restart_balance;
+    int reset_chassis_times;
 
 
     enum class wl_chassis_mode_t : uint8_t
@@ -121,6 +121,13 @@ struct ins_data_t
     float accel[3];
 };
 
+struct flag_data_t
+{
+    bool leg_is_should_restart;
+    bool leg_is_ready;
+};
+
+
 struct wl_chassis_data_ctx_t
 {
     leg_ctx_t leg[2];
@@ -128,13 +135,12 @@ struct wl_chassis_data_ctx_t
     state_vec_t target_state;
     state_vec_t current_state;
     control_vec_t control;
+    flag_data_t flag;
     float K[INPUT_DIM][STATE_DIM];
     float U0[INPUT_DIM];
     odom_t odom;
     ins_data_t ins;
     float _dt;
-    bool leg_is_should_restart;
-    bool leg_is_ready;
 };
 
 struct wl_chassis_ctx_t
