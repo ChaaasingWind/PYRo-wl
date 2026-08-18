@@ -16,6 +16,8 @@ target_sources(Infantry1
         pyro_init_thread.cpp
         pyro_mission_planer.cpp
 
+        ${CMAKE_SOURCE_DIR}/PYRo/Algorithm/KF/kf.cpp
+
         Chassis/pyro_wl_chassis.cpp
         Chassis/fsm/pyro_wl_active_state.cpp
         Chassis/fsm/pyro_wl_manual_state.cpp

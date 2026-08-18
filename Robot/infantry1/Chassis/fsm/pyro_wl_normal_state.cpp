@@ -9,10 +9,11 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
 {
 
     owner->_ctx.data.odom.real_x            = 0;
+    owner->_reset_pose_kf();
 
     owner->_ctx.data.target_state.x         = 0;
     owner->_ctx.data.target_state.dot_x     = 0.0f;
-    owner->_ctx.data.target_state.psi       = owner->_ctx.data.ins.euler_rad[0];
+    owner->_ctx.data.target_state.psi       = owner->_ctx.data.current_state.psi;
     owner->_ctx.data.target_state.dot_psi   = 0.0f;
     owner->_ctx.data.target_state.h         = 0.2f;
     owner->_ctx.data.target_state.dot_h     = 0.0f;
@@ -78,7 +79,6 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
 
     const float target_wz               = owner->_current_cmd.wz;
     owner->_ctx.data.target_state.psi += target_wz * owner->_ctx.data._dt;
-    owner->_ctx.data.target_state.psi = loop_fp32_constrain(owner->_ctx.data.target_state.psi,-PI,PI);
     owner->_ctx.data.target_state.dot_psi = target_wz;
 
     owner->_gain_calculate();
