@@ -15,8 +15,8 @@ namespace pyro
 
     static constexpr float ALIGN_TIME_MS       = 2000.0f;
     static constexpr float ALIGN_MAX_RAD       = 1.2f;
-    static constexpr float ALIGN_MIN_RAD       = 0.7f;
-    static constexpr float ALIGN_TARGET_RAD    = 1.0f;
+    static constexpr float ALIGN_MIN_RAD       = 0.75f;
+    static constexpr float ALIGN_TARGET_RAD    = 1.2f;
     static constexpr float ALIGN_TARGET_LENGTH = 0.20f;
 
     void wl_chassis_t::fsm_active_t::state_align_t::enter(wl_chassis_t *owner)
@@ -52,9 +52,9 @@ namespace pyro
            owner->_ctx.data.leg[leg_def::L].current_leg_rad >= ALIGN_MIN_RAD &&
            owner->_ctx.data.leg[leg_def::R].current_leg_rad <= ALIGN_MAX_RAD &&
            owner->_ctx.data.leg[leg_def::R].current_leg_rad >= ALIGN_MIN_RAD &&
-           owner->_ctx.data.leg[leg_def::L].current_leg_length <=MIN_LEG_LENGTH+0.04f&&
-           owner->_ctx.data.leg[leg_def::R].current_leg_length <=MIN_LEG_LENGTH+0.04f&&
-           abs(owner->_ctx.data.leg[leg_def::L].current_leg_rad-owner->_ctx.data.leg[leg_def::R].current_leg_rad)<=0.1f)
+           owner->_ctx.data.leg[leg_def::L].current_leg_length <=MIN_LEG_LENGTH+0.03f&&
+           owner->_ctx.data.leg[leg_def::R].current_leg_length <=MIN_LEG_LENGTH+0.03f&&
+           abs(owner->_ctx.data.leg[leg_def::L].current_leg_rad-owner->_ctx.data.leg[leg_def::R].current_leg_rad)<=0.2f)
         {
             if(keep_tick >=20)
             {

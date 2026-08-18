@@ -35,6 +35,7 @@ struct wl_chassis_cmd_t final : public cmd_base_t
     float wz;
     bool balance_flag = false;
     int reset_chassis_times;
+    float delta_h;
 
 
     enum class wl_chassis_mode_t : uint8_t
