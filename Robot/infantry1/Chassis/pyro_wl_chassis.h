@@ -34,8 +34,10 @@ struct wl_chassis_cmd_t final : public cmd_base_t
     float v;
     float wz;
     bool balance_flag = false;
-    int reset_chassis_times;
     float delta_h;
+
+    int reset_chassis_times;
+    int step_times;
 
 
     enum class wl_chassis_mode_t : uint8_t
@@ -124,8 +126,9 @@ struct ins_data_t
 
 struct flag_data_t
 {
-    bool leg_is_should_restart;
-    bool leg_is_ready;
+    bool leg_is_should_restart;  //紧急下力的标志位
+    bool leg_is_ready;           //复位成功的标志位
+    bool step;                   //是否上台阶的标志位
 };
 
 
@@ -218,6 +221,12 @@ class wl_chassis_t final
             void execute(owner *owner) override;
             void exit(owner *owner) override;
         };
+        struct state_step_t final : public state_t<owner>
+        {
+            void enter(owner *owner) override;
+            void execute(owner *owner) override;
+            void exit(owner *owner) override;
+        };
         void on_enter(wl_chassis_t *ctx) override;
         void on_execute(wl_chassis_t *ctx) override;
         void on_exit(wl_chassis_t *ctx) override;
@@ -226,6 +235,7 @@ class wl_chassis_t final
         state_manual_t _state_manual;
         state_normal_t _state_normal;
         state_align_t  _state_align;
+        state_step_t _state_step;
     };
 
     fsm_t<owner> _main_fsm;

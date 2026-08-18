@@ -14,6 +14,7 @@ using namespace pyro;
 
 
 constexpr uint32_t EVENT_BIT_RESTART   = (1 << 0); 
+constexpr uint32_t EVENT_BIT_STEP      = (1 << 0); 
 
 
 
@@ -76,6 +77,8 @@ extern "C"
         //订阅紧急停止后的复位事件
         pyro::sw_broker::subscribe(&vrc.switches.right, pyro::sw_event_t::MID_TO_UP, 
                             chassis_task_handle, EVENT_BIT_RESTART);
+        pyro::sw_broker::subscribe(&vrc.switches.left, pyro::sw_event_t::MID_TO_UP, 
+                            chassis_task_handle, EVENT_BIT_STEP);
 
         vTaskDelete(nullptr);
     }
@@ -100,12 +103,22 @@ void chassis_dr162cmd(uint32_t notify)
         wl_chassis_cmd_ptr->wz                           = 0.0f;
         return;
     }
+
+    //ACTIVE模式下的键位判断
     if (notify & EVENT_BIT_RESTART)
     {
         static int restart_times = 0;
         restart_times++;
         wl_chassis_cmd_ptr->reset_chassis_times = restart_times;
     }
+    if (notify & EVENT_BIT_STEP)
+    {
+        static int step_times = 0;
+        step_times++;
+        wl_chassis_cmd_ptr->step_times = step_times;
+    }
+
+
     if (pyro::sw_pos_t::MID == vrc.switches.right.current_pos)
     {
         wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::ACTIVE;
