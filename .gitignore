@@ -25,7 +25,7 @@ JLinkSetting.ini
 *.map
 *.uvguix.*
 
-vscode_bulid/
+vscode_build/
 build/
 /cmake-build-debug-stm32
 .cache/
