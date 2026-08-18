@@ -34,6 +34,7 @@ struct wl_chassis_cmd_t final : public cmd_base_t
     float v;
     float wz;
     bool balance_flag = false;
+    bool restart_balance;
 
 
     enum class wl_chassis_mode_t : uint8_t
@@ -132,6 +133,7 @@ struct wl_chassis_data_ctx_t
     odom_t odom;
     ins_data_t ins;
     float _dt;
+    bool leg_is_should_restart;
     bool leg_is_ready;
 };
 

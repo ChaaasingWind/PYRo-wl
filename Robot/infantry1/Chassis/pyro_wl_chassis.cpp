@@ -144,7 +144,11 @@ void wl_chassis_t::_update_feedback()
 
 void wl_chassis_t::_fsm_execute()
 {
-    if (_current_cmd.mode == cmd_base_t::mode_t::ACTIVE)
+    if(_current_cmd.restart_balance)
+    {
+        _ctx.data.leg_is_should_restart = false;
+    }
+    if (_current_cmd.mode == cmd_base_t::mode_t::ACTIVE && (!_ctx.data.leg_is_should_restart))
     {
         _main_fsm.change_state(&_state_active);
     }

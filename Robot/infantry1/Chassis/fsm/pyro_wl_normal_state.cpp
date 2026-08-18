@@ -57,6 +57,27 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
 
 void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
 {
+    static int reset_count;
+    if(0)
+    {
+        if(reset_count >= 50)
+        {
+            owner->_ctx.data.leg_is_should_restart = true;
+            owner->_ctx.data.leg_is_ready = false;
+            return;
+        }
+        reset_count++;
+    }
+    else 
+    {
+        reset_count = 0;
+    }
+
+
+
+
+
+
     const float target_vx = owner->_current_cmd.v;
     owner->_ctx.data.target_state.x += target_vx * owner->_ctx.data._dt;
     owner->_ctx.data.target_state.dot_x = target_vx;
