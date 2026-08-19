@@ -6,6 +6,24 @@
 
 namespace pyro
 {
+
+
+
+static constexpr float STEP_PHASE1_MAX_RAD       = -1.0f;
+static constexpr float STEP_PHASE1_TARGET_RAD    = -1.1f;
+static constexpr float STEP_PHASE1_TARGET_LENGTH = 0.35f;
+
+static constexpr float STEP_PHASE2_TARGET_LENGTH = 0.19f;
+
+static constexpr float STEP_PHASE3_TARGET_RAD    = 1.2f;
+static constexpr float STEP_PHASE3_MIN_RAD       = 0.75f;
+
+
+static constexpr float STEP_DELTA_RAD            = 0.003f;
+static constexpr float STEP_DELTA_LENGTH         = 0.001f;
+
+
+
 static int stepping_phase = 0;
 
 static uint8_t phase_1_ticks;
@@ -28,6 +46,7 @@ void wl_chassis_t::fsm_active_t::state_step_t::enter(wl_chassis_t *owner)
     owner->_ctx.motor.wheel[leg_def::L]->disable();
     owner->_ctx.motor.wheel[leg_def::R]->disable();
 
+
     stepping_phase = 0;
     phase_1_ticks  = 0;
     phase_2_ticks  = 0;
@@ -39,56 +58,140 @@ void wl_chassis_t::fsm_active_t::state_step_t::execute(wl_chassis_t *owner)
 {
     if(stepping_phase == 0)
     {
-        
-        if(owner->_ctx.data.leg[leg_def::L].current_leg_length >= 0.35f &&
-           owner->_ctx.data.leg[leg_def::R].current_leg_length >= 0.35f &&
-           owner->_ctx.data.leg[leg_def::L].current_leg_rad    <= -1.0f &&
-           owner->_ctx.data.leg[leg_def::R].current_leg_rad    <= -1.0f )
+        if(owner->_ctx.data.leg[leg_def::L].current_leg_length >= STEP_PHASE1_TARGET_LENGTH - 0.03f &&
+           owner->_ctx.data.leg[leg_def::R].current_leg_length >= STEP_PHASE1_TARGET_LENGTH - 0.03f &&
+           owner->_ctx.data.leg[leg_def::L].current_leg_rad    <= STEP_PHASE1_MAX_RAD &&
+           owner->_ctx.data.leg[leg_def::R].current_leg_rad    <= STEP_PHASE1_MAX_RAD )
         {
             if(phase_1_ticks >= 10)
             {
+                owner->_ctx.data.leg[leg_def::L].target_leg_rad = STEP_PHASE1_TARGET_RAD;
+                owner->_ctx.data.leg[leg_def::R].target_leg_rad = STEP_PHASE1_TARGET_RAD;
                 stepping_phase++;
             }
             phase_1_ticks++;
         }
         else
         {
-
+            phase_1_ticks = 0;
         }
-
-        //腿角向后摆并加长腿长
         
-
-
-
+        //腿角向后摆并加长腿长
+        if(owner->_ctx.data.leg[leg_def::L].target_leg_length <= STEP_PHASE1_TARGET_LENGTH)
+        {
+            owner->_ctx.data.leg[leg_def::L].target_leg_length += STEP_DELTA_LENGTH;
+        }
+        if(owner->_ctx.data.leg[leg_def::R].target_leg_length <= STEP_PHASE1_TARGET_LENGTH)
+        {
+            owner->_ctx.data.leg[leg_def::R].target_leg_length += STEP_DELTA_LENGTH;
+        }
+        if(owner->_ctx.data.leg[leg_def::L].target_leg_rad  >= STEP_PHASE1_TARGET_RAD)
+        {
+            owner->_ctx.data.leg[leg_def::L].target_leg_rad  -= STEP_DELTA_RAD;
+        }
+        if(owner->_ctx.data.leg[leg_def::R].target_leg_rad  >= STEP_PHASE1_TARGET_RAD)
+        {
+            owner->_ctx.data.leg[leg_def::R].target_leg_rad  -= STEP_DELTA_RAD;
+        }
         
     }
     else if(stepping_phase == 1)
     {
-        //缩短腿长
-
-        if(0)
+        if(owner->_ctx.data.leg[leg_def::L].current_leg_length <= STEP_PHASE2_TARGET_LENGTH + 0.02f &&
+           owner->_ctx.data.leg[leg_def::R].current_leg_length <= STEP_PHASE2_TARGET_LENGTH + 0.02f )
         {
-            stepping_phase++;
+            if(phase_2_ticks >= 10)
+            {
+                owner->_ctx.data.leg[leg_def::L].target_leg_length = STEP_PHASE2_TARGET_LENGTH;
+                owner->_ctx.data.leg[leg_def::R].target_leg_length = STEP_PHASE2_TARGET_LENGTH;
+                stepping_phase++;
+            }
+            phase_2_ticks++;
         }
+        else
+        {
+            phase_2_ticks = 0;
+        }
+
+        //缩短腿长
+        if(owner->_ctx.data.leg[leg_def::L].target_leg_length >= STEP_PHASE2_TARGET_LENGTH)
+        {
+            owner->_ctx.data.leg[leg_def::L].target_leg_length -= STEP_DELTA_LENGTH;
+        }
+        if(owner->_ctx.data.leg[leg_def::R].target_leg_length >= STEP_PHASE2_TARGET_LENGTH)
+        {
+            owner->_ctx.data.leg[leg_def::R].target_leg_length -= STEP_DELTA_LENGTH;
+        }
+
+
     }
     else if(stepping_phase == 2)
     {
-        //腿角回归
-
-
-        if(0)
+        if(owner->_ctx.data.leg[leg_def::L].current_leg_rad >= STEP_PHASE3_MIN_RAD &&
+           owner->_ctx.data.leg[leg_def::R].current_leg_rad >= STEP_PHASE3_MIN_RAD )
         {
-            stepping_phase++;
+            if(phase_3_ticks >= 10)
+            {
+                //清空标志位,退出该状态
+                stepping_phase = 0;
+                owner->_ctx.data.flag.step = false;
+                stepping_phase++;
+            }
+            phase_3_ticks++;
+        }
+        else 
+        {
+            phase_3_ticks = 0;
+        }
+        //腿角回归
+        if(owner->_ctx.data.leg[leg_def::L].target_leg_rad  <= STEP_PHASE3_TARGET_RAD)
+        {
+            owner->_ctx.data.leg[leg_def::L].target_leg_rad  += STEP_DELTA_RAD;
+        }
+        if(owner->_ctx.data.leg[leg_def::R].target_leg_rad  <= STEP_PHASE3_TARGET_RAD)
+        {
+            owner->_ctx.data.leg[leg_def::R].target_leg_rad  += STEP_DELTA_RAD;
         }
     }
     else if(stepping_phase == 3)
     {
-        //清空标志位
+        //清空标志位,退出该状态
+        stepping_phase = 0;
         owner->_ctx.data.flag.step = false;
     }
     
+    //限幅
+    owner->_ctx.data.leg[leg_def::L].target_leg_rad =
+            loop_fp32_constrain(owner->_ctx.data.leg[leg_def::L].target_leg_rad +
+            owner->_current_cmd.delta_leg_rad[leg_def::L],
+                   -PI, PI);
+                
+    //限幅
+    owner->_ctx.data.leg[leg_def::R].target_leg_rad =
+            loop_fp32_constrain(owner->_ctx.data.leg[leg_def::R].target_leg_rad +
+            owner->_current_cmd.delta_leg_rad[leg_def::R],
+                   -PI, PI);
 
+    //限幅
+    owner->_ctx.data.leg[leg_def::L].target_leg_length =
+        std::clamp(owner->_ctx.data.leg[leg_def::L].target_leg_length,
+                   MIN_LEG_LENGTH, MAX_LEG_LENGTH);
+
+    //限幅
+        owner->_ctx.data.leg[leg_def::R].target_leg_length =
+        std::clamp(owner->_ctx.data.leg[leg_def::R].target_leg_length,
+                   MIN_LEG_LENGTH, MAX_LEG_LENGTH);
+
+    owner->_ctx.data.leg[leg_def::L].error_leg_rad =
+        loop_fp32_constrain(owner->_ctx.data.leg[leg_def::L].current_leg_rad -
+                            owner->_ctx.data.leg[leg_def::L].target_leg_rad,
+                        -PI, PI);
+
+
+    owner->_ctx.data.leg[leg_def::R].error_leg_rad =
+        loop_fp32_constrain(owner->_ctx.data.leg[leg_def::R].current_leg_rad -
+                            owner->_ctx.data.leg[leg_def::R].target_leg_rad,
+                        -PI, PI);
 
     owner->_manual_control();
     owner->_vmc_trans_v2j();

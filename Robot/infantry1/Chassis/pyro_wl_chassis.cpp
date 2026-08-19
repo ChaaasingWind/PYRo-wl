@@ -205,17 +205,33 @@ void wl_chassis_t::_manual_control()
             _ctx.data.leg[leg_def::L].target_leg_length,
             _ctx.data.leg[leg_def::L].current_leg_length,
             _ctx.data.leg[leg_def::L].current_leg_speed);
-    _ctx.data.leg[leg_def::L].out_T_p = _ctx.pid.leg_rad[leg_def::L]->calculate(
-        0.0f, _ctx.data.leg[leg_def::L].error_leg_rad,
-        _ctx.data.leg[leg_def::L].current_leg_radps);
+    
     _ctx.data.leg[leg_def::R].out_F_L =
         _ctx.pid.leg_length[leg_def::R]->calculate(
             _ctx.data.leg[leg_def::R].target_leg_length,
             _ctx.data.leg[leg_def::R].current_leg_length,
             _ctx.data.leg[leg_def::R].current_leg_speed);
-    _ctx.data.leg[leg_def::R].out_T_p = _ctx.pid.leg_rad[leg_def::R]->calculate(
-        0.0f, _ctx.data.leg[leg_def::R].error_leg_rad,
-        _ctx.data.leg[leg_def::R].current_leg_radps);
+
+
+    float ll_target_radps;
+    ll_target_radps = _ctx.pid.leg_control_rad[leg_def::L]->calculate(
+        0.0f, _ctx.data.leg[leg_def::L].error_leg_rad);
+    _ctx.data.leg[leg_def::L].out_T_p = _ctx.pid.leg_control_radps[leg_def::L]->calculate
+        (ll_target_radps, _ctx.data.leg[leg_def::L].current_leg_radps);
+    
+    float rl_target_radps;
+    rl_target_radps = _ctx.pid.leg_control_rad[leg_def::R]->calculate(
+    0.0f, _ctx.data.leg[leg_def::R].error_leg_rad);
+    _ctx.data.leg[leg_def::R].out_T_p = _ctx.pid.leg_control_radps[leg_def::L]->calculate
+    (rl_target_radps, _ctx.data.leg[leg_def::R].current_leg_radps);
+
+    // _ctx.data.leg[leg_def::L].out_T_p = _ctx.pid.leg_rad[leg_def::L]->calculate(
+    //     0.0f, _ctx.data.leg[leg_def::L].error_leg_rad,
+    //     _ctx.data.leg[leg_def::L].current_leg_radps);
+
+    // _ctx.data.leg[leg_def::R].out_T_p = _ctx.pid.leg_rad[leg_def::R]->calculate(
+    //     0.0f, _ctx.data.leg[leg_def::R].error_leg_rad,
+    //     _ctx.data.leg[leg_def::R].current_leg_radps);
 }
 
 void wl_chassis_t::_gain_calculate()
