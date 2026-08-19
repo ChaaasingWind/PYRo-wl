@@ -15,6 +15,9 @@ static constexpr float STEP_PHASE1_TARGET_LENGTH = 0.35f;
 
 static constexpr float STEP_PHASE2_TARGET_LENGTH = 0.19f;
 
+static constexpr float STEP_PHASE3_TARGET_RAD    = 1.2f;
+static constexpr float STEP_PHASE3_MIN_RAD       = 0.75f;
+
 
 static constexpr float STEP_DELTA_RAD            = 0.001f;
 static constexpr float STEP_DELTA_LENGTH         = 0.001f;
@@ -84,11 +87,11 @@ void wl_chassis_t::fsm_active_t::state_step_t::execute(wl_chassis_t *owner)
         }
         if(owner->_ctx.data.leg[leg_def::L].target_leg_rad  >= STEP_PHASE1_TARGET_RAD)
         {
-            owner->_ctx.data.leg[leg_def::L].target_leg_rad  += STEP_DELTA_RAD;
+            owner->_ctx.data.leg[leg_def::L].target_leg_rad  -= STEP_DELTA_RAD;
         }
         if(owner->_ctx.data.leg[leg_def::R].target_leg_rad  >= STEP_PHASE1_TARGET_RAD)
         {
-            owner->_ctx.data.leg[leg_def::R].target_leg_rad  += STEP_DELTA_RAD;
+            owner->_ctx.data.leg[leg_def::R].target_leg_rad  -= STEP_DELTA_RAD;
         }
         
     }
@@ -124,11 +127,14 @@ void wl_chassis_t::fsm_active_t::state_step_t::execute(wl_chassis_t *owner)
     }
     else if(stepping_phase == 2)
     {
-        if(owner->_ctx.data.leg[leg_def::L].current_leg_rad <= STEP_PHASE1_MAX_RAD &&
-           owner->_ctx.data.leg[leg_def::R].current_leg_rad <= STEP_PHASE1_MAX_RAD )
+        if(owner->_ctx.data.leg[leg_def::L].current_leg_rad <= STEP_PHASE3_MIN_RAD &&
+           owner->_ctx.data.leg[leg_def::R].current_leg_rad <= STEP_PHASE3_MIN_RAD )
         {
             if(phase_3_ticks >= 10)
             {
+                //清空标志位,退出该状态
+                stepping_phase = 0;
+                owner->_ctx.data.flag.step = false;
                 stepping_phase++;
             }
             phase_3_ticks++;
@@ -138,11 +144,11 @@ void wl_chassis_t::fsm_active_t::state_step_t::execute(wl_chassis_t *owner)
             phase_3_ticks = 0;
         }
         //腿角回归
-        if(owner->_ctx.data.leg[leg_def::L].target_leg_rad  >= STEP_PHASE1_TARGET_RAD)
+        if(owner->_ctx.data.leg[leg_def::L].target_leg_rad  >= STEP_PHASE3_TARGET_RAD)
         {
             owner->_ctx.data.leg[leg_def::L].target_leg_rad  += STEP_DELTA_RAD;
         }
-        if(owner->_ctx.data.leg[leg_def::R].target_leg_rad  >= STEP_PHASE1_TARGET_RAD)
+        if(owner->_ctx.data.leg[leg_def::R].target_leg_rad  >= STEP_PHASE3_TARGET_RAD)
         {
             owner->_ctx.data.leg[leg_def::R].target_leg_rad  += STEP_DELTA_RAD;
         }
