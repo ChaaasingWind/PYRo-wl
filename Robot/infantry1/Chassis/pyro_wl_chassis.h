@@ -21,7 +21,11 @@ struct wl_chassis_deps_t
     struct pid_deps_t
     {
         pd_ctrl_t *leg_length[2];
-        pd_ctrl_t *leg_rad[2];
+
+        pd_ctrl_t *leg_rad[2];   
+        pyro::pid_t *leg_control_rad[2];   //角度环
+        pyro::pid_t *leg_control_radps[2]; //速度环
+
     };
     motor_deps_t motor;
     pid_deps_t pid;
