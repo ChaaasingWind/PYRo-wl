@@ -43,6 +43,10 @@ elseif (BOARD STREQUAL "GIMBAL_BOARD")
                 PRIVATE
                 pyro_init_thread.cpp
                 pyro_mission_planer.cpp
+
+                Gimbal/pyro_wl_gimbal.cpp
+                Gimbal/fsm/pyro_wl_passive_state.cpp
+                Gimbal/fsm/pyro_wl_active_state.cpp
                 
                 Application/Gimbal_board/pyro_wl_gimbal_app.cpp
         )       

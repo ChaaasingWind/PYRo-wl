@@ -24,8 +24,6 @@ struct wl_gimbal_cmd_t {
     float targetYawSpeed;        // 目标角速度 (用于前馈)
     float targetYawAcceleration; // 目标角加速度 (用于高级动力学前馈)
     // ------------------------------------
-
-    uint8_t mode;
     uint32_t timestamp;
 };
 
@@ -144,9 +142,17 @@ class wl_gimbal_t final
     void _update_feedback() override;
     void _fsm_execute() override;
 
+    enum MotionState 
+    { 
+        Relax, 
+        Align, 
+        Manual,
+        Auto,
+    };
 
     //辅助函数
-
+    void set_pitchstate(bool enable);
+    void set_yawstate(bool enable);
 
 
 
@@ -162,6 +168,12 @@ class wl_gimbal_t final
     };
     struct fsm_active_t final : public fsm_t<owner>
     {
+        struct state_align_t final : public state_t<owner>
+        {
+            void enter(owner *owner) override;
+            void execute(owner *owner) override;
+            void exit(owner *owner) override;
+        };
         struct state_manual_t final : public state_t<owner>
         {
             void enter(owner *owner) override;

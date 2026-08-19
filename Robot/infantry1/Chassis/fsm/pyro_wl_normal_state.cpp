@@ -74,10 +74,14 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
         reset_count = 0;
     }
 
+    
+    
+
+
     //自动上台阶判断
     if (owner->_ctx.data.current_state.L >= 0.28f &&
-        owner->_ctx.data.leg[leg_def::R].current_leg_rad < 1.1f && 
-        owner->_ctx.data.leg[leg_def::L].current_leg_rad < 1.1f )
+        owner->_ctx.data.leg[leg_def::R].current_leg_rad < 0.7f && 
+        owner->_ctx.data.leg[leg_def::L].current_leg_rad < 0.7f )
     {
         owner->_ctx.data.flag.step = true;
     }
