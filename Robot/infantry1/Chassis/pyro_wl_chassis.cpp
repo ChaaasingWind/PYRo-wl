@@ -129,16 +129,12 @@ void wl_chassis_t::_update_feedback()
     const float cos_beta_2 = arm_cos_f32(state.beta2);
     const float sin_beta_2 = arm_sin_f32(state.beta2);
 
-    state.h =
-        0.5f * (_ctx.data.leg[leg_def::L].current_leg_length * cos_beta_1 +
-                _ctx.data.leg[leg_def::R].current_leg_length * cos_beta_2);
-    state.dot_h =
-        0.5f * (_ctx.data.leg[leg_def::L].current_leg_speed * cos_beta_1 -
-                _ctx.data.leg[leg_def::L].current_leg_length * sin_beta_1 *
-                    state.dot_beta1 +
-                _ctx.data.leg[leg_def::R].current_leg_speed * cos_beta_2 -
-                _ctx.data.leg[leg_def::R].current_leg_length * sin_beta_2 *
-                    state.dot_beta2);
+    state.L =
+        0.5f * (_ctx.data.leg[leg_def::L].current_leg_length +
+                _ctx.data.leg[leg_def::R].current_leg_length);
+    state.dot_L =
+        0.5f * (_ctx.data.leg[leg_def::L].current_leg_speed  +
+                _ctx.data.leg[leg_def::R].current_leg_speed );
 }
 
 

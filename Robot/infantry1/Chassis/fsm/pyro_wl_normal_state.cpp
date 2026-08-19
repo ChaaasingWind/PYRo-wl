@@ -6,7 +6,6 @@ namespace pyro
 {
 
 static int reset_count;
-static constexpr float REAL_MAX_LEG_LENGTH = 0.32f;
 
 void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
 {
@@ -17,8 +16,8 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
     owner->_ctx.data.target_state.dot_x     = 0.0f;
     owner->_ctx.data.target_state.psi       = owner->_ctx.data.ins.euler_rad[0];
     owner->_ctx.data.target_state.dot_psi   = 0.0f;
-    owner->_ctx.data.target_state.h         = 0.2f;
-    owner->_ctx.data.target_state.dot_h     = 0.0f;
+    owner->_ctx.data.target_state.L         = 0.2f;
+    owner->_ctx.data.target_state.dot_L     = 0.0f;
     owner->_ctx.data.target_state.theta     = 0.0f;
     owner->_ctx.data.target_state.dot_theta = 0.0f;
     owner->_ctx.data.target_state.phi       = 0.0f;
@@ -76,11 +75,14 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
     }
 
     //腿长加上遥控器的小量
-    owner->_ctx.data.target_state.h += owner->_current_cmd.delta_h;
+
+    const float target_dot_h = owner->_current_cmd.dot_h;
+    owner->_ctx.data.target_state.dot_L = target_dot_h;
+    owner->_ctx.data.target_state.L += target_dot_h * owner->_ctx.data._dt;
 
     //腿长限幅
-    owner->_ctx.data.target_state.h =
-        std::clamp(owner->_ctx.data.target_state.h,MIN_LEG_LENGTH, REAL_MAX_LEG_LENGTH);
+    owner->_ctx.data.target_state.L =
+        std::clamp(owner->_ctx.data.target_state.L,MIN_LEG_LENGTH, MAX_LEG_LENGTH);
     
 
     const float target_vx = owner->_current_cmd.v;

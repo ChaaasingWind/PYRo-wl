@@ -148,7 +148,7 @@ void chassis_dr162cmd(uint32_t notify)
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] =
             vrc.axes.ly * 0.0003f;
         wl_chassis_cmd_ptr->balance_flag = true;
-        wl_chassis_cmd_ptr->delta_h                      = vrc.axes.ly * 0.0006f;
+        wl_chassis_cmd_ptr->dot_h                      = vrc.axes.ly * 0.2f;
     }
 }
 
