@@ -38,7 +38,7 @@ struct wl_chassis_cmd_t final : public cmd_base_t
     float v;
     float wz;
     bool balance_flag = false;
-    float dot_h;
+    float dot_L;
 
     int reset_chassis_times;
     int step_times;

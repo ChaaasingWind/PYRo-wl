@@ -76,7 +76,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
 
     //腿长加上遥控器的小量
 
-    const float target_dot_h = owner->_current_cmd.dot_h;
+    const float target_dot_h = owner->_current_cmd.dot_L;
     owner->_ctx.data.target_state.dot_L = target_dot_h;
     owner->_ctx.data.target_state.L += target_dot_h * owner->_ctx.data._dt;
 

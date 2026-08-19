@@ -124,11 +124,6 @@ void wl_chassis_t::_update_feedback()
     state.dot_beta2 =
         _ctx.data.leg[leg_def::R].current_leg_radps - _ctx.data.ins.gyro[1];
 
-    const float cos_beta_1 = arm_cos_f32(state.beta1);
-    const float sin_beta_1 = arm_sin_f32(state.beta1);
-    const float cos_beta_2 = arm_cos_f32(state.beta2);
-    const float sin_beta_2 = arm_sin_f32(state.beta2);
-
     state.L =
         0.5f * (_ctx.data.leg[leg_def::L].current_leg_length +
                 _ctx.data.leg[leg_def::R].current_leg_length);
