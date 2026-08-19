@@ -75,6 +75,14 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
         reset_count = 0;
     }
 
+    //自动下台阶判断
+    if (owner->_ctx.data.current_state.h >= 0.3f &&
+        owner->_ctx.data.leg[leg_def::R].current_leg_rad < 1.0f && 
+        owner->_ctx.data.leg[leg_def::L].current_leg_rad < 1.0f )
+    {
+        owner->_ctx.data.flag.step = true;
+    }
+
     //腿长加上遥控器的小量
     owner->_ctx.data.target_state.h += owner->_current_cmd.delta_h;
 
