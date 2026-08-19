@@ -14,7 +14,7 @@ using namespace pyro;
 
 
 constexpr uint32_t EVENT_BIT_RESTART   = (1 << 0); 
-constexpr uint32_t EVENT_BIT_STEP      = (1 << 0); 
+constexpr uint32_t EVENT_BIT_STEP      = (1 << 1); 
 
 
 
