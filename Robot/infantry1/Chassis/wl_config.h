@@ -60,6 +60,25 @@ constexpr float MAX_T_P                              = 60.0f;
 constexpr float MAX_CURRENT                          = 15.0f;
 constexpr float MAX_T_W                              = K_t * MAX_CURRENT;
 
+// Airborne and landing detection defaults. Tune from logged support-force data.
+constexpr float AIR_LENGTH_TARGET                   = 0.37f;//腿长目标值
+constexpr float NORMAL_LENGTH_TARGET                 = 0.20f;
+constexpr float AIR_LENGTH_RATE                      = 0.60f;
+constexpr float AIR_WHEEL_LOCK_K                     = 0.08f;
+constexpr float AIR_TAKEOFF_FORCE_ON                 = 80.0f;//单腿支持力阈值，越小越易离地
+constexpr float AIR_CONTACT_FORCE_OFF                = 35.0f;
+constexpr float AIR_LANDING_ACC_ON                   = 3.0f;
+constexpr float AIR_LANDING_COMPRESSION              = 0.03f;
+constexpr float AIR_LENGTH_RECOVERY_RATE             = 0.20f;
+constexpr float AIR_LENGTH_RECOVERY_EPSILON          = 0.005f;//腿长误差
+constexpr float AIR_ACCEL_LPF_TAU                    = 0.02f;
+constexpr float SUPPORT_FORCE_LPF_TAU                = 0.01f;
+constexpr float SUPPORT_FORCE_EFFECTIVE_MASS         =
+    SINGLE_LEG_BODY_MASS + LEG_MASS;
+constexpr float SUPPORT_FORCE_BIAS[2]                = {0.0f, 0.0f};
+constexpr uint16_t AIR_TAKEOFF_DEBOUNCE_TICKS        = 75;
+constexpr uint16_t AIR_LANDING_DEBOUNCE_TICKS        = 8;
+
 
 constexpr uint32_t L_WP_POLY_DEGREE                  = 3;
 
