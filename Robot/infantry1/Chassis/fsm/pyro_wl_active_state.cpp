@@ -24,7 +24,7 @@ void wl_chassis_t::fsm_active_t::on_execute(wl_chassis_t *ctx)
         ctx->_ctx.data.flag.step = true;
     }
     last_step_time = ctx->_current_cmd.step_times;
-    
+
 
     
     if (ctx->_current_cmd.balance_flag)
@@ -47,7 +47,7 @@ void wl_chassis_t::fsm_active_t::on_execute(wl_chassis_t *ctx)
             change_state(&_state_manual);
     }
 
-    
+
 }
 
 void wl_chassis_t::fsm_active_t::on_exit(wl_chassis_t *ctx)

@@ -38,7 +38,7 @@ struct wl_chassis_cmd_t final : public cmd_base_t
     float v;
     float wz;
     bool balance_flag = false;
-    float delta_h;
+    float dot_h;
 
     int reset_chassis_times;
     int step_times;
@@ -95,7 +95,7 @@ struct state_vec_t
             float psi, dot_psi;
             float theta, dot_theta;
             float phi, dot_phi;
-            float h, dot_h;
+            float L, dot_L;
             float beta1, dot_beta1;
             float beta2, dot_beta2;
         };
