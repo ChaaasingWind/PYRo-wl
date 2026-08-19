@@ -229,6 +229,10 @@ void deps_init()
     wl_chassis_deps->pid.leg_rad[leg_def::R] = new pyro::pd_ctrl_t(
         50.0f, 0.6f, 15.0f, OUTPUT_CUTOFF_HZ, 1, DERIVATIVE_CUTOFF_HZ, 1);
 
-
+    //双环控制的腿角度
+    wl_chassis_deps->pid.leg_control_rad[leg_def::R]   = new pyro::pid_t(60.0f, 0.0f, 0.0f, 0.0f, 15.0f);
+    wl_chassis_deps->pid.leg_control_rad[leg_def::L]   = new pyro::pid_t(60.0f, 0.0f, 0.0f, 0.0f, 15.0f);
+    wl_chassis_deps->pid.leg_control_radps[leg_def::R] = new pyro::pid_t(15.0f, 0.0f, 0.0f, 0.0f, 20.0f);
+    wl_chassis_deps->pid.leg_control_radps[leg_def::L] = new pyro::pid_t(15.0f, 0.0f, 0.0f, 0.0f, 20.0f);
     
 }

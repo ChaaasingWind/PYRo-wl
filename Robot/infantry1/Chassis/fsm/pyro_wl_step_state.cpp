@@ -19,7 +19,7 @@ static constexpr float STEP_PHASE3_TARGET_RAD    = 1.2f;
 static constexpr float STEP_PHASE3_MIN_RAD       = 0.75f;
 
 
-static constexpr float STEP_DELTA_RAD            = 0.002f;
+static constexpr float STEP_DELTA_RAD            = 0.003f;
 static constexpr float STEP_DELTA_LENGTH         = 0.001f;
 
 
