@@ -60,7 +60,7 @@ elseif (BOARD STREQUAL "GIMBAL_BOARD")
                 ${CMAKE_CURRENT_SOURCE_DIR}
                 ${CMAKE_CURRENT_SOURCE_DIR}/Application/Gimabl_board
                 ${CMAKE_CURRENT_SOURCE_DIR}/Gimbal
-                ${CMAKE_CURRENT_SOURCE_DIR}
+                ${CMAKE_CURRENT_SOURCE_DIR}/Communication/General
         )       
         target_compile_definitions(PYRo PUBLIC  
                 DR16_UART=PYRO_UART5

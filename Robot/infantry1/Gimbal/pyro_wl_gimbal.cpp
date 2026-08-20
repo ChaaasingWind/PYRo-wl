@@ -160,6 +160,14 @@ void wl_gimbal_t::updateYaw()
 void wl_gimbal_t::_fsm_execute()
 {
 
+    if (_ctx.data.mode == cmd_base_t::mode_t::ACTIVE)
+    {
+        _main_fsm.change_state(&_state_active);
+    }
+    else
+    {
+        _main_fsm.change_state(&_state_passive);
+    }
     _main_fsm.execute(this);
     wl_gimbal_t::_send_motor_command();
 }

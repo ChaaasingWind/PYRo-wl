@@ -48,6 +48,7 @@ void pyro_init_thread(void *argument)
         vt03_drv_t::instance().enable();
         VT03_UART.reset(921600, UART_WORDLENGTH_8B, UART_STOPBITS_1,
                 UART_PARITY_NONE);
+        VT03_UART.enable_rx_dma();
 #endif
 
 #ifdef REFEREE_UART

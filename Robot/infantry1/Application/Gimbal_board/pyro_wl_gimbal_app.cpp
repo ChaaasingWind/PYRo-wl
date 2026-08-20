@@ -66,12 +66,14 @@ extern "C"
             
 
             wl_gimbal_ptr->set_command(*wl_gimbal_cmd_ptr);
-            vTaskDelay(1);
+            vTaskDelay(pdMS_TO_TICKS(1));
         }
     }
 
     void infantry1_gimbal_init(void *argument)
     {
+        
+
         wl_gimbal_cmd_ptr = new pyro::wl_gimbal_cmd_t();
         wl_gimbal_ptr     = pyro::wl_gimbal_t::instance();
 
@@ -83,7 +85,6 @@ extern "C"
                     configMAX_PRIORITIES - 1, &gimbal_task_handle);
 
         auto &vrc = pyro::rc_drv_t::read();
-
 
         //这里添加要订阅的按键
         pyro::btn_broker::subscribe(&vrc.keys.e, pyro::btn_event_t::PRESS_DOWN, 

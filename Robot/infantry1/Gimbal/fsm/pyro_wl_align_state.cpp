@@ -28,7 +28,7 @@ void pyro::wl_gimbal_t::fsm_active_t::state_align_t::execute(owner *owner)
         float error_rad = YAW_ALIGN_TARGET_RAD - owner->_ctx.motor.yaw->get_current_position();
         float yawSpdCmd     = owner->_ctx.pid.yaw_pos->calculate(0.0f,  -error_rad);
         owner->_ctx.data.output.yawVoltage = owner->_ctx.pid.yaw_spd->calculate(yawSpdCmd, owner->_ctx.data.imu.gyro[2]);
-
+        owner->updateYaw();
 
         static int count = 0;
         if(error_rad < 0.3f)
