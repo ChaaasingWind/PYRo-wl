@@ -51,7 +51,6 @@ namespace pyro
             if(keep_tick >=20)
             {
                 request_switch(&owner->_state_active._state_normal._state_balance);
-                //owner->_ctx.data.flag.leg_is_ready = true;
             }
             keep_tick++;
         }

@@ -32,42 +32,6 @@ void wl_chassis_t::fsm_active_t::on_execute(wl_chassis_t *ctx)
     {
         change_state(&_state_normal);
     }
-    // static int last_step_time = 0;
-    // if(ctx->_current_cmd.step_times != last_step_time)
-    // {
-    //     ctx->_ctx.data.flag.step = true;
-    // }
-    // last_step_time = ctx->_current_cmd.step_times;
-
-
-    
-    // if (ctx->_ctx.data.airborne.state == chassis_state_t::AIR)
-    // {
-    //     change_state(&_state_air);
-    // }
-    // else if (ctx->_ctx.data.airborne.landing_recovery)
-    // {
-    //     change_state(&_state_normal);
-    // }
-    // else if (ctx->_current_cmd.balance_flag)
-    // {
-    //     if(ctx->_ctx.data.flag.step)
-    //     {
-    //         change_state(&_state_step);
-    //     }
-    //     else if(ctx->_ctx.data.flag.leg_is_ready)
-    //     {
-    //         change_state(&_state_normal);
-    //     }
-    //     else 
-    //     {
-    //         change_state(&_state_align);
-    //     } 
-    // }
-    // else
-    // {
-    //         change_state(&_state_manual);
-    // }
 
 
 }

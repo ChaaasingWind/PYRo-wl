@@ -164,8 +164,6 @@ struct airborne_data_t
 struct flag_data_t
 {
     bool leg_is_should_restart;  //紧急下力的标志位
-    // bool leg_is_ready;           //复位成功的标志位
-    // bool step;                   //是否上台阶的标志位
 };
 
 
