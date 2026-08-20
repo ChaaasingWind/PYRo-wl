@@ -37,7 +37,7 @@ struct wl_chassis_cmd_t final : public cmd_base_t
     float v;
     float wz;
     bool balance_flag = false;
-    float dot_h;
+    float dot_L;
 
     int reset_chassis_times;
     int step_times;
@@ -56,8 +56,12 @@ struct leg_ctx_t
     float target_leg_radps;
     float current_leg_length; // current_leg_length = f((θ1 - θ2) / 2)
     float current_leg_speed;
+    float previous_leg_speed;
+    float current_leg_accel;
     float current_leg_rad; // current_leg_rad = (θ1 + θ2) / 2
     float current_leg_radps;
+    float previous_leg_radps;
+    float current_leg_rad_accel;
     float error_leg_rad;
 
     float J_L;
@@ -126,6 +130,26 @@ struct ins_data_t
     float accel[3];
 };
 
+enum class chassis_state_t : uint8_t
+{
+    NORMAL,
+    AIR,
+};
+
+struct airborne_data_t
+{
+    chassis_state_t state = chassis_state_t::NORMAL;
+    bool landing_recovery = false;
+    uint16_t takeoff_counter = 0;
+    uint16_t landing_counter = 0;
+    float L_ref = NORMAL_LENGTH_TARGET;
+    float L_air_ref[2] = {NORMAL_LENGTH_TARGET, NORMAL_LENGTH_TARGET};
+    float accel_z_y = 0.0f;
+    float accel_z_y_lpf = 0.0f;
+    float support_force[2] = {0.0f, 0.0f};
+    float support_force_sum = 0.0f;
+};
+
 struct flag_data_t
 {
     bool leg_is_should_restart;  //紧急下力的标志位
@@ -146,6 +170,7 @@ struct wl_chassis_data_ctx_t
     float U0[INPUT_DIM];
     odom_t odom;
     ins_data_t ins;
+    airborne_data_t airborne;
     float _dt;
 };
 
@@ -193,6 +218,12 @@ class wl_chassis_t final
     void _vmc_trans_v2j();
     void _send_joint_torque() const;
     void _send_wheel_torque() const;
+    void _update_accel_heading_frame();
+    void _calc_support_force();
+    bool _detect_takeoff();
+    bool _detect_landing();
+    void _execute_air_control();
+    void _execute_landing_recovery();
 
     using owner = wl_chassis_t;
 
@@ -205,6 +236,9 @@ class wl_chassis_t final
     };
     struct fsm_active_t final : public fsm_t<owner>
     {
+        void request_air();
+        void request_normal();
+
         struct state_manual_t final : public state_t<owner>
         {
             void enter(owner *owner) override;
@@ -212,6 +246,12 @@ class wl_chassis_t final
             void exit(owner *owner) override;
         };
         struct state_normal_t final : public state_t<owner>
+        {
+            void enter(owner *owner) override;
+            void execute(owner *owner) override;
+            void exit(owner *owner) override;
+        };
+        struct state_air_t final : public state_t<owner>
         {
             void enter(owner *owner) override;
             void execute(owner *owner) override;
@@ -236,6 +276,7 @@ class wl_chassis_t final
       private:
         state_manual_t _state_manual;
         state_normal_t _state_normal;
+        state_air_t    _state_air;
         state_align_t  _state_align;
         state_step_t _state_step;
     };

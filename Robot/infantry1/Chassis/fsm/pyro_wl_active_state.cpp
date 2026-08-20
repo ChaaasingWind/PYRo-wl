@@ -6,6 +6,10 @@ namespace pyro
 
 void wl_chassis_t::fsm_active_t::on_enter(wl_chassis_t *owner)
 {
+    owner->_ctx.data.airborne.state = chassis_state_t::NORMAL;
+    owner->_ctx.data.airborne.landing_recovery = false;
+    owner->_ctx.data.airborne.takeoff_counter = 0;
+    owner->_ctx.data.airborne.landing_counter = 0;
     static_cast<dm_motor_drv_t*>(owner->_ctx.motor.joint[leg_def::L][joint_def::HIP])->clear_error();
     static_cast<dm_motor_drv_t*>(owner->_ctx.motor.joint[leg_def::L][joint_def::KNEE])->clear_error();
     static_cast<dm_motor_drv_t*>(owner->_ctx.motor.joint[leg_def::R][joint_def::HIP])->clear_error();
@@ -14,6 +18,16 @@ void wl_chassis_t::fsm_active_t::on_enter(wl_chassis_t *owner)
     owner->_ctx.motor.joint[leg_def::L][joint_def::KNEE]->enable();
     owner->_ctx.motor.joint[leg_def::R][joint_def::HIP]->enable();
     owner->_ctx.motor.joint[leg_def::R][joint_def::KNEE]->enable();
+}
+
+void wl_chassis_t::fsm_active_t::request_air()
+{
+    change_state(&_state_air);
+}
+
+void wl_chassis_t::fsm_active_t::request_normal()
+{
+    change_state(&_state_normal);
 }
 
 void wl_chassis_t::fsm_active_t::on_execute(wl_chassis_t *ctx)
@@ -27,7 +41,15 @@ void wl_chassis_t::fsm_active_t::on_execute(wl_chassis_t *ctx)
 
 
     
-    if (ctx->_current_cmd.balance_flag)
+    if (ctx->_ctx.data.airborne.state == chassis_state_t::AIR)
+    {
+        change_state(&_state_air);
+    }
+    else if (ctx->_ctx.data.airborne.landing_recovery)
+    {
+        change_state(&_state_normal);
+    }
+    else if (ctx->_current_cmd.balance_flag)
     {
         if(ctx->_ctx.data.flag.step)
         {

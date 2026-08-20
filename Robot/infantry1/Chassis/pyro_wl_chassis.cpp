@@ -6,6 +6,7 @@
 #include "dsp/fast_math_functions.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace pyro
 {
@@ -103,6 +104,9 @@ void wl_chassis_t::_update_feedback()
                     &_ctx.data.ins.euler_rad[2]);
     ins->get_gyro_b(&_ctx.data.ins.gyro[0], &_ctx.data.ins.gyro[1],
                     &_ctx.data.ins.gyro[2]);
+    ins->get_accel_without_g_b(&_ctx.data.ins.accel[0],
+                               &_ctx.data.ins.accel[1],
+                               &_ctx.data.ins.accel[2]);
 
     // 7. State vector feedback.
     state_vec_t &state = _ctx.data.current_state;
@@ -124,17 +128,36 @@ void wl_chassis_t::_update_feedback()
     state.dot_beta2 =
         _ctx.data.leg[leg_def::R].current_leg_radps - _ctx.data.ins.gyro[1];
 
-    const float cos_beta_1 = arm_cos_f32(state.beta1);
-    const float sin_beta_1 = arm_sin_f32(state.beta1);
-    const float cos_beta_2 = arm_cos_f32(state.beta2);
-    const float sin_beta_2 = arm_sin_f32(state.beta2);
-
     state.L =
         0.5f * (_ctx.data.leg[leg_def::L].current_leg_length +
                 _ctx.data.leg[leg_def::R].current_leg_length);
     state.dot_L =
         0.5f * (_ctx.data.leg[leg_def::L].current_leg_speed  +
                 _ctx.data.leg[leg_def::R].current_leg_speed );
+
+    const float accel_alpha =
+        _ctx.data._dt / (0.01f + _ctx.data._dt);
+    for (auto &leg : _ctx.data.leg)
+    {
+        const float raw_leg_accel =
+            std::clamp((leg.current_leg_speed - leg.previous_leg_speed) /
+                           _ctx.data._dt,
+                       -100.0f, 100.0f);
+        leg.current_leg_accel +=
+            accel_alpha * (raw_leg_accel - leg.current_leg_accel);
+        leg.previous_leg_speed = leg.current_leg_speed;
+        const float beta_dot = leg.current_leg_radps - _ctx.data.ins.gyro[1];
+        const float raw_beta_accel =
+            std::clamp((beta_dot - leg.previous_leg_radps) /
+                           _ctx.data._dt,
+                       -100.0f, 100.0f);
+        leg.current_leg_rad_accel +=
+            accel_alpha * (raw_beta_accel - leg.current_leg_rad_accel);
+        leg.previous_leg_radps = beta_dot;
+    }
+
+    _update_accel_heading_frame();
+    _calc_support_force();
 }
 
 

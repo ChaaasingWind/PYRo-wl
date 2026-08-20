@@ -16,7 +16,10 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
     owner->_ctx.data.target_state.dot_x     = 0.0f;
     owner->_ctx.data.target_state.psi       = owner->_ctx.data.ins.euler_rad[0];
     owner->_ctx.data.target_state.dot_psi   = 0.0f;
-    owner->_ctx.data.target_state.L         = 0.2f;
+    owner->_ctx.data.target_state.L =
+        owner->_ctx.data.airborne.landing_recovery
+            ? owner->_ctx.data.airborne.L_ref
+            : NORMAL_LENGTH_TARGET;
     owner->_ctx.data.target_state.dot_L     = 0.0f;
     owner->_ctx.data.target_state.theta     = 0.0f;
     owner->_ctx.data.target_state.dot_theta = 0.0f;
@@ -55,6 +58,10 @@ void wl_chassis_t::fsm_active_t::state_normal_t::enter(wl_chassis_t *owner)
 
     owner->_ctx.motor.wheel[leg_def::L]->enable();
     owner->_ctx.motor.wheel[leg_def::R]->enable();
+    owner->_ctx.data.airborne.state = chassis_state_t::NORMAL;
+    owner->_ctx.data.airborne.takeoff_counter = 0;
+    owner->_ctx.data.airborne.landing_counter = 0;
+    owner->_ctx.data.flag.leg_is_ready = true;
 }
 
 void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
@@ -74,6 +81,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
         reset_count = 0;
     }
 
+<<<<<<< HEAD
     
     
 
@@ -95,6 +103,24 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
     //腿长限幅
     owner->_ctx.data.target_state.L =
         std::clamp(owner->_ctx.data.target_state.L,MIN_LEG_LENGTH, MAX_LEG_LENGTH);
+=======
+    if (owner->_ctx.data.airborne.landing_recovery)
+    {
+        owner->_execute_landing_recovery();
+    }
+    else
+    {
+        //腿长加上遥控器的小量
+        const float target_dot_L = owner->_current_cmd.dot_L;
+        owner->_ctx.data.target_state.dot_L = target_dot_L;
+        owner->_ctx.data.target_state.L +=
+        target_dot_L * owner->_ctx.data._dt;
+        //腿长限幅
+        owner->_ctx.data.target_state.L =
+        std::clamp(owner->_ctx.data.target_state.L,
+                       MIN_LEG_LENGTH, MAX_LEG_LENGTH);
+    }
+>>>>>>> upstream/double_model
     
 
     const float target_vx = owner->_current_cmd.v;
@@ -106,6 +132,16 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
     owner->_ctx.data.target_state.psi = loop_fp32_constrain(owner->_ctx.data.target_state.psi,-PI,PI);
     owner->_ctx.data.target_state.dot_psi = target_wz;
 
+    if (!owner->_ctx.data.airborne.landing_recovery &&
+        owner->_detect_takeoff())
+    {
+        owner->_ctx.data.airborne.state = chassis_state_t::AIR;
+        owner->_ctx.data.airborne.takeoff_counter = 0;
+        owner->_ctx.data.airborne.landing_counter = 0;
+        request_switch(&owner->_state_active._state_air);
+        return;
+    }
+
     owner->_gain_calculate();
     owner->_balance_control();
     owner->_vmc_trans_v2j();
@@ -115,7 +151,6 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
 
 void wl_chassis_t::fsm_active_t::state_normal_t::exit(wl_chassis_t *owner)
 {
-    owner->_ctx.data.flag.leg_is_ready = false;
     (void)owner;
 }
 

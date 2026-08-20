@@ -142,13 +142,13 @@ void chassis_dr162cmd(uint32_t notify)
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = 0.0f;
         wl_chassis_cmd_ptr->v                            = vrc.axes.ry * 1.5f;
-        wl_chassis_cmd_ptr->wz                           = - vrc.axes.lx * 1.0f;
+        wl_chassis_cmd_ptr->wz                           = - vrc.axes.lx * 2.0f;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::L] =
             vrc.axes.ly * 0.0003f;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] =
             vrc.axes.ly * 0.0003f;
         wl_chassis_cmd_ptr->balance_flag = true;
-        wl_chassis_cmd_ptr->dot_h                      = vrc.axes.ly * 0.4f;
+        wl_chassis_cmd_ptr->dot_L                      = vrc.axes.ly * 0.4f;
     }
 }
 
