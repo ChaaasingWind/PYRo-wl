@@ -5,6 +5,7 @@
 #include "pyro_ins.h"
 #include "pyro_referee.h"
 #include "pyro_supercap_drv.h"
+#include "pyro_vt03_rc_drv.h"
 
 namespace pyro
 {
@@ -41,6 +42,12 @@ void pyro_init_thread(void *argument)
     DR16_UART.reset(100000, UART_WORDLENGTH_9B, UART_STOPBITS_2,
                     UART_PARITY_EVEN);
     DR16_UART.enable_rx_dma();
+#endif
+#ifdef VT03_UART
+        vt03_drv_t::instance().start();
+        vt03_drv_t::instance().enable();
+        VT03_UART.reset(921600, UART_WORDLENGTH_8B, UART_STOPBITS_1,
+                UART_PARITY_NONE);
 #endif
 
 #ifdef REFEREE_UART

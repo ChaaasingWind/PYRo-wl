@@ -1,5 +1,5 @@
-set(BOARD "CHASSIS_BOARD")
-#set(BOARD "GIMBAL_BOARD")
+#set(BOARD "CHASSIS_BOARD")
+set(BOARD "GIMBAL_BOARD")
 
 add_library(Infantry1 OBJECT)
 
@@ -16,15 +16,15 @@ if (BOARD STREQUAL "CHASSIS_BOARD")
                 pyro_init_thread.cpp
                 pyro_mission_planer.cpp
 
-        Chassis/pyro_wl_chassis.cpp
-        Chassis/fsm/pyro_wl_active_state.cpp
-        Chassis/fsm/pyro_wl_manual_state.cpp
-        Chassis/fsm/pyro_wl_passive_state.cpp
-        Chassis/fsm/pyro_wl_normal_state.cpp
-        Chassis/fsm/pyro_wl_air_state.cpp
-        Chassis/fsm/pyro_wl_align_state.cpp
-        Chassis/fsm/pyro_wl_step_state.cpp
-        Chassis/fsm/pyro_wl_balance_state.cpp
+                Chassis/pyro_wl_chassis.cpp
+                Chassis/fsm/pyro_wl_active_state.cpp
+                Chassis/fsm/pyro_wl_manual_state.cpp
+                Chassis/fsm/pyro_wl_passive_state.cpp
+                Chassis/fsm/pyro_wl_normal_state.cpp
+                Chassis/fsm/pyro_wl_air_state.cpp
+                Chassis/fsm/pyro_wl_align_state.cpp
+                Chassis/fsm/pyro_wl_step_state.cpp
+                Chassis/fsm/pyro_wl_balance_state.cpp
 
 
                 Application/Chassis_board/pyro_wl_chassis_app.cpp
@@ -49,6 +49,8 @@ elseif (BOARD STREQUAL "GIMBAL_BOARD")
                 Gimbal/pyro_wl_gimbal.cpp
                 Gimbal/fsm/pyro_wl_passive_state.cpp
                 Gimbal/fsm/pyro_wl_active_state.cpp
+                Gimbal/fsm/pyro_wl_manual_state.cpp
+                Gimbal/fsm/pyro_wl_align_state.cpp
                 
                 Application/Gimbal_board/pyro_wl_gimbal_app.cpp
         )       
@@ -61,6 +63,8 @@ elseif (BOARD STREQUAL "GIMBAL_BOARD")
                 ${CMAKE_CURRENT_SOURCE_DIR}
         )       
         target_compile_definitions(PYRo PUBLIC  
+                DR16_UART=PYRO_UART5
+                VT03_UART=PYRO_UART1
         )
 
 endif ()

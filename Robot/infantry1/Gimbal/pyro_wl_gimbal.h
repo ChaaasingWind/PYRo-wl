@@ -11,7 +11,13 @@
 namespace pyro
 {
 
-
+enum MotionState 
+{ 
+    Relax, 
+    Align, 
+    Manual,
+    Auto,
+};
 //命令结构体部分
 struct wl_gimbal_cmd_t {
     // 【修改】将绝对角度改为期望角速度 (rad/s)
@@ -25,6 +31,10 @@ struct wl_gimbal_cmd_t {
     float targetYawAcceleration; // 目标角加速度 (用于高级动力学前馈)
     // ------------------------------------
     uint32_t timestamp;
+
+    pyro::cmd_base_t::mode_t mode;
+    MotionState state_cmd;
+
 };
 
 
@@ -101,6 +111,8 @@ struct wl_gimbal_data_ctx_t final : public cmd_base_t
     GimbalState state;
     GimbalOutput output;
     GimbalTelemetry telem;
+    float target_yaw_vel;
+    float target_pitch_vel;
     float dt;
     uint8_t motionState;
 };
@@ -142,17 +154,17 @@ class wl_gimbal_t final
     void _update_feedback() override;
     void _fsm_execute() override;
 
-    enum MotionState 
-    { 
-        Relax, 
-        Align, 
-        Manual,
-        Auto,
-    };
+    
 
     //辅助函数
     void set_pitchstate(bool enable);
     void set_yawstate(bool enable);
+
+    void updatePitch();
+    void updateYaw();
+
+    void _send_motor_command();
+    float wrapAngle(float angle);//角度归一化到正负PI
 
 
 
@@ -187,6 +199,7 @@ class wl_gimbal_t final
 
       private:
         state_manual_t _state_manual;
+        state_align_t  _state_align;
     };
 
 

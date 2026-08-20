@@ -27,6 +27,7 @@ class dm_motor_drv_t : public motor_base_t // MIT only
     status_t clear_error();
 
     status_t update_feedback() override;
+    status_t send_mit_ctrl(float target_pos, float target_vel, float t_ff) ;
     status_t send_torque(float torque) override;
 
     void set_position_range(float min, float max);

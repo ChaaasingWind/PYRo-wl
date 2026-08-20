@@ -35,9 +35,6 @@
 #define YAW_POS_PID_KI 0.0f
 #define YAW_POS_PID_KD 0.0f
 
-//yaw轴初始偏移角
-//#define _YAW_OFFSET 2300
-#define _YAW_OFFSET 2650
   
 
 
@@ -81,7 +78,11 @@
 
 
 
-#define TRIGGER_MOTOR_ID pyro::dji_motor_tx_frame_t::id_3
+
+constexpr float YAW_ALIGN_TARGET_RAD = 0.0f;
+
+constexpr float PITCH_K_GRAVITY_COS = 1.0f; // 水平方向质心补偿
+constexpr float PITCH_K_GRAVITY_SIN = -0.5f; // 垂直方向质心补偿
 
 
 

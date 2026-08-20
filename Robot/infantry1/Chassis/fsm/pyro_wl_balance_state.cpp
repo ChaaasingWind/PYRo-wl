@@ -1,4 +1,5 @@
 #include "pyro_wl_chassis.h"
+#include "stm32h7xx_hal_rcc_ex.h"
 
 #include <algorithm>
 
@@ -83,11 +84,22 @@ void wl_chassis_t::fsm_active_t::state_normal_t::state_balance_t::execute(wl_cha
     
 
     //自动上台阶判断
+    static uint16_t auto_step_count = 0;
     if (owner->_ctx.data.current_state.L >= 0.28f &&
-        owner->_ctx.data.leg[leg_def::R].current_leg_rad < 0.7f && 
-        owner->_ctx.data.leg[leg_def::L].current_leg_rad < 0.7f )
+        owner->_ctx.data.leg[leg_def::R].current_leg_radps < 0.5f&&
+        owner->_ctx.data.leg[leg_def::R].current_leg_radps < 0.5f&&
+        owner->_ctx.data.leg[leg_def::R].current_leg_rad < 0.8f && 
+        owner->_ctx.data.leg[leg_def::L].current_leg_rad < 0.8f )
     {
-        request_switch(&owner->_state_active._state_normal._state_step);
+        if(auto_step_count >= 50)
+        {
+            request_switch(&owner->_state_active._state_normal._state_step);
+        }
+        auto_step_count++;
+    }
+    else
+    {
+        auto_step_count = 0;
     }
 
     //离地检测
