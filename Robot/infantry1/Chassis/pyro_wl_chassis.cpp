@@ -163,12 +163,13 @@ void wl_chassis_t::_update_feedback()
 
 void wl_chassis_t::_fsm_execute()
 {
-    static int last_chassis_reset_times = 0;
-    if(_current_cmd.reset_chassis_times != last_chassis_reset_times)
+    static pyro::chassis_function_state_t last_cmd_state = pyro::chassis_function_state_t::NONE;
+    if( _current_cmd.cmd_function_state == pyro::chassis_function_state_t::RESTART &&
+        last_cmd_state != _current_cmd.cmd_function_state)
     {
         _ctx.data.flag.leg_is_should_restart = false;
     }
-    last_chassis_reset_times = _current_cmd.reset_chassis_times;
+
     if (_current_cmd.mode == cmd_base_t::mode_t::ACTIVE && (!_ctx.data.flag.leg_is_should_restart))
     {
         _main_fsm.change_state(&_state_active);

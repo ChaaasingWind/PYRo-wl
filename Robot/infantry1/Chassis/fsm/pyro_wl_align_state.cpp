@@ -17,7 +17,7 @@ namespace pyro
     static constexpr float ALIGN_DELTA_RAD     = 0.003f;
     
 
-    void wl_chassis_t::fsm_active_t::state_align_t::enter(wl_chassis_t *owner)
+    void wl_chassis_t::fsm_active_t::state_normal_t::state_align_t::enter(wl_chassis_t *owner)
     {
         for (auto &leg : owner->_ctx.data.leg)
         {
@@ -36,7 +36,7 @@ namespace pyro
         owner->_ctx.motor.wheel[leg_def::R]->disable();
     }
 
-    void wl_chassis_t::fsm_active_t::state_align_t::execute(wl_chassis_t *owner)
+    void wl_chassis_t::fsm_active_t::state_normal_t::state_align_t::execute(wl_chassis_t *owner)
     {
         //判断双腿是否在可以起身的位置
         static uint8_t keep_tick =0;
@@ -50,7 +50,8 @@ namespace pyro
         {
             if(keep_tick >=20)
             {
-                owner->_ctx.data.flag.leg_is_ready = true;
+                request_switch(&owner->_state_active._state_normal._state_balance);
+                //owner->_ctx.data.flag.leg_is_ready = true;
             }
             keep_tick++;
         }
@@ -121,7 +122,7 @@ namespace pyro
         owner->_ctx.motor.wheel[leg_def::R]->send_torque(0);
     }
 
-    void wl_chassis_t::fsm_active_t::state_align_t::exit(wl_chassis_t *owner)
+    void wl_chassis_t::fsm_active_t::state_normal_t::state_align_t::exit(wl_chassis_t *owner)
     {
         (void)owner;
     }

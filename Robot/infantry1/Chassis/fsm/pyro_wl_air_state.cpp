@@ -186,9 +186,9 @@ void wl_chassis_t::_execute_air_control()
     }
 }
 
-void wl_chassis_t::fsm_active_t::state_air_t::enter(wl_chassis_t *owner)
+void wl_chassis_t::fsm_active_t::state_normal_t::state_air_t::enter(wl_chassis_t *owner)
 {
-    owner->_ctx.data.airborne.state = chassis_state_t::AIR;
+    owner->_ctx.data.airborne.state = chassis_function_state_t::AIR;
     owner->_ctx.data.airborne.landing_counter = 0;
     owner->_ctx.data.airborne.L_ref =
         0.5f * (owner->_ctx.data.leg[leg_def::L].current_leg_length +
@@ -205,11 +205,11 @@ void wl_chassis_t::fsm_active_t::state_air_t::enter(wl_chassis_t *owner)
     }
 }
 
-void wl_chassis_t::fsm_active_t::state_air_t::execute(wl_chassis_t *owner)
+void wl_chassis_t::fsm_active_t::state_normal_t::state_air_t::execute(wl_chassis_t *owner)
 {
     if (owner->_detect_landing())
     {
-        owner->_ctx.data.airborne.state = chassis_state_t::NORMAL;
+        owner->_ctx.data.airborne.state = chassis_function_state_t::NONE;
         owner->_ctx.data.airborne.landing_recovery = true;
         owner->_ctx.data.airborne.L_ref =
             0.5f * (owner->_ctx.data.leg[leg_def::L].current_leg_length +
@@ -219,7 +219,7 @@ void wl_chassis_t::fsm_active_t::state_air_t::execute(wl_chassis_t *owner)
         owner->_ctx.data.target_state.dot_L = 0.0f;
         owner->_ctx.data.airborne.takeoff_counter = 0;
         owner->_ctx.data.airborne.landing_counter = 0;
-        owner->_state_active.request_normal();
+        request_switch(&owner->_state_active._state_normal._state_balance);
         return;
     }
 
@@ -229,7 +229,7 @@ void wl_chassis_t::fsm_active_t::state_air_t::execute(wl_chassis_t *owner)
     owner->_send_wheel_torque();
 }
 
-void wl_chassis_t::fsm_active_t::state_air_t::exit(wl_chassis_t *owner)
+void wl_chassis_t::fsm_active_t::state_normal_t::state_air_t::exit(wl_chassis_t *owner)
 {
     for (auto &wheel : owner->_ctx.data.wheel)
     {
