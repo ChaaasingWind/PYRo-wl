@@ -16,15 +16,6 @@ if (BOARD STREQUAL "CHASSIS_BOARD")
                 pyro_init_thread.cpp
                 pyro_mission_planer.cpp
 
-<<<<<<< HEAD
-                Chassis/pyro_wl_chassis.cpp
-                Chassis/fsm/pyro_wl_active_state.cpp
-                Chassis/fsm/pyro_wl_manual_state.cpp
-                Chassis/fsm/pyro_wl_passive_state.cpp
-                Chassis/fsm/pyro_wl_normal_state.cpp
-                Chassis/fsm/pyro_wl_align_state.cpp
-                Chassis/fsm/pyro_wl_step_state.cpp
-=======
         Chassis/pyro_wl_chassis.cpp
         Chassis/fsm/pyro_wl_active_state.cpp
         Chassis/fsm/pyro_wl_manual_state.cpp
@@ -33,7 +24,6 @@ if (BOARD STREQUAL "CHASSIS_BOARD")
         Chassis/fsm/pyro_wl_air_state.cpp
         Chassis/fsm/pyro_wl_align_state.cpp
         Chassis/fsm/pyro_wl_step_state.cpp
->>>>>>> upstream/double_model
 
 
                 Application/Chassis_board/pyro_wl_chassis_app.cpp

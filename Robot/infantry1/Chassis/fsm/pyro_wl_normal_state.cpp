@@ -81,7 +81,6 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
         reset_count = 0;
     }
 
-<<<<<<< HEAD
     
     
 
@@ -94,16 +93,8 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
         owner->_ctx.data.flag.step = true;
     }
 
-    //腿长加上遥控器的小量
 
-    const float target_dot_h = owner->_current_cmd.dot_h;
-    owner->_ctx.data.target_state.dot_L = target_dot_h;
-    owner->_ctx.data.target_state.L += target_dot_h * owner->_ctx.data._dt;
-
-    //腿长限幅
-    owner->_ctx.data.target_state.L =
-        std::clamp(owner->_ctx.data.target_state.L,MIN_LEG_LENGTH, MAX_LEG_LENGTH);
-=======
+    //离地检测
     if (owner->_ctx.data.airborne.landing_recovery)
     {
         owner->_execute_landing_recovery();
@@ -120,7 +111,6 @@ void wl_chassis_t::fsm_active_t::state_normal_t::execute(wl_chassis_t *owner)
         std::clamp(owner->_ctx.data.target_state.L,
                        MIN_LEG_LENGTH, MAX_LEG_LENGTH);
     }
->>>>>>> upstream/double_model
     
 
     const float target_vx = owner->_current_cmd.v;
