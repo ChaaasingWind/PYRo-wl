@@ -7,7 +7,7 @@
 namespace pyro
 {
 
-
+//最短腿长的摆角：1.18 -- 2.1
 
 static constexpr float STEP_PHASE1_MAX_RAD       = -1.0f;
 static constexpr float STEP_PHASE1_TARGET_RAD    = -1.1f;
@@ -17,7 +17,6 @@ static constexpr float STEP_PHASE2_TARGET_LENGTH = 0.19f;
 
 static constexpr float STEP_PHASE3_TARGET_RAD    = 1.2f;
 static constexpr float STEP_PHASE3_MIN_RAD       = 0.75f;
-
 
 static constexpr float STEP_DELTA_RAD            = 0.003f;
 static constexpr float STEP_DELTA_LENGTH         = 0.001f;
@@ -30,7 +29,7 @@ static uint8_t phase_1_ticks;
 static uint8_t phase_2_ticks;
 static uint8_t phase_3_ticks;
 
-void wl_chassis_t::fsm_active_t::state_step_t::enter(wl_chassis_t *owner)
+void wl_chassis_t::fsm_active_t::state_normal_t::state_step_t::enter(wl_chassis_t *owner)
 {
     for (auto &leg : owner->_ctx.data.leg)
     {
@@ -54,7 +53,7 @@ void wl_chassis_t::fsm_active_t::state_step_t::enter(wl_chassis_t *owner)
 
 }
 
-void wl_chassis_t::fsm_active_t::state_step_t::execute(wl_chassis_t *owner)
+void wl_chassis_t::fsm_active_t::state_normal_t::state_step_t::execute(wl_chassis_t *owner)
 {
     if(stepping_phase == 0)
     {
@@ -132,9 +131,8 @@ void wl_chassis_t::fsm_active_t::state_step_t::execute(wl_chassis_t *owner)
         {
             if(phase_3_ticks >= 10)
             {
-                //清空标志位,退出该状态
-                stepping_phase = 0;
-                owner->_ctx.data.flag.step = false;
+                //退出该状态
+                request_switch(&owner->_state_active._state_normal._state_balance);
                 stepping_phase++;
             }
             phase_3_ticks++;
@@ -155,9 +153,8 @@ void wl_chassis_t::fsm_active_t::state_step_t::execute(wl_chassis_t *owner)
     }
     else if(stepping_phase == 3)
     {
-        //清空标志位,退出该状态
-        stepping_phase = 0;
-        owner->_ctx.data.flag.step = false;
+        //退出该状态
+        request_switch(&owner->_state_active._state_normal._state_balance);
     }
     
     //限幅
@@ -200,9 +197,9 @@ void wl_chassis_t::fsm_active_t::state_step_t::execute(wl_chassis_t *owner)
     owner->_ctx.motor.wheel[leg_def::R]->send_torque(0);
 }
 
-void wl_chassis_t::fsm_active_t::state_step_t::exit(wl_chassis_t *owner)
+void wl_chassis_t::fsm_active_t::state_normal_t::state_step_t::exit(wl_chassis_t *owner)
 {
-    owner->_ctx.data.flag.leg_is_ready = true;
+    stepping_phase = 0;
     (void)owner;
 }
 

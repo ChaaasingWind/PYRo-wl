@@ -105,17 +105,14 @@ void chassis_dr162cmd(uint32_t notify)
     }
 
     //ACTIVE模式下的键位判断
+    wl_chassis_cmd_ptr->cmd_function_state = pyro::chassis_function_state_t::NONE;
     if (notify & EVENT_BIT_RESTART)
     {
-        static int restart_times = 0;
-        restart_times++;
-        wl_chassis_cmd_ptr->reset_chassis_times = restart_times;
+        wl_chassis_cmd_ptr->cmd_function_state = pyro::chassis_function_state_t::RESTART;
     }
-    if (notify & EVENT_BIT_STEP)
+    else if (notify & EVENT_BIT_STEP)
     {
-        static int step_times = 0;
-        step_times++;
-        wl_chassis_cmd_ptr->step_times = step_times;
+        wl_chassis_cmd_ptr->cmd_function_state = pyro::chassis_function_state_t::STEP;
     }
 
 
@@ -131,7 +128,7 @@ void chassis_dr162cmd(uint32_t notify)
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = vrc.axes.rx * 0.001f;
         wl_chassis_cmd_ptr->v                            = 0.0f;
         wl_chassis_cmd_ptr->wz                           = 0.0f;
-        wl_chassis_cmd_ptr->balance_flag                 = false;
+        wl_chassis_cmd_ptr->cmd_continus_state           = pyro::chassis_active_state_t::MANUAL;
     }
     else if (pyro::sw_pos_t::UP == vrc.switches.right.current_pos)
     {
@@ -147,8 +144,8 @@ void chassis_dr162cmd(uint32_t notify)
             vrc.axes.ly * 0.0003f;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] =
             vrc.axes.ly * 0.0003f;
-        wl_chassis_cmd_ptr->balance_flag = true;
         wl_chassis_cmd_ptr->dot_L                      = vrc.axes.ly * 0.4f;
+        wl_chassis_cmd_ptr->cmd_continus_state           = pyro::chassis_active_state_t::NORMAL;
     }
 }
 

@@ -1,0 +1,174 @@
+#include "pyro_can_drv.h"
+#include "pyro_dr16_rc_drv.h"
+#include "pyro_rc_core.h"
+#include "pyro_vt03_rc_drv.h"
+#include "pyro_rc_base_drv.h"
+#include "pyro_wl_gimbal.h"
+#include "pyro_dm_motor_drv.h"
+#include "pyro_bsp_can.h"
+#include "pyro_dji_motor_drv.h"
+#include "gimbal_config.h"
+#include "pyro_mutex.h"
+
+
+using namespace pyro;
+
+
+
+constexpr uint32_t EVENT_BIT_STEPCLIMB        = (1 << 0);     // - [E] 上台阶
+constexpr uint32_t EVENT_BIT_SPINING          = (1 << 1);     // - pause键 小陀螺
+
+
+static TaskHandle_t gimbal_task_handle = nullptr;
+
+static pyro::wl_gimbal_t *wl_gimbal_ptr         = nullptr;
+static pyro::wl_gimbal_cmd_t *wl_gimbal_cmd_ptr = nullptr;
+static pyro::wl_gimbal_deps_t *wl_gimbal_deps   = nullptr;
+
+static void motor_deps_init();
+
+static void gimbal_vt032cmd(uint32_t notify);
+static void chassis_vt032cmd(uint32_t notify){};
+
+static void chassis_dr16cmd(uint32_t notify){};
+static void gimbal_dr16cmd(uint32_t notify){};
+
+
+
+extern "C"
+{
+    void wl_gimbal_thread(void *argument)
+    {
+        while(true)
+        {
+            uint32_t notify_val = 0;
+            xTaskNotifyWait(0x00, UINT32_MAX, &notify_val, 0);
+            
+            if (vt03_drv_t::instance().check_online())
+            {
+                
+                gimbal_vt032cmd(notify_val);
+                chassis_vt032cmd(notify_val);
+            }
+            else if(dr16_drv_t::instance().check_online())
+            {
+                
+                gimbal_dr16cmd(notify_val);
+                chassis_dr16cmd(notify_val);
+            }
+            else
+            {
+
+                wl_gimbal_cmd_ptr->mode = pyro::cmd_base_t::mode_t::PASSIVE;
+                wl_gimbal_cmd_ptr->state_cmd = pyro::MotionState::Relax;
+            }
+
+            
+
+            wl_gimbal_ptr->set_command(*wl_gimbal_cmd_ptr);
+            vTaskDelay(pdMS_TO_TICKS(1));
+        }
+    }
+
+    void infantry1_gimbal_init(void *argument)
+    {
+        
+
+        wl_gimbal_cmd_ptr = new pyro::wl_gimbal_cmd_t();
+        wl_gimbal_ptr     = pyro::wl_gimbal_t::instance();
+
+        motor_deps_init();
+        wl_gimbal_ptr->configure(*wl_gimbal_deps);
+        wl_gimbal_ptr->start();
+
+        xTaskCreate(wl_gimbal_thread, "infantry_gimbal_thread", 1024, nullptr,
+                    configMAX_PRIORITIES - 1, &gimbal_task_handle);
+
+        auto &vrc = pyro::rc_drv_t::read();
+
+        //这里添加要订阅的按键
+        pyro::btn_broker::subscribe(&vrc.keys.e, pyro::btn_event_t::PRESS_DOWN, 
+                            gimbal_task_handle, EVENT_BIT_STEPCLIMB);
+        pyro::btn_broker::subscribe(&vrc.buttons.pause, pyro::btn_event_t::PRESS_DOWN, 
+                            gimbal_task_handle, EVENT_BIT_SPINING);
+                            
+        vTaskDelete(nullptr);
+    }
+}
+
+
+
+static void motor_deps_init()
+{
+    wl_gimbal_deps = new pyro::wl_gimbal_deps_t();
+
+    // 初始化电机
+    wl_gimbal_deps->motor_deps.pitch = 
+        new pyro::dm_motor_drv_t(0x01, 0x00, pyro::bsp_can::can2);;
+    wl_gimbal_deps->motor_deps.yaw = 
+        new pyro::dji_gm_6020_motor_drv_t(pyro::dji_motor_tx_frame_t::id_5, pyro::bsp_can::can1);
+    wl_gimbal_deps->motor_deps.pitch->set_position_range(-12.5f,12.5f); // 设定位置限位 (rad)
+    wl_gimbal_deps->motor_deps.pitch->set_rotate_range(-30.0f,30.0f); // 设定速度限位 (rad/s)
+    wl_gimbal_deps->motor_deps.pitch->set_torque_range(-10.0f,10.0f); // 设定扭矩限位 (N.m)
+
+    // 初始化串级 PID
+    wl_gimbal_deps->pid_deps.pitch_pos =
+        new pyro::pid_t(PITCH_DM_MOT_KP, PITCH_DM_MOT_KI, PITCH_DM_MOT_KD, 10.0f, 20.0f);
+    // infantry_gimbal_deps->pid_deps.pitch_spd =
+    //     new pyro::pid_t(PITCH_SPEED_PID_KP, PITCH_SPEED_PID_KI, PITCH_SPEED_PID_KD, 0.0f, 24.0f);
+    wl_gimbal_deps->pid_deps.yaw_pos =
+        new pyro::pid_t(YAW_POS_PID_KP, YAW_POS_PID_KI, YAW_POS_PID_KD, 10.0f, 20.0f);
+    wl_gimbal_deps->pid_deps.yaw_spd =
+        new pyro::pid_t(YAW_SPEED_PID_KP, YAW_SPEED_PID_KI, YAW_SPEED_PID_KD, 0.0f, 24.0f);
+    
+    // 设置 MIT 模式下的阻抗参数 (若使用串级PID输出扭矩，Kp和Kd必须设为0)
+    wl_gimbal_deps->motor_deps.pitch->set_runtime_kp(DM_MOT_PITCH_KP);
+    wl_gimbal_deps->motor_deps.pitch->set_runtime_kd(DM_MOT_PITCH_KD);
+}
+
+static void gimbal_vt032cmd(uint32_t notify)
+{
+    pyro::read_scope_lock lock(pyro::rc_drv_t::get_lock());
+    auto &vrc = pyro::rc_drv_t::read();
+
+
+    //判断当前模式
+    if(vrc.switches.gear.current_pos == pyro::sw_pos_t::UP)
+    {
+        wl_gimbal_cmd_ptr->mode = pyro::cmd_base_t::mode_t::PASSIVE;
+        wl_gimbal_cmd_ptr->state_cmd = pyro::MotionState::Relax;
+
+    }
+    else if(vrc.switches.gear.current_pos == pyro::sw_pos_t::DOWN ||
+            vrc.switches.gear.current_pos == pyro::sw_pos_t::MID)
+    {
+        wl_gimbal_cmd_ptr->mode = pyro::cmd_base_t::mode_t::ACTIVE;
+        wl_gimbal_cmd_ptr->state_cmd = pyro::MotionState::Manual;
+
+        float pitchInput =vrc.axes.ly+vrc.mouse_axes.y*100.0f;
+        if(pitchInput > 1.0f)
+        {
+            pitchInput=1.0f;
+        }
+        else if(pitchInput < -1.0f)
+        {
+            pitchInput=-1.0f;
+        }
+        wl_gimbal_cmd_ptr->pitchVel = pitchInput * 6.28f;
+
+        float yawInput =vrc.axes.lx+vrc.mouse_axes.x*100.0f;
+        if(yawInput > 1.0f)
+        {
+            yawInput=1.0f;
+        }
+        else if(yawInput < -1.0f)
+        {
+            yawInput=-1.0f;
+        }
+        wl_gimbal_cmd_ptr->yawVel = yawInput*6.28f;
+
+
+
+    }
+}
+

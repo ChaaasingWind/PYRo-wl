@@ -7,6 +7,7 @@
 #include "pyro_motor_base.h"
 #include "wl_config.h"
 #include "dsp/window_functions.h"
+#include <cstdint>
 
 namespace pyro
 {
@@ -21,7 +22,6 @@ struct wl_chassis_deps_t
     struct pid_deps_t
     {
         pd_ctrl_t *leg_length[2];
-
         pd_ctrl_t *leg_rad[2];   
         pyro::pid_t *leg_control_rad[2];   //角度环
         pyro::pid_t *leg_control_radps[2]; //速度环
@@ -31,23 +31,36 @@ struct wl_chassis_deps_t
     pid_deps_t pid;
 };
 
+enum class chassis_active_state_t : uint8_t
+{
+    NORMAL,
+    MANUAL,
+};
+
+enum class chassis_function_state_t : uint8_t
+{
+    NONE,
+    RESTART,
+    ALIGN,
+    STEP,
+    AIR,
+};
+
 struct wl_chassis_cmd_t final : public cmd_base_t
 {
     float delta_leg_length[2];
     float delta_leg_rad[2];
     float v;
     float wz;
-    bool balance_flag = false;
+    //bool balance_flag = false;
     float dot_L;
 
     int reset_chassis_times;
     int step_times;
 
+    chassis_active_state_t cmd_continus_state;
+    chassis_function_state_t cmd_function_state;
 
-    enum class wl_chassis_mode_t : uint8_t
-    {
-        MANUAL,
-    };
 };
 
 struct leg_ctx_t
@@ -133,15 +146,11 @@ struct ins_data_t
     float accel[3];
 };
 
-enum class chassis_state_t : uint8_t
-{
-    NORMAL,
-    AIR,
-};
+
 
 struct airborne_data_t
 {
-    chassis_state_t state = chassis_state_t::NORMAL;
+    chassis_function_state_t state = chassis_function_state_t::NONE;
     bool landing_recovery = false;
     uint16_t takeoff_counter = 0;
     uint16_t landing_counter = 0;
@@ -156,8 +165,6 @@ struct airborne_data_t
 struct flag_data_t
 {
     bool leg_is_should_restart;  //紧急下力的标志位
-    bool leg_is_ready;           //复位成功的标志位
-    bool step;                   //是否上台阶的标志位
 };
 
 
@@ -175,6 +182,7 @@ struct wl_chassis_data_ctx_t
     ins_data_t ins;
     airborne_data_t airborne;
     float _dt;
+    chassis_function_state_t current_function;//主动量，改变它即可改变状态
 };
 
 struct wl_chassis_ctx_t
@@ -240,39 +248,50 @@ class wl_chassis_t final
     };
     struct fsm_active_t final : public fsm_t<owner>
     {
-        void request_air();
-        void request_normal();
-
         struct state_manual_t final : public state_t<owner>
         {
             void enter(owner *owner) override;
             void execute(owner *owner) override;
             void exit(owner *owner) override;
         };
-        struct state_normal_t final : public state_t<owner>
+        struct state_normal_t final : public fsm_t<owner>
         {
-            void enter(owner *owner) override;
-            void execute(owner *owner) override;
-            void exit(owner *owner) override;
+            struct state_balance_t final : public state_t<owner>
+            {
+                void enter(owner *owner) override;
+                void execute(owner *owner) override;
+                void exit(owner *owner) override;
+            };
+            struct state_air_t final : public state_t<owner>
+            {
+                void enter(owner *owner) override;
+                void execute(owner *owner) override;
+                void exit(owner *owner) override;
+            };
+            struct state_align_t final : public state_t<owner>
+            {
+                void enter(owner *owner) override;
+                void execute(owner *owner) override;
+                void exit(owner *owner) override;
+            };
+            struct state_step_t final : public state_t<owner>
+            {
+                void enter(owner *owner) override;
+                void execute(owner *owner) override;
+                void exit(owner *owner) override;
+            };
+
+            void on_enter(owner *owner) override;
+            void on_execute(owner *owner) override;
+            void on_exit(owner *owner) override;
+
+          private:
+                state_balance_t _state_balance;
+                state_air_t     _state_air;
+                state_align_t   _state_align;
+                state_step_t    _state_step;
         };
-        struct state_air_t final : public state_t<owner>
-        {
-            void enter(owner *owner) override;
-            void execute(owner *owner) override;
-            void exit(owner *owner) override;
-        };
-        struct state_align_t final : public state_t<owner>
-        {
-            void enter(owner *owner) override;
-            void execute(owner *owner) override;
-            void exit(owner *owner) override;
-        };
-        struct state_step_t final : public state_t<owner>
-        {
-            void enter(owner *owner) override;
-            void execute(owner *owner) override;
-            void exit(owner *owner) override;
-        };
+        
         void on_enter(wl_chassis_t *ctx) override;
         void on_execute(wl_chassis_t *ctx) override;
         void on_exit(wl_chassis_t *ctx) override;
@@ -280,9 +299,7 @@ class wl_chassis_t final
       private:
         state_manual_t _state_manual;
         state_normal_t _state_normal;
-        state_air_t    _state_air;
-        state_align_t  _state_align;
-        state_step_t _state_step;
+
     };
 
     fsm_t<owner> _main_fsm;

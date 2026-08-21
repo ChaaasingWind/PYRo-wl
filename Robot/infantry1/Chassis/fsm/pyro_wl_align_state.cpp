@@ -7,19 +7,17 @@
 namespace pyro
 {
 
-    static float right_leg_delta_rad;
-    static float left_leg_delta_rad;
-    static float right_leg_delta_length;
-    static float left_leg_delta_length;
-    static int count;
+    
 
-    static constexpr float ALIGN_TIME_MS       = 2000.0f;
     static constexpr float ALIGN_MAX_RAD       = 1.2f;
     static constexpr float ALIGN_MIN_RAD       = 0.75f;
-    static constexpr float ALIGN_TARGET_RAD    = 1.2f;
+    static constexpr float ALIGN_TARGET_RAD    = 0.9f;
     static constexpr float ALIGN_TARGET_LENGTH = 0.20f;
+    static constexpr float ALIGN_DELTA_LENGTH  = 0.0003f;
+    static constexpr float ALIGN_DELTA_RAD     = 0.003f;
+    
 
-    void wl_chassis_t::fsm_active_t::state_align_t::enter(wl_chassis_t *owner)
+    void wl_chassis_t::fsm_active_t::state_normal_t::state_align_t::enter(wl_chassis_t *owner)
     {
         for (auto &leg : owner->_ctx.data.leg)
         {
@@ -33,18 +31,12 @@ namespace pyro
             leg.out_joint_torque[joint_def::KNEE] = 0;
         }
 
-        //复位的角度小量计算
-        right_leg_delta_rad    = (loop_fp32_constrain(ALIGN_TARGET_RAD-owner->_ctx.data.leg[leg_def::R].target_leg_rad,0,2*PI))/ALIGN_TIME_MS;
-        left_leg_delta_rad     = (loop_fp32_constrain(ALIGN_TARGET_RAD-owner->_ctx.data.leg[leg_def::L].target_leg_rad,0,2*PI))/ALIGN_TIME_MS;
-        right_leg_delta_length = (ALIGN_TARGET_LENGTH - owner->_ctx.data.leg[leg_def::R].target_leg_length)/ALIGN_TIME_MS;
-        left_leg_delta_length  = (ALIGN_TARGET_LENGTH - owner->_ctx.data.leg[leg_def::L].target_leg_length)/ALIGN_TIME_MS;
-        count                  = (int)ALIGN_TIME_MS;
 
         owner->_ctx.motor.wheel[leg_def::L]->disable();
         owner->_ctx.motor.wheel[leg_def::R]->disable();
     }
 
-    void wl_chassis_t::fsm_active_t::state_align_t::execute(wl_chassis_t *owner)
+    void wl_chassis_t::fsm_active_t::state_normal_t::state_align_t::execute(wl_chassis_t *owner)
     {
         //判断双腿是否在可以起身的位置
         static uint8_t keep_tick =0;
@@ -58,7 +50,7 @@ namespace pyro
         {
             if(keep_tick >=20)
             {
-                owner->_ctx.data.flag.leg_is_ready = true;
+                request_switch(&owner->_state_active._state_normal._state_balance);
             }
             keep_tick++;
         }
@@ -67,13 +59,23 @@ namespace pyro
             keep_tick = 0;
         }
 
-        if(count > 0)
+        if(owner->_ctx.data.leg[leg_def::L].target_leg_length >= ALIGN_TARGET_LENGTH)
         {
-            owner->_ctx.data.leg[leg_def::L].target_leg_rad    += left_leg_delta_rad;
-            owner->_ctx.data.leg[leg_def::R].target_leg_rad    += right_leg_delta_rad;
-            owner->_ctx.data.leg[leg_def::L].target_leg_length += left_leg_delta_length;
-            owner->_ctx.data.leg[leg_def::R].target_leg_length += right_leg_delta_length;
-            count--;
+            owner->_ctx.data.leg[leg_def::L].target_leg_length -= ALIGN_DELTA_LENGTH;
+        }
+        if(owner->_ctx.data.leg[leg_def::R].target_leg_length >= ALIGN_TARGET_LENGTH)
+        {
+            owner->_ctx.data.leg[leg_def::R].target_leg_length -= ALIGN_DELTA_LENGTH;
+        }
+        if(owner->_ctx.data.leg[leg_def::L].target_leg_rad  >= ALIGN_MAX_RAD ||
+           owner->_ctx.data.leg[leg_def::L].target_leg_rad  <= ALIGN_TARGET_RAD )
+        {
+            owner->_ctx.data.leg[leg_def::L].target_leg_rad  += ALIGN_DELTA_RAD;
+        }
+        if(owner->_ctx.data.leg[leg_def::R].target_leg_rad  >= ALIGN_MAX_RAD ||
+           owner->_ctx.data.leg[leg_def::R].target_leg_rad  <= ALIGN_TARGET_RAD)
+        {
+            owner->_ctx.data.leg[leg_def::R].target_leg_rad  += ALIGN_DELTA_RAD;
         }
         
 
@@ -82,13 +84,13 @@ namespace pyro
         owner->_ctx.data.leg[leg_def::L].target_leg_rad =
                 loop_fp32_constrain(owner->_ctx.data.leg[leg_def::L].target_leg_rad +
                 owner->_current_cmd.delta_leg_rad[leg_def::L],
-                       -PI, PI);
+                       0, 2*PI);
                     
         //限幅
         owner->_ctx.data.leg[leg_def::R].target_leg_rad =
                 loop_fp32_constrain(owner->_ctx.data.leg[leg_def::R].target_leg_rad +
                 owner->_current_cmd.delta_leg_rad[leg_def::R],
-                       -PI, PI);
+                       0, 2*PI);
         
         //限幅
         owner->_ctx.data.leg[leg_def::L].target_leg_length =
@@ -119,7 +121,7 @@ namespace pyro
         owner->_ctx.motor.wheel[leg_def::R]->send_torque(0);
     }
 
-    void wl_chassis_t::fsm_active_t::state_align_t::exit(wl_chassis_t *owner)
+    void wl_chassis_t::fsm_active_t::state_normal_t::state_align_t::exit(wl_chassis_t *owner)
     {
         (void)owner;
     }
