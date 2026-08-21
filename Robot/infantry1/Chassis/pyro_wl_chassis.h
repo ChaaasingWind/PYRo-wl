@@ -69,6 +69,7 @@ struct leg_ctx_t
     float J_L;
     float L_wp;
     float out_F_L; // F_L * J_L = tau_2 - tau_1
+    float virtual_wall_force;
     float out_T_p; // T_p = tau_2 + tau_1
     float current_F_L;
     float current_T_p;
@@ -215,6 +216,7 @@ class wl_chassis_t final
     // 辅助函数
     void _vmc_trans_j2v();
     void _manual_control();
+    float _calc_leg_length_wall_force(const leg_ctx_t &leg) const;
     void _gain_calculate();
     void _balance_control();
     void _vmc_trans_v2j();
