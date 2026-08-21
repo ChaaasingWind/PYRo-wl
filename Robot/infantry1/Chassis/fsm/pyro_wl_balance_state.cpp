@@ -101,7 +101,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::state_balance_t::execute(wl_cha
     if (owner->_ctx.data.current_state.L >= 0.30f &&
         owner->_ctx.data.leg[leg_def::R].current_leg_rad< 1.2f && 
         owner->_ctx.data.leg[leg_def::L].current_leg_rad< 1.2f &&
-        press_forward_time >= 500)
+        press_forward_time >= 600)
     {
         if(auto_step_count >= 100)
         {
