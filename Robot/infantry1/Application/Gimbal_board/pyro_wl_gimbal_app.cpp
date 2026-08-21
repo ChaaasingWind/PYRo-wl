@@ -81,7 +81,7 @@ extern "C"
         wl_gimbal_ptr->configure(*wl_gimbal_deps);
         wl_gimbal_ptr->start();
 
-        xTaskCreate(wl_gimbal_thread, "infantry_gimbal_thread", 128, nullptr,
+        xTaskCreate(wl_gimbal_thread, "infantry_gimbal_thread", 1024, nullptr,
                     configMAX_PRIORITIES - 1, &gimbal_task_handle);
 
         auto &vrc = pyro::rc_drv_t::read();

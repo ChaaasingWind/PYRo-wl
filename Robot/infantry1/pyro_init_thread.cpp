@@ -5,6 +5,7 @@
 #include "pyro_ins.h"
 #include "pyro_referee.h"
 #include "pyro_supercap_drv.h"
+#include "pyro_uart_drv.h"
 #include "pyro_vt03_rc_drv.h"
 
 namespace pyro

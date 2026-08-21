@@ -1,8 +1,8 @@
 #include "pyro_wl_chassis.h"
 #include "stm32h7xx_hal_rcc_ex.h"
-
 #include <algorithm>
-
+float debug1;
+float debug2;
 namespace pyro
 {
 
@@ -67,7 +67,7 @@ void wl_chassis_t::fsm_active_t::state_normal_t::state_balance_t::enter(wl_chass
 void wl_chassis_t::fsm_active_t::state_normal_t::state_balance_t::execute(wl_chassis_t *owner)
 {
     //紧急下力判断
-    if(abs(owner->_ctx.data.ins.euler_rad[1]) >= PI / 6.0f ||
+    if(abs(owner->_ctx.data.ins.euler_rad[1]) >= PI / 4.0f ||
        abs(owner->_ctx.data.ins.euler_rad[2]) >= PI / 9.0f)
     {
         if(reset_count >= 50)
@@ -81,17 +81,29 @@ void wl_chassis_t::fsm_active_t::state_normal_t::state_balance_t::execute(wl_cha
         reset_count = 0;
     }
 
+    debug1 = owner->_ctx.data.leg[leg_def::R].current_leg_radps - owner->_ctx.data.current_state.dot_theta;
+    debug2 = owner->_ctx.data.leg[leg_def::R].current_leg_rad + owner->_ctx.data.current_state.theta;
     
 
     //自动上台阶判断
     static uint16_t auto_step_count = 0;
-    if (owner->_ctx.data.current_state.L >= 0.28f &&
-        owner->_ctx.data.leg[leg_def::R].current_leg_radps < 0.5f&&
-        owner->_ctx.data.leg[leg_def::R].current_leg_radps < 0.5f&&
-        owner->_ctx.data.leg[leg_def::R].current_leg_rad < 0.8f && 
-        owner->_ctx.data.leg[leg_def::L].current_leg_rad < 0.8f )
+    static int press_forward_time = 0;
+    //只有在按下前行1s后才可以进;
+    if(owner->_ctx.data.target_state.dot_x > 0)
     {
-        if(auto_step_count >= 50)
+        press_forward_time++;
+    }
+    else 
+    {
+        press_forward_time = 0;
+    }
+
+    if (owner->_ctx.data.current_state.L >= 0.30f &&
+        owner->_ctx.data.leg[leg_def::R].current_leg_rad< 1.2f && 
+        owner->_ctx.data.leg[leg_def::L].current_leg_rad< 1.2f &&
+        press_forward_time >= 500)
+    {
+        if(auto_step_count >= 100)
         {
             request_switch(&owner->_state_active._state_normal._state_step);
         }

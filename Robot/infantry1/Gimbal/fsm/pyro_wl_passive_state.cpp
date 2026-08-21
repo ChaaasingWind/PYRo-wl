@@ -11,12 +11,12 @@ void pyro::wl_gimbal_t::state_passive_t::enter(pyro::wl_gimbal_t* ctx) {
     ctx->_ctx.data.telem.targetPitchRad          = ctx->_ctx.data.imu.pitch;
 
     
-    instance()->_module_deps.pid_deps.yaw_pos->clear();
-    instance()->_module_deps.pid_deps.yaw_spd->clear();
-    instance()->_module_deps.pid_deps.pitch_pos->clear();
-    instance()->_module_deps.pid_deps.pitch_spd->clear();
-    instance()->set_pitchstate(ctx->_ctx.data.output.pitchEn);
-    instance()->set_yawstate(ctx->_ctx.data.output.yawEn);
+    ctx->_module_deps.pid_deps.yaw_pos->clear();
+    ctx->_module_deps.pid_deps.yaw_spd->clear();
+    ctx->_module_deps.pid_deps.pitch_pos->clear();
+    ctx->_module_deps.pid_deps.pitch_spd->clear();
+    ctx->set_pitchstate(ctx->_ctx.data.output.pitchEn);
+    ctx->set_yawstate(ctx->_ctx.data.output.yawEn);
 }
 
 void pyro::wl_gimbal_t::state_passive_t::execute(pyro::wl_gimbal_t* ctx) 
