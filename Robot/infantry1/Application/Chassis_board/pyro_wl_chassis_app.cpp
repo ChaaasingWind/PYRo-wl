@@ -25,7 +25,7 @@ union GimbalToChassisComm {
         uint32_t mode      : 2;//0下力，1手动(新遥控器下废除)，2平衡
 
         uint32_t vx        : 6;
-        uint32_t vy        : 6;
+        uint32_t w         : 6;
 
         uint32_t delta_leg : 2;//0不变，1增大，2减小
         uint32_t step_mode : 1;
@@ -146,8 +146,8 @@ void gimbal_cmd()
             which_leg = !which_leg;
         }
         
-        wl_chassis_cmd_ptr->delta_leg_length[which_leg] = 0.001f;
-        wl_chassis_cmd_ptr->delta_leg_rad[which_leg]    = 0.001f;
+        wl_chassis_cmd_ptr->delta_leg_length[which_leg] = g2c_cmd.msg.vx * 0.001f;
+        wl_chassis_cmd_ptr->delta_leg_rad[which_leg]    = g2c_cmd.msg.w  * 0.001f;
         wl_chassis_cmd_ptr->v                           = 0.0f;
         wl_chassis_cmd_ptr->wz                          = 0.0f;
         wl_chassis_cmd_ptr->cmd_continus_state          = pyro::chassis_active_state_t::MANUAL;
@@ -169,8 +169,8 @@ void gimbal_cmd()
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]    = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = 0.0f;
-        wl_chassis_cmd_ptr->v                            = g2c_cmd.msg.vy;
-        wl_chassis_cmd_ptr->wz                           = - g2c_cmd.msg.vx;
+        wl_chassis_cmd_ptr->v                            = g2c_cmd.msg.vx;
+        wl_chassis_cmd_ptr->wz                           = - g2c_cmd.msg.w;
         if(g2c_cmd.msg.delta_leg == 0)
         {
             wl_chassis_cmd_ptr->dot_L                    = 0.0f;
