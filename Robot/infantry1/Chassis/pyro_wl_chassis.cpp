@@ -254,6 +254,27 @@ void wl_chassis_t::_manual_control()
     //     _ctx.data.leg[leg_def::R].current_leg_radps);
 }
 
+float wl_chassis_t::_calc_leg_length_wall_force(const leg_ctx_t &leg) const
+{
+    if (leg.current_leg_length > LEG_LENGTH_WALL_MAX)
+    {
+        const float penetration = leg.current_leg_length - LEG_LENGTH_WALL_MAX;
+        const float damping_force =
+            LEG_LENGTH_WALL_D * std::max(leg.current_leg_speed, 0.0f);
+        return -LEG_LENGTH_WALL_K * penetration - damping_force;
+    }
+
+    if (leg.current_leg_length < LEG_LENGTH_WALL_MIN)
+    {
+        const float penetration = LEG_LENGTH_WALL_MIN - leg.current_leg_length;
+        const float damping_force =
+            LEG_LENGTH_WALL_D * std::max(-leg.current_leg_speed, 0.0f);
+        return LEG_LENGTH_WALL_K * penetration + damping_force;
+    }
+
+    return 0.0f;
+}
+
 void wl_chassis_t::_gain_calculate()
 {
     // const float norm_delta_L =
@@ -356,6 +377,10 @@ void wl_chassis_t::_vmc_trans_v2j()
 
     for (auto &leg : _ctx.data.leg)
     {
+        leg.virtual_wall_force = _calc_leg_length_wall_force(leg);
+        leg.out_F_L = std::clamp(leg.out_F_L + leg.virtual_wall_force,
+                                 -MAX_F_L, MAX_F_L);
+
         float tau_sum                        = leg.out_T_p;
         float tau_diff                       = leg.out_F_L * leg.J_L;
         leg.out_joint_torque[joint_def::HIP] = std::clamp(

@@ -5,7 +5,7 @@ void pyro::wl_gimbal_t::state_passive_t::enter(pyro::wl_gimbal_t* ctx) {
     ctx->_ctx.data.output.targetPitchSpeed       = 0.0f;
     ctx->_ctx.data.output.pitchFeedforwardTorque = 0.0f;
     ctx->_ctx.data.output.pitchEn                = false;
-    ctx->_ctx.data.output.yawVoltage             = 0.0f;
+    ctx->_ctx.data.output.yawCurrent             = 0.0f;
     ctx->_ctx.data.output.yawEn                  = false;
     ctx->_ctx.data.telem.targetYawRad            = ctx->_ctx.data.imu.yaw;
     ctx->_ctx.data.telem.targetPitchRad          = ctx->_ctx.data.imu.pitch;
