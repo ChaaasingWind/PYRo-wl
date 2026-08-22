@@ -17,7 +17,7 @@ using namespace pyro;
 
 constexpr uint32_t EVENT_BIT_STEPCLIMB                = (1 << 0);     // - 左上按钮双击 上台阶
 constexpr uint32_t EVENT_BIT_SPINING                  = (1 << 1);     // - pause键 小陀螺
-constexpr uint32_t EVENT_BIT_LEG_LENGTH_MODE          = (1 << 1);     // - 左上按钮双击 单击切换腿长变长变短或不动
+constexpr uint32_t EVENT_BIT_LEG_LENGTH_MODE          = (1 << 2);     // - 左上按钮双击 单击切换腿长变长变短或不动
 
 
 
