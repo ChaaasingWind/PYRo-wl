@@ -1,3 +1,4 @@
+#include "pyro_can_drv.h"
 #include "pyro_module_base.h"
 #include "pyro_mutex.h"
 #include "pyro_dr16_rc_drv.h"
@@ -9,6 +10,7 @@
 #include "pyro_bsp_can.h"
 #include "pyro_dji_motor_drv.h"
 #include "wl_config.h"
+#include <cstdint>
 
 using namespace pyro;
 
@@ -16,7 +18,28 @@ using namespace pyro;
 constexpr uint32_t EVENT_BIT_RESTART   = (1 << 0); 
 constexpr uint32_t EVENT_BIT_STEP      = (1 << 1); 
 
+union GimbalToChassisComm {
 
+    __attribute__((packed)) struct 
+    {
+        uint32_t mode      : 2;//0下力，1手动(新遥控器下废除)，2平衡
+
+        uint32_t vx        : 6;
+        uint32_t vy        : 6;
+
+        uint32_t delta_leg : 2;//0不变，1增大，2减小
+        uint32_t step_mode : 1;
+        uint32_t spining   : 1;
+        
+    } msg;
+
+    uint8_t buffer[8];
+};
+//yaw轴控制逻辑：
+//vx vy的值为0时，底盘应当跟随云台，方向一致
+//如果vy不为0，则底盘应当有一个偏航速度，而云台有自己的yaw控制而不动
+//如果此时有偏航角，vy为0，但是vx不为0，则，此时操作者应当是想朝这个方向一直前行，则偏航角保持不动
+//如果vx vy值为0，则1秒后底盘yaw轴应当回归云台的方向（可选）（1s的原因主要是操作手可能会有继续朝着当前方向前进的可能）
 
 
 
@@ -26,6 +49,11 @@ static pyro::wl_chassis_t *wl_chassis_ptr         = nullptr;
 static pyro::wl_chassis_cmd_t *wl_chassis_cmd_ptr = nullptr;
 static pyro::wl_chassis_deps_t *wl_chassis_deps   = nullptr;
 
+static pyro::can_msg_buffer_t can3_rx_buf(0x101);//板间通信id
+static GimbalToChassisComm g2c_cmd;
+static GimbalToChassisComm last_g2c_cmd;
+
+static void gimbal_cmd();
 static void chassis_dr162cmd(uint32_t notify);
 static void deps_init();
 
@@ -33,7 +61,8 @@ extern "C"
 {
     void infantry1_chassis_thread(void *argument)
     {
-
+        
+        pyro::bsp_can::get_can3().register_rx_msg(&can3_rx_buf);
         vTaskDelay(2000);
         while (true)
         {
@@ -42,9 +71,17 @@ extern "C"
             xTaskNotifyWait(0x00, UINT32_MAX, &notify_val, 0);
             
 
-            // 当前没有板间通信，直接检测并使用遥控器控制
-            if (dr16_drv_t::instance().check_online())
+            std::array<uint8_t, 8> data;
+            if (can3_rx_buf.get_data(data))
             {
+                //云台命令
+                memcpy(&last_g2c_cmd, &g2c_cmd, 8);
+                memcpy(&g2c_cmd, &data, 8);
+                gimbal_cmd();
+            }
+            else if (dr16_drv_t::instance().check_online())
+            {
+                // 当前没有板间通信，直接检测并使用遥控器控制
                 chassis_dr162cmd(notify_val);
             }
             else
@@ -74,13 +111,80 @@ extern "C"
 
         //订阅按键部分
         auto &vrc = pyro::rc_drv_t::read();
-        //订阅紧急停止后的复位事件
         pyro::sw_broker::subscribe(&vrc.switches.right, pyro::sw_event_t::MID_TO_UP, 
                             chassis_task_handle, EVENT_BIT_RESTART);
         pyro::sw_broker::subscribe(&vrc.switches.left, pyro::sw_event_t::MID_TO_UP, 
                             chassis_task_handle, EVENT_BIT_STEP);
 
         vTaskDelete(nullptr);
+    }
+}
+
+void gimbal_cmd()
+{
+    //下力模式
+    if(g2c_cmd.msg.mode == 0)
+    {
+        wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::PASSIVE;
+        wl_chassis_cmd_ptr->delta_leg_length[leg_def::L] = 0.0f;
+        wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = 0.0f;
+        wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]    = 0.0f;
+        wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = 0.0f;
+        wl_chassis_cmd_ptr->v                            = 0.0f;
+        wl_chassis_cmd_ptr->wz                           = 0.0f;
+        return;
+    }
+    if (g2c_cmd.msg.mode == 1)
+    {
+        wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::ACTIVE;
+
+        // 手动通道输入控制腿长和腿度（角度）的偏置量
+        //用spining按键来切换左右腿
+        static bool which_leg = 0;
+        if(g2c_cmd.msg.spining == 1 && last_g2c_cmd.msg.spining == 0)
+        {
+            which_leg = !which_leg;
+        }
+        
+        wl_chassis_cmd_ptr->delta_leg_length[which_leg] = 0.001f;
+        wl_chassis_cmd_ptr->delta_leg_rad[which_leg]    = 0.001f;
+        wl_chassis_cmd_ptr->v                           = 0.0f;
+        wl_chassis_cmd_ptr->wz                          = 0.0f;
+        wl_chassis_cmd_ptr->cmd_continus_state          = pyro::chassis_active_state_t::MANUAL;
+    }
+    else if (g2c_cmd.msg.mode == 2)//平衡模式
+    {
+        //平衡模式下的键位判断
+        wl_chassis_cmd_ptr->cmd_function_state = pyro::chassis_function_state_t::NONE;
+        if (g2c_cmd.msg.step_mode == 1)
+        {
+            wl_chassis_cmd_ptr->cmd_function_state = pyro::chassis_function_state_t::STEP;
+        }
+        else if (g2c_cmd.msg.step_mode == 2 && last_g2c_cmd.msg.mode == 1)
+        {
+            wl_chassis_cmd_ptr->cmd_function_state = pyro::chassis_function_state_t::RESTART;
+        }
+        wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::ACTIVE;
+        wl_chassis_cmd_ptr->delta_leg_length[leg_def::L] = 0.0f;
+        wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]    = 0.0f;
+        wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = 0.0f;
+        wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = 0.0f;
+        wl_chassis_cmd_ptr->v                            = g2c_cmd.msg.vy;
+        wl_chassis_cmd_ptr->wz                           = - g2c_cmd.msg.vx;
+        if(g2c_cmd.msg.delta_leg == 0)
+        {
+            wl_chassis_cmd_ptr->dot_L                    = 0.0f;
+        }
+        else if(g2c_cmd.msg.delta_leg == 1)
+        {
+            wl_chassis_cmd_ptr->dot_L                    = 0.3f;
+        }
+        else if(g2c_cmd.msg.delta_leg == 2)
+        {
+            wl_chassis_cmd_ptr->dot_L                    = -0.3f;
+        }
+        wl_chassis_cmd_ptr->cmd_continus_state           = pyro::chassis_active_state_t::NORMAL;
+
     }
 }
 
