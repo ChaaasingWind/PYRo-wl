@@ -12,7 +12,7 @@ void pyro::wl_gimbal_t::fsm_active_t::state_align_t::enter(owner *owner)
     owner->_module_deps.pid_deps.pitch_spd->clear();
     owner->_ctx.data.output.pitchEn    = true;
     owner->_ctx.data.output.yawEn      = true;
-    owner->_ctx.data.output.yawVoltage = 0.0f;
+    owner->_ctx.data.output.yawCurrent = 0.0f;
     instance()->set_pitchstate(owner->_ctx.data.output.pitchEn);
     instance()->set_yawstate(owner->_ctx.data.output.yawEn);
 
@@ -27,7 +27,7 @@ void pyro::wl_gimbal_t::fsm_active_t::state_align_t::execute(owner *owner)
     {
         float error_rad = YAW_ALIGN_TARGET_RAD - owner->_ctx.motor.yaw->get_current_position();
         float yawSpdCmd     = owner->_ctx.pid.yaw_pos->calculate(0.0f,  -error_rad);
-        owner->_ctx.data.output.yawVoltage = owner->_ctx.pid.yaw_spd->calculate(yawSpdCmd, owner->_ctx.data.imu.gyro[2]);
+        owner->_ctx.data.output.yawCurrent = owner->_ctx.pid.yaw_spd->calculate(yawSpdCmd, owner->_ctx.data.imu.gyro[2]);
         owner->updateYaw();
 
         static int count = 0;

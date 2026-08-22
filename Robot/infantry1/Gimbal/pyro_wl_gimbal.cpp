@@ -81,14 +81,11 @@ void wl_gimbal_t::updatePitch()
         return;
     }
         
-    //计算imu角度和电机角度的差值，以此作为电机角度的偏移值
+    // IMU and motor encoder move in the same direction. Keep their measured
+    // relative offset when converting the target IMU angle to motor angle.
     float pitch_pos = _ctx.data.state.pitch.pos;
-    //因为p轴的imu向上转增加，电机是向下转增加，所以二者实际上相加才是常量
-    //现在offset相当于是imu反转后imu比p轴多出来的值
-    float offsetPitch    =  pitch_pos + _ctx.data.imu.pitch;
-
-    //这个得到的是电机的p轴角度
-    float targetMotorRaw = -(_ctx.data.telem.targetPitchRad - offsetPitch);
+    float offsetPitch = pitch_pos - _ctx.data.imu.pitch;
+    float targetMotorRaw = _ctx.data.telem.targetPitchRad + offsetPitch;
 
 
     // 角度限制
@@ -102,8 +99,8 @@ void wl_gimbal_t::updatePitch()
         targetMotorRaw = PITCH_LIMIT_MAX;
     }
 
-    //再还原回imu的角度用来pid计算
-    _ctx.data.telem.targetPitchRad = -(targetMotorRaw - offsetPitch);
+    // Keep the clamped target consistent with the IMU coordinate.
+    _ctx.data.telem.targetPitchRad = targetMotorRaw - offsetPitch;
 
     //云台俯仰轴的重力补偿和位置控制
     float gravityFf           = PITCH_K_GRAVITY_COS * arm_cos_f32(_ctx.data.imu.pitch) + PITCH_K_GRAVITY_SIN * arm_sin_f32(_ctx.data.imu.pitch);
@@ -134,7 +131,7 @@ void wl_gimbal_t::updateYaw()
         _ctx.data.telem.targetYawRad = _ctx.data.imu.yaw;
         _module_deps.pid_deps.yaw_pos->clear();
         _module_deps.pid_deps.yaw_spd->clear();
-        _ctx.data.output.yawVoltage = 0.0f;
+        _ctx.data.output.yawCurrent = 0.0f;
         return;
     }
 
@@ -152,7 +149,7 @@ void wl_gimbal_t::updateYaw()
     float tgtYawSpd       = yawPosOut;
     //后期要加上小陀螺转速补偿
     float yawSpdOut       = _module_deps.pid_deps.yaw_spd->calculate(tgtYawSpd, _ctx.data.imu.gyro[0]);
-    _ctx.data.output.yawVoltage = yawSpdOut;
+    _ctx.data.output.yawCurrent = yawSpdOut;
 }
 
 
@@ -199,9 +196,9 @@ void wl_gimbal_t::set_yawstate(bool enable)
 void wl_gimbal_t::_send_motor_command()
 {
     _module_deps.motor_deps.pitch->send_mit_ctrl(_ctx.data.output.targetPitchPos, 
-                                                 _ctx.data.target_pitch_vel,
+                                                 _ctx.data.output.targetPitchSpeed,
                                                  _ctx.data.output.pitchFeedforwardTorque);
-    _module_deps.motor_deps.yaw->send_torque(_ctx.data.output.yawVoltage);
+    _module_deps.motor_deps.yaw->send_torque(_ctx.data.output.yawCurrent);
 }
 
 float wl_gimbal_t::wrapAngle(float angle) {
