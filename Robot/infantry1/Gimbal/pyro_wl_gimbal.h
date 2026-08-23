@@ -51,13 +51,10 @@ struct wl_gimbal_deps_t
     // 算法对象 (串级 PID)
     struct pid_deps_t
     {
-        pid_t *pitch_pos{nullptr};
-        pid_t *pitch_spd{nullptr};
         pid_t *yaw_pos{nullptr};
         pid_t *yaw_spd{nullptr};
 
         // --- 新增：自瞄专用的串级 PID ---
-        pid_t *auto_pitch_pos{nullptr};
         pid_t *auto_yaw_pos{nullptr};
         pid_t *auto_yaw_spd{nullptr};
     };
@@ -98,11 +95,13 @@ struct GimbalOutput {
     bool yawEn;
 };
 
+//自瞄指令
 struct GimbalTelemetry {
     float targetYawRad;
-    float targetYawRotate;
     float targetPitchRad;
-    float targetPitchRotate;
+
+    float target_yaw_vel;
+    float target_pitch_vel;
 };
 
 struct wl_gimbal_data_ctx_t final : public cmd_base_t
@@ -111,8 +110,7 @@ struct wl_gimbal_data_ctx_t final : public cmd_base_t
     GimbalState state;
     GimbalOutput output;
     GimbalTelemetry telem;
-    float target_yaw_vel;
-    float target_pitch_vel;
+    
     float dt;
     uint8_t motionState;
 };

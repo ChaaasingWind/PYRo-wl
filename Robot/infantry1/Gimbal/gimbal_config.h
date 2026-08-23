@@ -39,20 +39,14 @@
 
 
 //pitch轴达妙mit控制阻抗系数
-#define DM_MOT_PITCH_KP 25.0f
+#define DM_MOT_PITCH_KP 28.0f
 #define DM_MOT_PITCH_KI 0.0f
 #define DM_MOT_PITCH_KD 0.7f
 
-//pitch轴达妙mit控制的重力补偿的pid的参数
-#define PITCH_DM_MOT_KP 28.0f
-#define PITCH_DM_MOT_KI 0.0f
-#define PITCH_DM_MOT_KD 0.5f
-
 //pitch轴物理限幅参数
-#define PITCH_LIMIT_MAX 1.70f
-#define PITCH_LIMIT_MIN 2.94f
+#define PITCH_LIMIT_MAX 1.60f
+#define PITCH_LIMIT_MIN 2.80f
 
-#define PITCH_ALIGN_TARGET_RAD -0.2f
 
 //--------------------------------------------------------
 
@@ -79,6 +73,7 @@
 
 
 
+constexpr float PITCH_ALIGN_TARGET_RAD = 0.0f;
 constexpr float YAW_ALIGN_TARGET_RAD = 1.97f;
 
 constexpr float PITCH_K_GRAVITY_COS = 1.0f; // 水平方向质心补偿

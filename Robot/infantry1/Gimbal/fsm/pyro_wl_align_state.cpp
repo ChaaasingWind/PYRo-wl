@@ -8,8 +8,6 @@ void pyro::wl_gimbal_t::fsm_active_t::state_align_t::enter(owner *owner)
 {
     owner->_module_deps.pid_deps.yaw_pos->clear();
     owner->_module_deps.pid_deps.yaw_spd->clear();
-    owner->_module_deps.pid_deps.pitch_pos->clear();
-    owner->_module_deps.pid_deps.pitch_spd->clear();
     owner->_ctx.data.output.pitchEn    = true;
     owner->_ctx.data.output.yawEn      = true;
     owner->_ctx.data.output.yawCurrent = 0.0f;

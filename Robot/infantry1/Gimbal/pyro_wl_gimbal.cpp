@@ -57,10 +57,11 @@ void wl_gimbal_t::_update_feedback()
     _ctx.data.state.yaw.temp     = _module_deps.motor_deps.yaw->get_temperature();
     _ctx.data.state.yaw.torque   = _module_deps.motor_deps.yaw->get_current_torque();
 
-    _ctx.data.target_yaw_vel     = _current_cmd.yawVel;
-    _ctx.data.target_pitch_vel   = _current_cmd.pitchVel;
-    _ctx.data.motionState        = _current_cmd.state_cmd;
-    _ctx.data.mode               = _current_cmd.mode;
+
+    _ctx.data.telem.target_yaw_vel     = _current_cmd.yawVel;
+    _ctx.data.telem.target_pitch_vel   = _current_cmd.pitchVel;
+    _ctx.data.motionState              = _current_cmd.state_cmd;
+    _ctx.data.mode                     = _current_cmd.mode;
 
     static uint32_t dwtCnt;
     _ctx.data.dt = pyro::dwt_drv_t::get_delta_t(&dwtCnt);
@@ -74,18 +75,19 @@ void wl_gimbal_t::updatePitch()
     // 在线检测
     if (!_module_deps.motor_deps.pitch->is_online())
     {
-        _module_deps.pid_deps.pitch_pos->clear();
         _ctx.data.output.targetPitchSpeed       = 0.0f;
         _ctx.data.output.pitchFeedforwardTorque = 0.0f;
         _ctx.data.output.pitchEn                = false;
         return;
     }
-        
-    // IMU and motor encoder move in the same direction. Keep their measured
-    // relative offset when converting the target IMU angle to motor angle.
+    //计算imu角度和电机角度的差值，以此作为电机角度的偏移值
     float pitch_pos = _ctx.data.state.pitch.pos;
-    float offsetPitch = pitch_pos - _ctx.data.imu.pitch;
-    float targetMotorRaw = _ctx.data.telem.targetPitchRad + offsetPitch;
+    //因为p轴的imu向上转增加，电机是向下转增加，所以二者实际上相加才是常量
+    //现在offset相当于是imu反转后imu比p轴多出来的值
+    float offsetPitch    =  pitch_pos + _ctx.data.imu.pitch;
+
+    //这个得到的是电机的p轴角度
+    float targetMotorRaw = -(_ctx.data.telem.targetPitchRad - offsetPitch);
 
 
     // 角度限制
@@ -99,19 +101,15 @@ void wl_gimbal_t::updatePitch()
         targetMotorRaw = PITCH_LIMIT_MAX;
     }
 
-    // Keep the clamped target consistent with the IMU coordinate.
-    _ctx.data.telem.targetPitchRad = targetMotorRaw - offsetPitch;
+    //再还原回imu的角度用来pid计算
+    _ctx.data.telem.targetPitchRad = -(targetMotorRaw - offsetPitch);
 
     //云台俯仰轴的重力补偿和位置控制
     float gravityFf           = PITCH_K_GRAVITY_COS * arm_cos_f32(_ctx.data.imu.pitch) + PITCH_K_GRAVITY_SIN * arm_sin_f32(_ctx.data.imu.pitch);
 
+    float totalFf             = 0;
 
-    float pitchIntegralTorque = _module_deps.pid_deps.pitch_pos->calculate(
-                    _ctx.data.telem.targetPitchRad, _ctx.data.imu.pitch);
-    float totalFf             = gravityFf + pitchIntegralTorque;//总扭矩合成
-
-
-    float targetPitchSpeed =  _ctx.data.target_pitch_vel;
+    float targetPitchSpeed =  _ctx.data.telem.target_pitch_vel;
 
 
     if (std::abs(targetPitchSpeed) > 0.1f)//如果俯仰速度过大，限幅
@@ -157,14 +155,14 @@ void wl_gimbal_t::updateYaw()
 void wl_gimbal_t::_fsm_execute()
 {
 
-    // if (_ctx.data.mode == cmd_base_t::mode_t::ACTIVE)
-    // {
-    //     _main_fsm.change_state(&_state_active);
-    // }
-    // else
-    // {
-    //     _main_fsm.change_state(&_state_passive);
-    // }
+    if (_ctx.data.mode == cmd_base_t::mode_t::ACTIVE)
+    {
+        _main_fsm.change_state(&_state_active);
+    }
+    else
+    {
+        _main_fsm.change_state(&_state_passive);
+    }
     _main_fsm.execute(this);
     wl_gimbal_t::_send_motor_command();
 }
