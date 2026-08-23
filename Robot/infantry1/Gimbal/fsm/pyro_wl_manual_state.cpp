@@ -16,7 +16,7 @@ void pyro::wl_gimbal_t::fsm_active_t::state_manual_t::execute(owner *owner)
 {
     owner->_ctx.data.telem.targetPitchRad += owner->_ctx.data.target_pitch_vel * owner->_ctx.data.dt;
     owner->_ctx.data.telem.targetYawRad = owner->wrapAngle(
-        owner->_ctx.data.telem.targetYawRad - owner->_ctx.data.target_yaw_vel * owner->_ctx.data.dt);
+        owner->_ctx.data.telem.targetYawRad + owner->_ctx.data.target_yaw_vel * owner->_ctx.data.dt);
     owner->updatePitch();
     owner->updateYaw();
  

@@ -79,7 +79,7 @@
 
 
 
-constexpr float YAW_ALIGN_TARGET_RAD = 0.0f;
+constexpr float YAW_ALIGN_TARGET_RAD = 1.97f;
 
 constexpr float PITCH_K_GRAVITY_COS = 1.0f; // 水平方向质心补偿
 constexpr float PITCH_K_GRAVITY_SIN = -0.5f; // 垂直方向质心补偿

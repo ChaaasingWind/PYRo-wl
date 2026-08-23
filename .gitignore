@@ -1,3 +1,4 @@
+.gitignore
 *.bak
 *.ddk
 *.edk
@@ -27,6 +28,11 @@ JLinkSetting.ini
 
 vscode_build/
 build/
+/build-gimbal/
+/build-chassis/
+/cmake-build-debug/
+/cmake-build-debug-gimbal/
+/cmake-build-debug-chassis/
 /cmake-build-debug-stm32
 .cache/
 .idea

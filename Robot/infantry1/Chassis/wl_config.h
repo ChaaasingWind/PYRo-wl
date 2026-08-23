@@ -41,6 +41,11 @@ constexpr float RIGHT_KNEE_OFFSET =
 
 constexpr float MAX_LEG_LENGTH        = 0.38f;
 constexpr float MIN_LEG_LENGTH        = 0.18f;
+constexpr float LEG_LENGTH_WALL_MARGIN = 0.02f;
+constexpr float LEG_LENGTH_WALL_MAX    = MAX_LEG_LENGTH - LEG_LENGTH_WALL_MARGIN;
+constexpr float LEG_LENGTH_WALL_MIN    = MIN_LEG_LENGTH + LEG_LENGTH_WALL_MARGIN;
+constexpr float LEG_LENGTH_WALL_K      = 2500.0f; // N/m
+constexpr float LEG_LENGTH_WALL_D      = 25.0f;   // N*s/m
 
 constexpr float LEFT_LEG_DIRECTION    = -1.0f;
 constexpr float RIGHT_LEG_DIRECTION   = 1.0f;
@@ -61,7 +66,7 @@ constexpr float MAX_CURRENT                          = 15.0f;
 constexpr float MAX_T_W                              = K_t * MAX_CURRENT;
 
 // Airborne and landing detection defaults. Tune from logged support-force data.
-constexpr float AIR_LENGTH_TARGET                   = 0.37f;//腿长目标值
+constexpr float AIR_LENGTH_TARGET                   = 0.35f;//腿长目标值，低于上限虚拟墙
 constexpr float NORMAL_LENGTH_TARGET                 = 0.20f;
 constexpr float AIR_LENGTH_RATE                      = 0.60f;
 constexpr float AIR_WHEEL_LOCK_K                     = 0.08f;

@@ -90,7 +90,7 @@ struct GimbalState {
 };
 
 struct GimbalOutput {
-    float yawVoltage;
+    float yawCurrent;
     float targetPitchPos;
     float targetPitchSpeed;
     float pitchFeedforwardTorque;

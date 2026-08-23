@@ -208,7 +208,8 @@ void gimbal_vt032cmd(virtual_rc_t vrc, uint32_t notify)
         {
             pitchInput=-1.0f;
         }
-        wl_gimbal_cmd_ptr->pitchVel = pitchInput * 6.28f;
+        // VT03 reports downward pitch stick movement as a negative value.
+        wl_gimbal_cmd_ptr->pitchVel = -pitchInput * 6.28f;
 
         float yawInput =vrc.axes.lx+vrc.mouse_axes.x*100.0f;
         if(yawInput > 1.0f)
