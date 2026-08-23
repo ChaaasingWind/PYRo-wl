@@ -6,6 +6,9 @@
 #include "dsp/fast_math_functions.h"
 #include <algorithm>
 
+
+    static float debug1;
+    static float debug2;
 namespace pyro
 {
 
@@ -77,17 +80,17 @@ void wl_gimbal_t::updatePitch()
     {
         _ctx.data.output.targetPitchSpeed       = 0.0f;
         _ctx.data.output.pitchFeedforwardTorque = 0.0f;
+        _ctx.data.output.targetPitchPos         = _ctx.data.state.pitch.pos;
+        _ctx.data.output.targetPitchSpeed       = 0.0f;
         _ctx.data.output.pitchEn                = false;
         return;
     }
     //计算imu角度和电机角度的差值，以此作为电机角度的偏移值
-    float pitch_pos = _ctx.data.state.pitch.pos;
-    //因为p轴的imu向上转增加，电机是向下转增加，所以二者实际上相加才是常量
-    //现在offset相当于是imu反转后imu比p轴多出来的值
-    float offsetPitch    =  pitch_pos + _ctx.data.imu.pitch;
+    //现在offset相当于是p轴比imu多出来的量
+    float offsetPitch = _ctx.data.state.pitch.pos - _ctx.data.imu.pitch;
 
     //这个得到的是电机的p轴角度
-    float targetMotorRaw = -(_ctx.data.telem.targetPitchRad - offsetPitch);
+    float targetMotorRaw = _ctx.data.telem.targetPitchRad + offsetPitch;
 
 
     // 角度限制
@@ -102,24 +105,25 @@ void wl_gimbal_t::updatePitch()
     }
 
     //再还原回imu的角度用来pid计算
-    _ctx.data.telem.targetPitchRad = -(targetMotorRaw - offsetPitch);
+    float target_imu_rad = targetMotorRaw - offsetPitch;
+    float pitch_torque = _ctx.pid.pitch_pos->calculate(target_imu_rad, _ctx.data.imu.pitch);
 
     //云台俯仰轴的重力补偿和位置控制
     float gravityFf           = PITCH_K_GRAVITY_COS * arm_cos_f32(_ctx.data.imu.pitch) + PITCH_K_GRAVITY_SIN * arm_sin_f32(_ctx.data.imu.pitch);
 
-    float totalFf             = 0;
-
-    float targetPitchSpeed =  _ctx.data.telem.target_pitch_vel;
+    float targetPitchSpeed = -_ctx.data.telem.target_pitch_vel;
 
 
     if (std::abs(targetPitchSpeed) > 0.1f)//如果俯仰速度过大，限幅
         targetPitchSpeed = targetPitchSpeed > 0.0f ? 0.1f : -0.1f;
 
     _ctx.data.output.targetPitchPos         = targetMotorRaw;
-    _ctx.data.output.targetPitchSpeed       = targetPitchSpeed;
-    _ctx.data.output.pitchFeedforwardTorque = -totalFf;
+    _ctx.data.output.targetPitchSpeed       = -targetPitchSpeed;
+    _ctx.data.output.pitchFeedforwardTorque = gravityFf + pitch_torque;
+    // _ctx.data.output.pitchFeedforwardTorque = gravityFf;
     _ctx.data.output.pitchEn                = true;
 }
+
 
 
 void wl_gimbal_t::updateYaw()
@@ -134,22 +138,66 @@ void wl_gimbal_t::updateYaw()
     }
 
 
-    _module_deps.pid_deps.yaw_pos->
-        set_gains(YAW_POS_PID_KP, YAW_POS_PID_KI, YAW_POS_PID_KD);
-    _module_deps.pid_deps.yaw_spd->
-        set_gains(YAW_SPEED_PID_KP, YAW_SPEED_PID_KI, YAW_SPEED_PID_KD);
-
-
-    
     //角度归一化
-    float alignedTgtYaw   = _ctx.data.imu.yaw + wrapAngle(_ctx.data.telem.targetYawRad - _ctx.data.imu.yaw);
-    float yawPosOut       = _module_deps.pid_deps.yaw_pos->calculate(alignedTgtYaw, _ctx.data.imu.yaw);
+    float error_rad = wrapAngle(_ctx.data.imu.yaw - _ctx.data.telem.targetYawRad);
+    float yawPosOut       = _module_deps.pid_deps.yaw_pos->calculate(0.0f, error_rad);
     float tgtYawSpd       = yawPosOut;
     //后期要加上小陀螺转速补偿
     float yawSpdOut       = _module_deps.pid_deps.yaw_spd->calculate(tgtYawSpd, _ctx.data.imu.gyro[0]);
     _ctx.data.output.yawCurrent = yawSpdOut;
+
+    debug1 = _ctx.data.telem.targetYawRad;
+    debug2 = _ctx.data.imu.yaw;
 }
 
+void wl_gimbal_t::align_updatePitch()
+{
+    // 在线检测
+    if (!_module_deps.motor_deps.pitch->is_online())
+    {
+        _ctx.data.output.targetPitchSpeed       = 0.0f;
+        _ctx.data.output.pitchFeedforwardTorque = 0.0f;
+        _ctx.data.output.targetPitchPos         = _ctx.data.state.pitch.pos;
+        _ctx.data.output.targetPitchSpeed       = 0.0f;
+        _ctx.data.output.pitchEn                = false;
+        return;
+    }
+
+    float pitch_torque = _ctx.pid.pitch_pos->calculate(PITCH_ALIGN_TARGET_RAD,_ctx.data.state.pitch.pos);
+
+    //云台俯仰轴的重力补偿和位置控制
+    float gravityFf           = PITCH_K_GRAVITY_COS * arm_cos_f32(_ctx.data.imu.pitch) + PITCH_K_GRAVITY_SIN * arm_sin_f32(_ctx.data.imu.pitch);
+    float targetPitchSpeed = -_ctx.data.telem.target_pitch_vel;
+
+    if (std::abs(targetPitchSpeed) > 0.1f)//如果俯仰速度过大，限幅
+        targetPitchSpeed = targetPitchSpeed > 0.0f ? 0.1f : -0.1f;
+
+    _ctx.data.output.targetPitchPos         = PITCH_ALIGN_TARGET_RAD;
+    _ctx.data.output.targetPitchSpeed       = -targetPitchSpeed;
+    _ctx.data.output.pitchFeedforwardTorque = gravityFf + pitch_torque;
+    // _ctx.data.output.pitchFeedforwardTorque = gravityFf;
+    _ctx.data.output.pitchEn                = true;
+}
+void wl_gimbal_t::align_updateYaw()
+{
+    /*1. 在线检测 */
+    if (!_ctx.data.state.yaw.online) {
+        _ctx.data.telem.targetYawRad = _ctx.data.imu.yaw;
+        _module_deps.pid_deps.yaw_pos->clear();
+        _module_deps.pid_deps.yaw_spd->clear();
+        _ctx.data.output.yawCurrent = 0.0f;
+        return;
+    }
+    //角度归一化
+    float error_rad = wrapAngle(_ctx.data.state.yaw.pos - YAW_ALIGN_TARGET_RAD);
+    float yawPosOut       = _module_deps.pid_deps.yaw_pos->calculate(0.0f, error_rad);
+    float tgtYawSpd       = yawPosOut;
+    float yawSpdOut       = _module_deps.pid_deps.yaw_spd->calculate(tgtYawSpd, _ctx.data.imu.gyro[0]);
+    _ctx.data.output.yawCurrent = yawSpdOut;
+
+    debug1 = _ctx.data.telem.targetYawRad;
+    debug2 = _ctx.data.imu.yaw;
+}
 
 
 void wl_gimbal_t::_fsm_execute()

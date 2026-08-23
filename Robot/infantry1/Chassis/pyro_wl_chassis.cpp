@@ -158,6 +158,9 @@ void wl_chassis_t::_update_feedback()
 
     _update_accel_heading_frame();
     _calc_support_force();
+
+    _ctx.motor.yaw->update_feedback();
+    _ctx.data.yaw.pos = _module_deps.motor.yaw->get_current_position();
 }
 
 

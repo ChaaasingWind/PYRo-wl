@@ -151,15 +151,14 @@ void gimbal_cmd()
     else if (g2c_cmd.msg.mode == 2)//平衡模式
     {
         if(g2c_cmd.msg.mode == 2 && last_g2c_cmd.msg.mode != 2)
+        {
+            wl_chassis_cmd_ptr->cmd_function_state = pyro::chassis_function_state_t::RESTART;
+        }
         //平衡模式下的键位判断
         wl_chassis_cmd_ptr->cmd_function_state = pyro::chassis_function_state_t::NONE;
         if (g2c_cmd.msg.step_mode == 1)
         {
             wl_chassis_cmd_ptr->cmd_function_state = pyro::chassis_function_state_t::STEP;
-        }
-        else if (g2c_cmd.msg.step_mode == 2 && last_g2c_cmd.msg.mode == 1)
-        {
-            wl_chassis_cmd_ptr->cmd_function_state = pyro::chassis_function_state_t::RESTART;
         }
         wl_chassis_cmd_ptr->mode = pyro::cmd_base_t::mode_t::ACTIVE;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::L] = 0.0f;
@@ -275,6 +274,10 @@ void deps_init()
         pyro::dji_motor_tx_frame_t::id_2, pyro::bsp_can::can2);
     wl_chassis_deps->motor.wheel[leg_def::R] = new pyro::dji_m3508_motor_drv_t(
         pyro::dji_motor_tx_frame_t::id_3, pyro::bsp_can::can1);
+        
+    //登记yaw轴6020，获取反馈信息
+    wl_chassis_deps->motor.yaw = 
+        new pyro::dji_gm_6020_motor_drv_t(pyro::dji_motor_tx_frame_t::id_5, pyro::bsp_can::can3);
 
     static_cast<dm_motor_drv_t *>(
         wl_chassis_deps->motor.joint[leg_def::L][joint_def::HIP])

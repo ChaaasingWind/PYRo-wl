@@ -143,12 +143,41 @@ void wl_chassis_t::fsm_active_t::state_normal_t::state_balance_t::execute(wl_cha
                        MIN_LEG_LENGTH, MAX_LEG_LENGTH);
     }
     
-
+    
     const float target_vx = owner->_current_cmd.v;
     owner->_ctx.data.target_state.x += target_vx * owner->_ctx.data._dt;
     owner->_ctx.data.target_state.dot_x = target_vx;
 
-    const float target_wz               = owner->_current_cmd.wz;
+    float target_wz;
+    static int not_set_wz_time = 0;
+    if(owner->_current_cmd.wz != 0 ||target_vx != 0)
+    {
+        target_wz = owner->_current_cmd.wz;
+        not_set_wz_time = 0;
+    }
+    else
+    {
+        not_set_wz_time++;
+        if(not_set_wz_time >= 500)
+        {
+            static const float WZ_KP = 1.5f;
+            constexpr float YAW_ALIGN_TARGET_RAD = -2.2f;
+            target_wz = WZ_KP * (wrap2pi_f32_normalized(owner->_ctx.data.yaw.pos - YAW_ALIGN_TARGET_RAD));
+            if(fabs(target_wz) < 0.1f )
+            {
+                target_wz = 0;
+            }
+        }
+        else
+        {
+            target_wz = 0;
+        }
+    }
+    
+
+
+
+
     owner->_ctx.data.target_state.psi += target_wz * owner->_ctx.data._dt;
     owner->_ctx.data.target_state.psi = loop_fp32_constrain(owner->_ctx.data.target_state.psi,-PI,PI);
     owner->_ctx.data.target_state.dot_psi = target_wz;

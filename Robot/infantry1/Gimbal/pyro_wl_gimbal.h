@@ -51,10 +51,12 @@ struct wl_gimbal_deps_t
     // 算法对象 (串级 PID)
     struct pid_deps_t
     {
+        pid_t *pitch_pos{nullptr};
         pid_t *yaw_pos{nullptr};
         pid_t *yaw_spd{nullptr};
 
         // --- 新增：自瞄专用的串级 PID ---
+        pid_t *auto_pitch_pos{nullptr};
         pid_t *auto_yaw_pos{nullptr};
         pid_t *auto_yaw_spd{nullptr};
     };
@@ -160,6 +162,8 @@ class wl_gimbal_t final
 
     void updatePitch();
     void updateYaw();
+    void align_updatePitch();
+    void align_updateYaw();
 
     void _send_motor_command();
     float wrapAngle(float angle);//角度归一化到正负PI
