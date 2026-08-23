@@ -1,10 +1,9 @@
 #include "pyro_wl_gimbal.h"
 
 void pyro::wl_gimbal_t::state_passive_t::enter(pyro::wl_gimbal_t* ctx) {
-    ctx->_ctx.data.output.targetPitchSpeed       = 0.0f;
-    ctx->_ctx.data.output.pitchFeedforwardTorque = 0.0f;
+    ctx->_ctx.data.telem.targetPitchRotate      = 0.0f;
+    ctx->_ctx.data.output.pitchTorque = 0.0f;
     ctx->_ctx.data.output.yawCurrent             = 0.0f;
-    ctx->_ctx.data.output.targetPitchPos         = ctx->_ctx.data.state.pitch.pos;
     ctx->_ctx.data.telem.targetYawRad            = ctx->_ctx.data.imu.yaw;
     ctx->_ctx.data.telem.targetPitchRad          = ctx->_ctx.data.imu.pitch;
     ctx->_ctx.data.output.pitchEn                = false;
@@ -23,8 +22,7 @@ void pyro::wl_gimbal_t::state_passive_t::execute(pyro::wl_gimbal_t* ctx)
     count++;
     if(count >= 500)
     {
-        //ctx->set_pitchstate(ctx->_ctx.data.output.pitchEn);
-        ctx->_ctx.motor.pitch->clear_error();
+        ctx->set_pitchstate(ctx->_ctx.data.output.pitchEn);
         ctx->set_yawstate(ctx->_ctx.data.output.yawEn);
         count =0;
     }

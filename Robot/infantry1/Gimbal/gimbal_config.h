@@ -35,13 +35,18 @@
 #define YAW_POS_PID_KI 0.0f
 #define YAW_POS_PID_KD 0.0f
 
-  
+//pitch轴pid环  
 
+#define PITCH_POS_PID_KP 2.0f
+#define PITCH_POS_PID_KI 0.0f
+#define PITCH_POS_PID_KD 0.0f
 
-//pitch轴达妙mit控制阻抗系数
-#define DM_MOT_PITCH_KP 28.0f
-#define DM_MOT_PITCH_KI 0.0f
-#define DM_MOT_PITCH_KD 0.7f
+//pitch轴速度环
+
+#define PITCH_SPEED_PID_KP 4.0f
+#define PITCH_SPEED_PID_KI 0.0f
+#define PITCH_SPEED_PID_KD 0.0f
+
 
 //pitch轴物理限幅参数
 #define PITCH_LIMIT_MAX 1.60f
