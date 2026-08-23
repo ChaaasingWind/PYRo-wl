@@ -24,8 +24,8 @@ union GimbalToChassisComm {
     {
         uint32_t mode      : 2;//0下力，1手动(新遥控器下废除)，2平衡
 
-        uint32_t vx        : 6;
-        uint32_t w         : 6;
+        int32_t vx        : 6;
+        int32_t w         : 6;
 
         uint32_t delta_leg : 2;//0不变，1增大，2减小
         uint32_t step_mode : 1;
@@ -140,20 +140,17 @@ void gimbal_cmd()
 
         // 手动通道输入控制腿长和腿度（角度）的偏置量
         //用spining按键来切换左右腿
-        static bool which_leg = 0;
-        if(g2c_cmd.msg.spining == 1 && last_g2c_cmd.msg.spining == 0)
-        {
-            which_leg = !which_leg;
-        }
-        
-        wl_chassis_cmd_ptr->delta_leg_length[which_leg] = g2c_cmd.msg.vx * 0.001f;
-        wl_chassis_cmd_ptr->delta_leg_rad[which_leg]    = g2c_cmd.msg.w  * 0.001f;
+        wl_chassis_cmd_ptr->delta_leg_length[!g2c_cmd.msg.spining]= 0;
+        wl_chassis_cmd_ptr->delta_leg_rad[!g2c_cmd.msg.spining]   = 0;
+        wl_chassis_cmd_ptr->delta_leg_length[g2c_cmd.msg.spining] = g2c_cmd.msg.vx / 31.0f * 0.001f;
+        wl_chassis_cmd_ptr->delta_leg_rad[g2c_cmd.msg.spining]    = g2c_cmd.msg.w  / 31.0f * 0.001f;
         wl_chassis_cmd_ptr->v                           = 0.0f;
         wl_chassis_cmd_ptr->wz                          = 0.0f;
         wl_chassis_cmd_ptr->cmd_continus_state          = pyro::chassis_active_state_t::MANUAL;
     }
     else if (g2c_cmd.msg.mode == 2)//平衡模式
     {
+        if(g2c_cmd.msg.mode == 2 && last_g2c_cmd.msg.mode != 2)
         //平衡模式下的键位判断
         wl_chassis_cmd_ptr->cmd_function_state = pyro::chassis_function_state_t::NONE;
         if (g2c_cmd.msg.step_mode == 1)
@@ -169,8 +166,16 @@ void gimbal_cmd()
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::L]    = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] = 0.0f;
         wl_chassis_cmd_ptr->delta_leg_rad[leg_def::R]    = 0.0f;
-        wl_chassis_cmd_ptr->v                            = g2c_cmd.msg.vx;
-        wl_chassis_cmd_ptr->wz                           = - g2c_cmd.msg.w;
+        wl_chassis_cmd_ptr->v                            = g2c_cmd.msg.vx / 31.0f;
+        if(g2c_cmd.msg.spining)
+        {
+            wl_chassis_cmd_ptr->wz                       = 3.0f;
+        }
+        else 
+        {
+            wl_chassis_cmd_ptr->wz                       = -g2c_cmd.msg.w / 31.0f * 2.0f;
+        }
+        
         if(g2c_cmd.msg.delta_leg == 0)
         {
             wl_chassis_cmd_ptr->dot_L                    = 0.0f;
@@ -248,7 +253,7 @@ void chassis_dr162cmd(uint32_t notify)
             vrc.axes.ly * 0.0003f;
         wl_chassis_cmd_ptr->delta_leg_length[leg_def::R] =
             vrc.axes.ly * 0.0003f;
-        wl_chassis_cmd_ptr->dot_L                      = vrc.axes.ly * 0.4f;
+        wl_chassis_cmd_ptr->dot_L                        = vrc.axes.ly * 0.4f;
         wl_chassis_cmd_ptr->cmd_continus_state           = pyro::chassis_active_state_t::NORMAL;
     }
 }

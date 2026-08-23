@@ -17,7 +17,7 @@ using namespace pyro;
 
 constexpr uint32_t EVENT_BIT_STEPCLIMB                = (1 << 0);     // - 左上按钮双击 上台阶
 constexpr uint32_t EVENT_BIT_SPINING                  = (1 << 1);     // - pause键 小陀螺
-constexpr uint32_t EVENT_BIT_LEG_LENGTH_MODE          = (1 << 2);     // - 左上按钮双击 单击切换腿长变长变短或不动
+constexpr uint32_t EVENT_BIT_LEG_LENGTH_MODE          = (1 << 2);     // - 左上按钮单击切换腿长变长变短或不动
 
 
 
@@ -27,8 +27,8 @@ union GimbalToChassisComm {
     {
         uint32_t mode      : 2;//0下力，1手动(新遥控器下废除)，2平衡
 
-        uint32_t vx        : 6;
-        uint32_t w         : 6;
+        int32_t vx        : 6;
+        int32_t w         : 6;
 
         uint32_t delta_leg : 2;//0不变，1增大，2减小
         uint32_t step_mode : 1;
@@ -117,7 +117,7 @@ extern "C"
         pyro::btn_broker::subscribe(&vrc.buttons.fn_l, pyro::btn_event_t::DOUBLE_CLICK, 
                             gimbal_task_handle, EVENT_BIT_STEPCLIMB);
         pyro::btn_broker::subscribe(&vrc.buttons.fn_l, pyro::btn_event_t::PRESS_DOWN, 
-                            gimbal_task_handle, EVENT_BIT_STEPCLIMB);
+                            gimbal_task_handle, EVENT_BIT_LEG_LENGTH_MODE);
         pyro::btn_broker::subscribe(&vrc.buttons.pause, pyro::btn_event_t::PRESS_DOWN, 
                             gimbal_task_handle, EVENT_BIT_SPINING);
                             
@@ -144,8 +144,8 @@ void chassis_vt032cmd(virtual_rc_t vrc, uint32_t notify, GimbalToChassisComm* tx
         tx_cmd->msg.mode      = 1;
         tx_cmd->msg.step_mode = 0;
         tx_cmd->msg.delta_leg = 0;
-        tx_cmd->msg.vx        = vrc.axes.rx;
-        tx_cmd->msg.w         = vrc.axes.ry;
+        tx_cmd->msg.vx        = vrc.axes.rx * 31.0f;
+        tx_cmd->msg.w         = vrc.axes.ry * 31.0f;
 
         if(notify & EVENT_BIT_SPINING)
         {
@@ -157,8 +157,13 @@ void chassis_vt032cmd(virtual_rc_t vrc, uint32_t notify, GimbalToChassisComm* tx
         tx_cmd->msg.mode      = 2;
         tx_cmd->msg.step_mode = (notify & EVENT_BIT_STEPCLIMB);
         tx_cmd->msg.spining   = (notify & EVENT_BIT_SPINING);
-        tx_cmd->msg.vx        = vrc.axes.ry;
-        tx_cmd->msg.w         = vrc.axes.rx;
+        tx_cmd->msg.vx        = vrc.axes.ry * 31.0f;
+        tx_cmd->msg.w         = vrc.axes.rx * 31.0f;
+
+        if(notify & EVENT_BIT_SPINING)
+        {
+            tx_cmd->msg.spining   = !tx_cmd->msg.spining;
+        }
         //腿长命令逻辑遵循以下循环：不变->变长->不变->变短，循环往复
         static int count = 0;
         if(notify & EVENT_BIT_LEG_LENGTH_MODE)
