@@ -28,7 +28,7 @@ union GimbalToChassisComm {
         uint32_t mode      : 2;//0下力，1手动(新遥控器下废除)，2平衡
 
         uint32_t vx        : 6;
-        uint32_t w        : 6;
+        uint32_t w         : 6;
 
         uint32_t delta_leg : 2;//0不变，1增大，2减小
         uint32_t step_mode : 1;
@@ -91,7 +91,7 @@ extern "C"
             }
 
 
-            pyro::bsp_can::get_can1().send_msg(0x02, g2c_tx.buffer);
+            pyro::bsp_can::get_can1().send_msg(0x101, g2c_tx.buffer);
             wl_gimbal_ptr->set_command(*wl_gimbal_cmd_ptr);
             vTaskDelay(pdMS_TO_TICKS(1));
         }
