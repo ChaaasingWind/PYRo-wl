@@ -47,12 +47,20 @@ elseif (BOARD STREQUAL "GIMBAL_BOARD")
                 pyro_mission_planer.cpp
 
                 Gimbal/pyro_wl_gimbal.cpp
-                Gimbal/fsm/pyro_wl_passive_state.cpp
-                Gimbal/fsm/pyro_wl_active_state.cpp
-                Gimbal/fsm/pyro_wl_manual_state.cpp
-                Gimbal/fsm/pyro_wl_align_state.cpp
+                Gimbal/fsm/pyro_gimbal_passive_state.cpp
+                Gimbal/fsm/pyro_gimbal_active_state.cpp
+                Gimbal/fsm/pyro_gimbal_manual_state.cpp
+                Gimbal/fsm/pyro_gimbal_align_state.cpp
 
                 Booster/pyro_wl_booster.cpp
+                Booster/fsm/pyro_booster_passive_state.cpp
+                Booster/fsm/pyro_booster_active_state.cpp
+                Booster/fsm/pyro_booster_ready_state.cpp
+                Booster/fsm/pyro_booster_spin_up_state.cpp
+                Booster/fsm/pyro_booster_singlefire_state.cpp
+                Booster/fsm/pyro_booster_burstfire_state.cpp
+                Booster/fsm/pyro_booster_cali_forward_state.cpp
+                Booster/fsm/pyro_booster_cali_reverse_state.cpp
                 
                 Application/Gimbal_board/pyro_wl_gimbal_app.cpp
                 Application/Gimbal_board/pyro_wl_booster_app.cpp
