@@ -6,7 +6,7 @@
 
 void pyro::wl_gimbal_t::fsm_active_t::state_manual_t::enter(owner *owner)
 {
-    owner->_ctx.data.telem.targetPitchRad = owner->_ctx.data.imu.pitch;
+    owner->_ctx.data.telem.targetPitchRad = 0.0f;
     owner->_ctx.data.telem.targetYawRad   = owner->_ctx.data.imu.yaw;
     owner->_ctx.data.output.pitchEn       = true;
     owner->_ctx.data.output.yawEn         = true;

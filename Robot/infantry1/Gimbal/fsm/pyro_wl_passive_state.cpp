@@ -1,46 +1,46 @@
 #include "pyro_wl_gimbal.h"
 
-void pyro::wl_gimbal_t::state_passive_t::enter(pyro::wl_gimbal_t* ctx) {
-    ctx->_ctx.data.output.targetPitchSpeed       = 0.0f;
-    ctx->_ctx.data.output.pitchFeedforwardTorque = 0.0f;
-    ctx->_ctx.data.output.yawCurrent             = 0.0f;
-    ctx->_ctx.data.output.targetPitchPos         = ctx->_ctx.data.state.pitch.pos;
-    ctx->_ctx.data.telem.targetYawRad            = ctx->_ctx.data.imu.yaw;
-    ctx->_ctx.data.telem.targetPitchRad          = ctx->_ctx.data.imu.pitch;
-    ctx->_ctx.data.output.pitchEn                = false;
-    ctx->_ctx.data.output.yawEn                  = false;
+void pyro::wl_gimbal_t::state_passive_t::enter(owner* owner) {
+    owner->_ctx.data.output.targetPitchSpeed       = 0.0f;
+    owner->_ctx.data.output.pitchFeedforwardTorque = 0.0f;
+    owner->_ctx.data.output.yawCurrent             = 0.0f;
+    owner->_ctx.data.output.targetPitchPos         = owner->_ctx.data.state.pitch.pos;
+    owner->_ctx.data.telem.targetYawRad            = owner->_ctx.data.imu.yaw;
+    owner->_ctx.data.telem.targetPitchRad          = owner->_ctx.data.imu.pitch;
+    owner->_ctx.data.output.pitchEn                = false;
+    owner->_ctx.data.output.yawEn                  = false;
 
     
-    ctx->_module_deps.pid_deps.yaw_pos->clear();
-    ctx->_module_deps.pid_deps.yaw_spd->clear();
-    ctx->set_pitchstate(ctx->_ctx.data.output.pitchEn);
-    ctx->set_yawstate(ctx->_ctx.data.output.yawEn);
+    owner->_module_deps.pid_deps.yaw_pos->clear();
+    owner->_module_deps.pid_deps.yaw_spd->clear();
+    owner->set_pitchstate(owner->_ctx.data.output.pitchEn);
+    owner->set_yawstate(owner->_ctx.data.output.yawEn);
 }
 
-void pyro::wl_gimbal_t::state_passive_t::execute(pyro::wl_gimbal_t* ctx) 
+void pyro::wl_gimbal_t::state_passive_t::execute(owner* owner) 
 {
     static int count = 0;
     count++;
     if(count >= 500)
     {
-        ctx->set_pitchstate(ctx->_ctx.data.output.pitchEn);
-        ctx->set_yawstate(ctx->_ctx.data.output.yawEn);
+        owner->set_pitchstate(owner->_ctx.data.output.pitchEn);
+        owner->set_yawstate(owner->_ctx.data.output.yawEn);
         count =0;
     }
-    ctx->set_pitchstate(ctx->_ctx.data.output.pitchEn);
-    ctx->_ctx.data.telem.targetYawRad            = ctx->_ctx.data.imu.yaw;
-    ctx->_ctx.data.telem.targetPitchRad          = ctx->_ctx.data.imu.pitch;
-    ctx->_ctx.data.output.targetPitchSpeed       = 0.0f;
-    ctx->_ctx.data.output.pitchFeedforwardTorque = 0.0f;
-    ctx->_ctx.data.output.targetPitchPos         = ctx->_ctx.data.state.pitch.pos;
-    ctx->_ctx.data.output.targetPitchSpeed       = 0.0f;
-    if(ctx->_ctx.data.mode == cmd_base_t::mode_t::ACTIVE)
+    owner->set_pitchstate(owner->_ctx.data.output.pitchEn);
+    owner->_ctx.data.telem.targetYawRad            = owner->_ctx.data.imu.yaw;
+    owner->_ctx.data.telem.targetPitchRad          = owner->_ctx.data.imu.pitch;
+    owner->_ctx.data.output.targetPitchSpeed       = 0.0f;
+    owner->_ctx.data.output.pitchFeedforwardTorque = 0.0f;
+    owner->_ctx.data.output.targetPitchPos         = owner->_ctx.data.state.pitch.pos;
+    owner->_ctx.data.output.targetPitchSpeed       = 0.0f;
+    if(owner->_ctx.data.mode == cmd_base_t::mode_t::ACTIVE)
     {
         request_switch(&instance()->_state_active);
     }
 }
 
-void pyro::wl_gimbal_t::state_passive_t::exit(pyro::wl_gimbal_t* ctx)
+void pyro::wl_gimbal_t::state_passive_t::exit(owner* owner)
 {
 
 }
