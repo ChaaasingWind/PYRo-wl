@@ -28,7 +28,6 @@ struct wl_gimbal_cmd_t {
     float targetYaw;
     float targetPitch;
     float targetYawSpeed;        // 目标角速度 (用于前馈)
-    float targetYawAcceleration; // 目标角加速度 (用于高级动力学前馈)
     // ------------------------------------
     uint32_t timestamp;
 
@@ -114,7 +113,6 @@ struct wl_gimbal_data_ctx_t final : public cmd_base_t
     GimbalState state;
     GimbalOutput output;
     GimbalTelemetry telem;
-    
     float dt;
     uint8_t motionState;
 };
@@ -128,7 +126,6 @@ struct wl_gimbal_ctx_t
 
 struct wl_gimbal_param_t
 {
-
     using CmdType    = wl_gimbal_cmd_t;
     using ModuleDeps = wl_gimbal_deps_t;
     using ModuleCtx  = wl_gimbal_ctx_t;
@@ -197,9 +194,9 @@ class wl_gimbal_t final
             void exit(owner *owner) override;
         };
         
-        void on_enter(wl_gimbal_t *ctx) override;
-        void on_execute(wl_gimbal_t *ctx) override;
-        void on_exit(wl_gimbal_t *ctx) override;
+        void on_enter(wl_gimbal_t *owner) override;
+        void on_execute(wl_gimbal_t *owner) override;
+        void on_exit(wl_gimbal_t *owner) override;
 
       private:
         state_manual_t _state_manual;

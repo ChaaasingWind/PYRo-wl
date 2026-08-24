@@ -168,7 +168,7 @@ void gimbal_cmd()
         wl_chassis_cmd_ptr->v                            = g2c_cmd.msg.vx / 31.0f;
         if(g2c_cmd.msg.spining)
         {
-            wl_chassis_cmd_ptr->wz                       = 3.0f;
+            wl_chassis_cmd_ptr->wz                       = 6.5f;
         }
         else 
         {

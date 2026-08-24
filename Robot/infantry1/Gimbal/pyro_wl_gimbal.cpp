@@ -1,14 +1,10 @@
 #include "pyro_wl_gimbal.h"
 #include "gimbal_config.h"
-#include "pyro_algo_common.h"
 #include "pyro_dwt_drv.h"
 #include "pyro_ins.h"
 #include "dsp/fast_math_functions.h"
-#include <algorithm>
 
 
-    static float debug1;
-    static float debug2;
 namespace pyro
 {
 
@@ -145,8 +141,7 @@ void wl_gimbal_t::updateYaw()
     float yawSpdOut       = _module_deps.pid_deps.yaw_spd->calculate(tgtYawSpd, _ctx.data.imu.gyro[0]);
     _ctx.data.output.yawCurrent = yawSpdOut;
 
-    debug1 = _ctx.data.telem.targetYawRad;
-    debug2 = _ctx.data.imu.yaw;
+
 }
 
 void wl_gimbal_t::align_updatePitch()
@@ -193,8 +188,6 @@ void wl_gimbal_t::align_updateYaw()
     float yawSpdOut       = _module_deps.pid_deps.yaw_spd->calculate(tgtYawSpd, _ctx.data.imu.gyro[0]);
     _ctx.data.output.yawCurrent = yawSpdOut;
 
-    debug1 = _ctx.data.telem.targetYawRad;
-    debug2 = _ctx.data.imu.yaw;
 }
 
 
