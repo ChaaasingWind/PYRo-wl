@@ -5,25 +5,17 @@
 
 
 
-//拨弹盘单发情况速度环pid参数
-#define TRIGGER_SINGLE_SPEED_PID_KP 0.16f
-#define TRIGGER_SINGLE_SPEED_PID_KI 0.0f
-#define TRIGGER_SINGLE_SPEED_PID_KD 0.0f
+//拨弹盘速度环pid参数
+constexpr float TRIGGER_SPEED_PID_KP = 0.16f;
+constexpr float TRIGGER_SPEED_PID_KD = 0.0f;
 
-//拨弹盘单发情况位置环pid参数
-#define TRIGGER_SINGLE_POS_PID_KP 2300.0f
-#define TRIGGER_SINGLE_POS_PID_KI 0.0f
-#define TRIGGER_SINGLE_POS_PID_KD 0.0f
-
-//拨弹盘连发情况速度环pid参数
-#define TRIGGER_BURST_SPEED_PID_KP 0.16f
-#define TRIGGER_BURST_SPEED_PID_KI 0.0f
-#define TRIGGER_BURST_SPEED_PID_KD 0.0002f
+//拨弹盘位置环pid参数
+constexpr float TRIGGER_POS_PID_KP = 2300.0f;
+constexpr float TRIGGER_POS_PID_KD = 0.0002f;
 
 //摩擦轮速度环pid参数
-#define FRIC_SPEED_PID_KP 0.3f
-#define FRIC_SPEED_PID_KI 0.0f
-#define FRIC_SPEED_PID_KD 0.00002f
+constexpr float FRIC_SPEED_PID_KP = 0.3f;
+constexpr float FRIC_SPEED_PID_KD = 0.00002f;
 
 
 

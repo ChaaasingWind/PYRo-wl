@@ -3,9 +3,7 @@
 
 #include "pyro_algo_pid.h"
 #include "pyro_dji_motor_drv.h"
-#include "pyro_dm_motor_drv.h"
 #include "pyro_module_base.h"
-#include "pyro_motor_base.h"
 
 
 namespace pyro
@@ -25,7 +23,6 @@ enum class FireState
 enum class ShootEvent 
 {
     NONE = 0,
-    EMERGENCY_STOP,
     FRIC_TOGGLE, // 摩擦轮开启/关闭 切换事件
     SINGLE_FIRE, // 单发事件
     BURST_FIRE,  //连发
@@ -94,27 +91,29 @@ struct TargetBoosterState
     float triggerOffset;                ///< 拨弹盘零点偏移 (校准后确定)
     float targetTriggerSpeed;           ///< 拨弹盘目标转速 (用于速度环)
     bool useTriggerSpeedLoopOnly;       ///< true=绕过位置环, 仅速度环 (连发/校准)
+    // --- 校准 & 堵转 ---
+    bool isCalibrated              = false;  ///< 是否已完成拨弹盘校准
+    FireState jamSourceState       ;         ///< 堵转来源状态 (校准后恢复)
+    FireState targetStateAfterCali ;         ///< 校准完成后目标状态
+    bool burst_state;
 };
 
 struct BoosterOutput
 {
-    float fric0Current;
     float fric1Current;
+    float fric2Current;
     float triggerCurrent;
 };
 
 struct booster_data_ctx_t final : public cmd_base_t
 {
-    BoosterState state;
+    BoosterState motor_state;
     TargetBoosterState target_state;
     BoosterOutput output;
     FireState fsm_state;
     ShootEvent cmd_event;
 
-    // --- 校准 & 堵转 ---
-    bool isCalibrated              = false;  ///< 是否已完成拨弹盘校准
-    FireState jamSourceState       = FireState::Passive; ///< 堵转来源状态 (校准后恢复)
-    FireState targetStateAfterCali = FireState::Ready;   ///< 校准完成后目标状态
+    float dt;
 };
 
 struct wl_booster_ctx_t
@@ -155,7 +154,8 @@ class wl_booster_t final
 
 
     //辅助函数
-    void calculateCurrents();
+    void calculateFricCurrents();
+    void calculateTriggerCurrents(bool useTriggerSpeedLoopOnly);
     void sendCurrents();
 
     //弹速补偿器

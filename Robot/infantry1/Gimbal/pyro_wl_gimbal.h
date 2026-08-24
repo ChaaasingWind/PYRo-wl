@@ -5,7 +5,6 @@
 #include "pyro_dji_motor_drv.h"
 #include "pyro_dm_motor_drv.h"
 #include "pyro_module_base.h"
-#include "pyro_motor_base.h"
 
 
 namespace pyro

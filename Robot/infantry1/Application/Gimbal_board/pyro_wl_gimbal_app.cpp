@@ -8,16 +8,25 @@
 #include "pyro_bsp_can.h"
 #include "pyro_dji_motor_drv.h"
 #include "gimbal_config.h"
-#include "pyro_mutex.h"
 
 
 using namespace pyro;
 
 
-
+//底盘部分
 constexpr uint32_t EVENT_BIT_STEPCLIMB                = (1 << 0);     // - 左上按钮双击 上台阶
 constexpr uint32_t EVENT_BIT_SPINING                  = (1 << 1);     // - pause键 小陀螺
 constexpr uint32_t EVENT_BIT_LEG_LENGTH_MODE          = (1 << 2);     // - 左上按钮单击切换腿长变长变短或不动
+
+
+//云台部分
+
+
+
+//发射机构部分
+constexpr uint32_t EVENT_BIT_FRIC_TOGGLE              = (1 << 3);
+constexpr uint32_t EVENT_BIT_SINGLE_FIRE              = (1 << 4);
+constexpr uint32_t EVENT_BIT_BURST_FIRE               = (1 << 5);
 
 
 
@@ -108,8 +117,8 @@ extern "C"
         wl_gimbal_ptr->configure(*wl_gimbal_deps);
         wl_gimbal_ptr->start();
 
-        xTaskCreate(wl_gimbal_thread, "infantry_gimbal_thread", 1024, nullptr,
-                    configMAX_PRIORITIES - 1, &gimbal_task_handle);
+        xTaskCreate(wl_gimbal_thread, "infantry_gimbal_thread", 256, 
+                    nullptr,configMAX_PRIORITIES - 1, &gimbal_task_handle);
 
         auto &vrc = pyro::rc_drv_t::read();
 
