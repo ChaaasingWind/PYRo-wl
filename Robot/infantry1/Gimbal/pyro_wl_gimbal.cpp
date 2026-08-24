@@ -79,7 +79,7 @@ void wl_gimbal_t::updatePitch()
     if (!_module_deps.motor_deps.pitch->is_online())
     {
         _ctx.data.output.targetPitchSpeed       = 0.0f;
-        _ctx.data.output.pitchFeedforwardTorque = 0.0f;
+        _ctx.data.output.pitchTorque            = 0.0f;
         _ctx.data.output.targetPitchPos         = _ctx.data.state.pitch.pos;
         _ctx.data.output.targetPitchSpeed       = 0.0f;
         _ctx.data.output.pitchEn                = false;
@@ -119,8 +119,7 @@ void wl_gimbal_t::updatePitch()
 
     _ctx.data.output.targetPitchPos         = targetMotorRaw;
     _ctx.data.output.targetPitchSpeed       = -targetPitchSpeed;
-    _ctx.data.output.pitchFeedforwardTorque = gravityFf + pitch_torque;
-    // _ctx.data.output.pitchFeedforwardTorque = gravityFf;
+    _ctx.data.output.pitchTorque = gravityFf + pitch_torque;
     _ctx.data.output.pitchEn                = true;
 }
 
@@ -156,7 +155,7 @@ void wl_gimbal_t::align_updatePitch()
     if (!_module_deps.motor_deps.pitch->is_online())
     {
         _ctx.data.output.targetPitchSpeed       = 0.0f;
-        _ctx.data.output.pitchFeedforwardTorque = 0.0f;
+        _ctx.data.output.pitchTorque            = 0.0f;
         _ctx.data.output.targetPitchPos         = _ctx.data.state.pitch.pos;
         _ctx.data.output.targetPitchSpeed       = 0.0f;
         _ctx.data.output.pitchEn                = false;
@@ -174,8 +173,7 @@ void wl_gimbal_t::align_updatePitch()
 
     _ctx.data.output.targetPitchPos         = PITCH_ALIGN_TARGET_RAD;
     _ctx.data.output.targetPitchSpeed       = -targetPitchSpeed;
-    _ctx.data.output.pitchFeedforwardTorque = gravityFf + pitch_torque;
-    // _ctx.data.output.pitchFeedforwardTorque = gravityFf;
+    _ctx.data.output.pitchTorque = gravityFf + pitch_torque;
     _ctx.data.output.pitchEn                = true;
 }
 void wl_gimbal_t::align_updateYaw()
@@ -243,7 +241,7 @@ void wl_gimbal_t::_send_motor_command()
 {
     _module_deps.motor_deps.pitch->send_mit_ctrl(_ctx.data.output.targetPitchPos, 
                                                  _ctx.data.output.targetPitchSpeed,
-                                                 _ctx.data.output.pitchFeedforwardTorque);
+                                                 _ctx.data.output.pitchTorque);
     _module_deps.motor_deps.yaw->send_torque(_ctx.data.output.yawCurrent);
 }
 

@@ -1,0 +1,34 @@
+#ifndef PYRO_ROBOT_BOOSTER_CONFIG_H
+#define PYRO_ROBOT_BOOSTER_CONFIG_H
+
+
+
+
+
+//拨弹盘单发情况速度环pid参数
+#define TRIGGER_SINGLE_SPEED_PID_KP 0.16f
+#define TRIGGER_SINGLE_SPEED_PID_KI 0.0f
+#define TRIGGER_SINGLE_SPEED_PID_KD 0.0f
+
+//拨弹盘单发情况位置环pid参数
+#define TRIGGER_SINGLE_POS_PID_KP 2300.0f
+#define TRIGGER_SINGLE_POS_PID_KI 0.0f
+#define TRIGGER_SINGLE_POS_PID_KD 0.0f
+
+//拨弹盘连发情况速度环pid参数
+#define TRIGGER_BURST_SPEED_PID_KP 0.16f
+#define TRIGGER_BURST_SPEED_PID_KI 0.0f
+#define TRIGGER_BURST_SPEED_PID_KD 0.0002f
+
+//摩擦轮速度环pid参数
+#define FRIC_SPEED_PID_KP 0.3f
+#define FRIC_SPEED_PID_KI 0.0f
+#define FRIC_SPEED_PID_KD 0.00002f
+
+
+
+
+
+
+
+#endif
