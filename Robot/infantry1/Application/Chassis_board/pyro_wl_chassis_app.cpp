@@ -11,6 +11,7 @@
 #include "pyro_dji_motor_drv.h"
 #include "wl_config.h"
 #include <cstdint>
+#include "pyro_shared_data_def.h"
 
 using namespace pyro;
 
@@ -18,28 +19,7 @@ using namespace pyro;
 constexpr uint32_t EVENT_BIT_RESTART   = (1 << 0); 
 constexpr uint32_t EVENT_BIT_STEP      = (1 << 1); 
 
-union GimbalToChassisComm {
 
-    __attribute__((packed)) struct 
-    {
-        uint32_t mode      : 2;//0下力，1手动(新遥控器下废除)，2平衡
-
-        int32_t vx        : 6;
-        int32_t w         : 6;
-
-        uint32_t delta_leg : 2;//0不变，1增大，2减小
-        uint32_t step_mode : 1;
-        uint32_t spining   : 1;
-        
-    } msg;
-
-    uint8_t buffer[8];
-};
-//yaw轴控制逻辑：
-//vx vy的值为0时，底盘应当跟随云台，方向一致
-//如果vy不为0，则底盘应当有一个偏航速度，而云台有自己的yaw控制而不动
-//如果此时有偏航角，vy为0，但是vx不为0，则，此时操作者应当是想朝这个方向一直前行，则偏航角保持不动
-//如果vx vy值为0，则1秒后底盘yaw轴应当回归云台的方向（可选）（1s的原因主要是操作手可能会有继续朝着当前方向前进的可能）
 
 
 

@@ -4,7 +4,7 @@
 #include "pyro_dji_motor_drv.h"
 #include "booster_config.h"
 #include "pyro_rw_lock.h"
-
+#include "pyro_shared_data_def.h"
 
 using namespace pyro;
 
@@ -12,17 +12,7 @@ using namespace pyro;
 
 
 
-struct GimbalBoosterShared 
-{
-    //event: 
-    // 0 NONE
-    // 1 摩擦轮转换
-    // 2 单发
-    // 3 连发
-    //事件优先级： 1 > 2 > 3 >0
-    uint32_t event : 2;
-    uint32_t mode  : 1;
-};
+
 
 
 static TaskHandle_t booster_task_handle = nullptr;

@@ -25,7 +25,8 @@ enum class ShootEvent
     NONE = 0,
     FRIC_TOGGLE, // 摩擦轮开启/关闭 切换事件
     SINGLE_FIRE, // 单发事件
-    BURST_FIRE,  //连发
+    BURST_START, //连发开始
+    BURST_END,   //连发结束
 };
 
 //命令结构体
@@ -79,7 +80,7 @@ struct BoosterState
 {
     MotorState fric[2];
     MotorState trigger;
-    float triggerMotorRad;    //拨弹盘的“电机”的位置
+    bool enable;
     float trigger_rad;        //拨弹盘的位置
     uint8_t triggerRound;     //拨弹盘“电机”转过的圈数，用于换算至拨弹盘实际角度
 };
@@ -87,14 +88,12 @@ struct BoosterState
 struct TargetBoosterState 
 {
     float targetFricSpeed;              ///< 摩擦轮目标转速 (rad/s)
-    float targetTriggerRad;             ///< 拨弹盘目标位置 (用于位置环)
-    float triggerOffset;                ///< 拨弹盘零点偏移 (校准后确定)
+    float targetTriggerRad;             ///< 拨弹盘目标位置 (用于位置环) (最大为72*PI)
+    //float triggerOffset;                ///< 拨弹盘零点偏移 (校准后确定)
     float targetTriggerSpeed;           ///< 拨弹盘目标转速 (用于速度环)
     bool useTriggerSpeedLoopOnly;       ///< true=绕过位置环, 仅速度环 (连发/校准)
     // --- 校准 & 堵转 ---
-    bool isCalibrated              = false;  ///< 是否已完成拨弹盘校准
     FireState jamSourceState       ;         ///< 堵转来源状态 (校准后恢复)
-    FireState targetStateAfterCali ;         ///< 校准完成后目标状态
     bool burst_state;
 };
 
@@ -112,7 +111,7 @@ struct booster_data_ctx_t final : public cmd_base_t
     BoosterOutput output;
     FireState fsm_state;
     ShootEvent cmd_event;
-
+    bool isCalibrated              = false;  ///< 是否已完成拨弹盘校准
     float dt;
 };
 
