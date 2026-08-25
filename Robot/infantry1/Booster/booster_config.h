@@ -3,6 +3,8 @@
 
 #include "pyro_core_def.h"
 
+namespace pyro
+{
 
 //拨弹盘速度环pid参数
 constexpr float TRIGGER_SPEED_PID_KP = 0.16f;
@@ -35,7 +37,7 @@ constexpr float FRIC_TARGET_SPEED = PROJECTILE_TARGET_MUZZLE_VELOCITY / FRIC_RAD
 constexpr float SHOOT_SPEED                                       = 10.0f;
 
 // 拨弹盘速度
-constexpr float TRIGGER_SPEED        = SHOOT_SPEED / 8 * 2 * pyro::PI * 36;
+constexpr float TRIGGER_SPEED        = SHOOT_SPEED / 8 * 2 * PI * 36;
 
 
 //云台差的东西
@@ -44,5 +46,5 @@ constexpr float TRIGGER_SPEED        = SHOOT_SPEED / 8 * 2 * pyro::PI * 36;
 //3.自瞄控制
 //4.ui绘制
 //5.功率控制
-
+}
 #endif

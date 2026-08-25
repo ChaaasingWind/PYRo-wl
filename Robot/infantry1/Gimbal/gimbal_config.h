@@ -1,6 +1,9 @@
 #ifndef PYRO_ROBOT_GIMBAL_CONFIG_H
 #define PYRO_ROBOT_GIMBAL_CONFIG_H
 
+namespace pyro 
+{
+
 
 //手动模式下------------------------------------------
 
@@ -38,6 +41,6 @@ constexpr float PITCH_K_GRAVITY_SIN = 0.0f; // 垂直方向质心补偿
 
 
 
-
+}
 
 #endif

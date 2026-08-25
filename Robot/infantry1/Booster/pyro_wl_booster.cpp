@@ -71,21 +71,21 @@ void wl_booster_t::_update_feedback()
 
 
     //拨弹盘角度计算
-    static float lastRad;
+    static float lastRad = _ctx.data.motor_state.trigger.pos;
     float deltaRad = _ctx.data.motor_state.trigger.pos - lastRad;
     if (deltaRad < -PI/2.0f) {
         // 原始值突变变小，说明正向转过了零点
         _ctx.data.motor_state.triggerRound++;
         if (_ctx.data.motor_state.triggerRound >= 36) 
         {
-            _ctx.data.motor_state.triggerRound = 0; // 满36圈，输出轴刚好转满一圈，圈数归零
+            _ctx.data.motor_state.triggerRound -= 36; // 满36圈，输出轴刚好转满一圈，圈数归零
         }
     } else if (deltaRad > PI/2.0f) {
         // 原始值突变变大，说明反向转过了零点 (例如 10 -> 8190)
         _ctx.data.motor_state.triggerRound--;
         if (_ctx.data.motor_state.triggerRound < 0) 
         {
-            _ctx.data.motor_state.triggerRound = 35; // 退回上一圈
+            _ctx.data.motor_state.triggerRound += 36; // 退回上一圈
         }
     }
     lastRad = _ctx.data.motor_state.trigger.pos;

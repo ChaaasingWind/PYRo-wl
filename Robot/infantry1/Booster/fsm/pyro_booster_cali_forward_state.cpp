@@ -4,7 +4,7 @@
 void pyro::wl_booster_t::fsm_active_t::state_cali_forward_t::enter(owner* owner) 
 {
     // --- 初始化状态 ---
-    owner->_ctx.data.target_state.useTriggerSpeedLoopOnly = true;
+    owner->_ctx.data.target_state.useTriggerSpeedLoopOnly = false;
 
     owner->_ctx.data.target_state.targetTriggerRad += 9.0f * PI;
     if(owner->_ctx.data.target_state.targetTriggerRad >= 72 *PI)
@@ -15,7 +15,6 @@ void pyro::wl_booster_t::fsm_active_t::state_cali_forward_t::enter(owner* owner)
 
 void pyro::wl_booster_t::fsm_active_t::state_cali_forward_t::execute(owner* owner)
 {
-    owner->_ctx.data.target_state.targetTriggerRad =  owner->_ctx.data.motor_state.trigger_rad;
 
     float err = wrap2pi_f32_normalized
         ((owner->_ctx.data.target_state.targetTriggerRad - owner->_ctx.data.motor_state.trigger_rad) / 36.0f);
@@ -45,6 +44,7 @@ void pyro::wl_booster_t::fsm_active_t::state_cali_forward_t::execute(owner* owne
         if(steady_count >= 10)
         {
             //决定向前校准后应当进入什么状态
+            owner->_ctx.data.isCalibrated = true;
             if(owner->_ctx.data.target_state.jamSourceState == FireState::BurstFire)
             {
                 request_switch(&owner->_state_active._state_burstfire);

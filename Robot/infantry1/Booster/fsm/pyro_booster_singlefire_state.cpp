@@ -17,8 +17,6 @@ void pyro::wl_booster_t::fsm_active_t::state_singlefire_t::enter(owner* owner)
 
 void pyro::wl_booster_t::fsm_active_t::state_singlefire_t::execute(owner* owner)
 {
-    owner->_ctx.data.target_state.targetTriggerRad =  owner->_ctx.data.motor_state.trigger_rad;
-
     float err = wrap2pi_f32_normalized
         ((owner->_ctx.data.target_state.targetTriggerRad - owner->_ctx.data.motor_state.trigger_rad) / 36.0f);
     while (err >  PI) err -= 2.0f * PI;

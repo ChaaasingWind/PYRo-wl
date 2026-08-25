@@ -15,7 +15,7 @@ void pyro::wl_booster_t::fsm_active_t::state_cali_reverse_t::execute(owner* owne
     //堵转检测
     static uint16_t blocked_count = 0;
     if (fabs(owner->_ctx.data.target_state.targetTriggerSpeed) >= 50.0f && 
-        fabs(owner->_ctx.data.motor_state.trigger.vel <= 10.0f))
+        fabs(owner->_ctx.data.motor_state.trigger.vel) <= 10.0f)
     {
         if(blocked_count >= 800)
         {

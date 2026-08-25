@@ -82,7 +82,7 @@ struct BoosterState
     MotorState trigger;
     bool enable;
     float trigger_rad;        //拨弹盘的位置
-    uint8_t triggerRound;     //拨弹盘“电机”转过的圈数，用于换算至拨弹盘实际角度
+    int8_t triggerRound;     //拨弹盘“电机”转过的圈数，用于换算至拨弹盘实际角度
 };
 
 struct TargetBoosterState 
