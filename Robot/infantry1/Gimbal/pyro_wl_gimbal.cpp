@@ -102,6 +102,7 @@ void wl_gimbal_t::updatePitch()
 
     //再还原回imu的角度用来pid计算
     float target_imu_rad = targetMotorRaw - offsetPitch;
+    _ctx.data.telem.targetPitchRad = target_imu_rad;
     float pitch_torque = _ctx.pid.pitch_pos->calculate(target_imu_rad, _ctx.data.imu.pitch);
 
     //云台俯仰轴的重力补偿和位置控制
