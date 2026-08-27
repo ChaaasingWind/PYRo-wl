@@ -28,7 +28,7 @@ constexpr uint32_t EVENT_BIT_LEG_LENGTH_MODE          = (1 << 2);     // - 左�
 constexpr uint32_t EVENT_BIT_FRIC_TOGGLE              = (1 << 3);
 constexpr uint32_t EVENT_BIT_SINGLE_FIRE              = (1 << 4);
 constexpr uint32_t EVENT_BIT_BURST_FIRE               = (1 << 5);
-constexpr uint32_t EVENT_BIT_BURST_END               = (1 << 6);
+constexpr uint32_t EVENT_BIT_BURST_END                = (1 << 6);
 
 
 
@@ -94,7 +94,7 @@ extern "C"
             }
 
 
-            pyro::bsp_can::get_can1().send_msg(0x101, g2c_tx.buffer);
+            //pyro::bsp_can::get_can1().send_msg(0x101, g2c_tx.buffer);
             wl_gimbal_ptr->set_command(*wl_gimbal_cmd_ptr);
             vTaskDelay(pdMS_TO_TICKS(1));
         }
@@ -119,14 +119,14 @@ extern "C"
         //这里添加要订阅的按键
         pyro::btn_broker::subscribe(&vrc.buttons.fn_l, pyro::btn_event_t::DOUBLE_CLICK, 
                             gimbal_task_handle, EVENT_BIT_STEPCLIMB);
-        pyro::btn_broker::subscribe(&vrc.buttons.fn_l, pyro::btn_event_t::PRESS_DOWN, 
+        pyro::btn_broker::subscribe(&vrc.buttons.fn_l, pyro::btn_event_t::SINGLE_CLICK, 
                             gimbal_task_handle, EVENT_BIT_LEG_LENGTH_MODE);
-        pyro::btn_broker::subscribe(&vrc.buttons.pause, pyro::btn_event_t::PRESS_DOWN, 
+        pyro::btn_broker::subscribe(&vrc.buttons.pause, pyro::btn_event_t::SINGLE_CLICK, 
                             gimbal_task_handle, EVENT_BIT_SPINING);
         //这里添加要订阅的按键
-        pyro::btn_broker::subscribe(&vrc.buttons.fn_r, pyro::btn_event_t::PRESS_DOWN, 
+        pyro::btn_broker::subscribe(&vrc.buttons.fn_r, pyro::btn_event_t::SINGLE_CLICK, 
                             gimbal_task_handle, EVENT_BIT_FRIC_TOGGLE);
-        pyro::btn_broker::subscribe(&vrc.buttons.trigger, pyro::btn_event_t::PRESS_DOWN, 
+        pyro::btn_broker::subscribe(&vrc.buttons.trigger, pyro::btn_event_t::SINGLE_CLICK, 
                             gimbal_task_handle, EVENT_BIT_SINGLE_FIRE);
         pyro::btn_broker::subscribe(&vrc.buttons.trigger, pyro::btn_event_t::LONG_PRESS_START, 
                             gimbal_task_handle, EVENT_BIT_BURST_FIRE);
@@ -258,13 +258,13 @@ void booster_vt03cmd(virtual_rc_t vrc, uint32_t notify)
         {
             shared_data.event = 1;
         }
-        else if(notify & EVENT_BIT_SINGLE_FIRE)
-        {
-            shared_data.event = 2;
-        }
         else if(notify & EVENT_BIT_BURST_FIRE)
         {
             shared_data.event = 3;
+        }
+        else if(notify & EVENT_BIT_SINGLE_FIRE)
+        {
+            shared_data.event = 2;
         }
         else if(notify & EVENT_BIT_BURST_END)
         {

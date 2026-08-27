@@ -17,6 +17,9 @@ status_t wl_booster_t::_init()
     _ctx                                      = {};
     _ctx.motor                                = _module_deps.motor_deps;
     _ctx.pid                                  = _module_deps.pid_deps;
+    _module_deps.motor_deps.fric1->enable();
+    _module_deps.motor_deps.fric2->enable();
+    _module_deps.motor_deps.trigger->enable();
 
     return PYRO_OK;
 }

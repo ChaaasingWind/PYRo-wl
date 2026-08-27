@@ -86,7 +86,7 @@ void motor_deps_init()
     wl_booster_deps->motor_deps.fric2 =
         new pyro::dji_m3508_motor_drv_t(pyro::dji_motor_tx_frame_t::id_2,pyro::bsp_can::can2);
     wl_booster_deps->motor_deps.trigger =
-        new pyro::dji_m2006_motor_drv_t(pyro::dji_motor_tx_frame_t::id_3,pyro::bsp_can::can2);
+        new pyro::dji_m2006_motor_drv_t(pyro::dji_motor_tx_frame_t::id_3,pyro::bsp_can::can1);
 
     // 初始化串级 PID
 

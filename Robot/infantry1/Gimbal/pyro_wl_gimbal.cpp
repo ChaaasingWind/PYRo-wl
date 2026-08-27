@@ -89,16 +89,7 @@ void wl_gimbal_t::updatePitch()
     float targetMotorRaw = _ctx.data.telem.targetPitchRad + offsetPitch;
 
 
-    // 角度限制
-    if (targetMotorRaw > PITCH_LIMIT_MIN)
-    {
-        targetMotorRaw = PITCH_LIMIT_MIN;
-    }
-        
-    else if (targetMotorRaw < PITCH_LIMIT_MAX)
-    {
-        targetMotorRaw = PITCH_LIMIT_MAX;
-    }
+
 
     //再还原回imu的角度用来pid计算
     float target_imu_rad = targetMotorRaw - offsetPitch;
@@ -108,7 +99,7 @@ void wl_gimbal_t::updatePitch()
     //云台俯仰轴的重力补偿和位置控制
     float gravityFf           = PITCH_K_GRAVITY_COS * arm_cos_f32(_ctx.data.imu.pitch) + PITCH_K_GRAVITY_SIN * arm_sin_f32(_ctx.data.imu.pitch);
 
-    float targetPitchSpeed = -_ctx.data.telem.target_pitch_vel;
+    float targetPitchSpeed = -0.1f;
 
 
     if (std::abs(targetPitchSpeed) > 0.1f)//如果俯仰速度过大，限幅
@@ -116,7 +107,7 @@ void wl_gimbal_t::updatePitch()
 
     _ctx.data.output.targetPitchPos         = targetMotorRaw;
     _ctx.data.output.targetPitchSpeed       = -targetPitchSpeed;
-    _ctx.data.output.pitchTorque = gravityFf + pitch_torque;
+    _ctx.data.output.pitchTorque = gravityFf ;//+ pitch_torque;
     _ctx.data.output.pitchEn                = true;
 }
 
@@ -164,11 +155,9 @@ void wl_gimbal_t::align_updatePitch()
     float gravityFf           = PITCH_K_GRAVITY_COS * arm_cos_f32(_ctx.data.imu.pitch) + PITCH_K_GRAVITY_SIN * arm_sin_f32(_ctx.data.imu.pitch);
     float targetPitchSpeed = -_ctx.data.telem.target_pitch_vel;
 
-    if (std::abs(targetPitchSpeed) > 0.1f)//如果俯仰速度过大，限幅
-        targetPitchSpeed = targetPitchSpeed > 0.0f ? 0.1f : -0.1f;
 
     _ctx.data.output.targetPitchPos         = PITCH_ALIGN_TARGET_RAD;
-    _ctx.data.output.targetPitchSpeed       = -targetPitchSpeed;
+    _ctx.data.output.targetPitchSpeed       = 1.0f;
     _ctx.data.output.pitchTorque = gravityFf + pitch_torque;
     _ctx.data.output.pitchEn                = true;
 }
@@ -236,6 +225,7 @@ void wl_gimbal_t::_send_motor_command()
     _module_deps.motor_deps.pitch->send_mit_ctrl(_ctx.data.output.targetPitchPos, 
                                                  _ctx.data.output.targetPitchSpeed,
                                                  _ctx.data.output.pitchTorque);
+    //_module_deps.motor_deps.pitch->send_torque(0.0f);
     _module_deps.motor_deps.yaw->send_torque(_ctx.data.output.yawCurrent);
 }
 

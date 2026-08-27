@@ -12,6 +12,7 @@ void pyro::wl_booster_t::fsm_active_t::state_burstfire_t::enter(owner* owner)
 void pyro::wl_booster_t::fsm_active_t::state_burstfire_t::execute(owner* owner)
 {
     owner->_ctx.data.target_state.targetTriggerSpeed = TRIGGER_SPEED;
+    owner->_ctx.data.target_state.targetTriggerRad =  owner->_ctx.data.motor_state.trigger_rad;
 
     //堵转检测
     static uint16_t blocked_count = 0;
