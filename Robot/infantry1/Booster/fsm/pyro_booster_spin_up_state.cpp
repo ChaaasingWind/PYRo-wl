@@ -21,6 +21,7 @@ void pyro::wl_booster_t::fsm_active_t::state_spin_up_t::execute(owner* owner)
     owner->calculateFricCurrents();
     owner->calculateTriggerCurrents(owner->_ctx.data.target_state.useTriggerSpeedLoopOnly);
 
+    
 }
 
 void pyro::wl_booster_t::fsm_active_t::state_spin_up_t::exit(owner* owner)
